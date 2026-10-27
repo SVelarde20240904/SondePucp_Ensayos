@@ -7,6 +7,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import pe.sdp.beans.Miembro;
 import pe.sdp.daos.MiembroDao;
+import pe.sdp.util.Config;
+import pe.sdp.util.Intentos;
 import pe.sdp.util.Password;
 import pe.sdp.util.Sesion;
 
@@ -25,6 +27,7 @@ public class LoginServlet extends BaseServlet {
             case "/logout" -> {
                 HttpSession s = req.getSession(false);
                 if (s != null) s.invalidate();
+                resp.setHeader("Clear-Site-Data", "\"cache\"");
                 ir(req, resp, "/login");
             }
             case "/cambiar-password" -> vista(req, resp, "cambiar-password");
@@ -40,24 +43,39 @@ public class LoginServlet extends BaseServlet {
         try {
             if ("/cambiar-password".equals(req.getServletPath())) { cambiarPassword(req, resp); return; }
             String correo = texto(req, "correo"), pass = req.getParameter("password");
-            Miembro m = dao.buscarPorCorreo(correo);
-            if (m == null || !Password.verifica(pass, m.getPasswordHash())) {
-                req.setAttribute("error", "Correo o contraseña incorrectos.");
-                req.setAttribute("correo", correo);
-                vista(req, resp, "login");
+            String ip = req.getRemoteAddr();
+            long espera = Intentos.minutosBloqueado(correo, ip);
+            if (espera > 0) {
+                loginError(req, resp, correo, "Demasiados intentos fallidos. Espera " + espera + " min y vuelve a intentarlo.");
+                return;
+            }
+            Miembro m = correo == null ? null : dao.buscarPorCorreo(correo);
+            boolean cuentaPrueba = Config.produccion() && correo != null && correo.toLowerCase().endsWith("@sdp.test");
+            if (m == null || cuentaPrueba || !Password.verifica(pass, m.getPasswordHash())) {
+                Intentos.fallo(correo, ip);
+                loginError(req, resp, correo, "Correo o contraseña incorrectos.");
                 return;
             }
             if (!m.isActivo()) {
-                req.setAttribute("error", "Tu cuenta está inactiva. Habla con la Mesa Directiva.");
-                vista(req, resp, "login");
+                loginError(req, resp, correo, "Tu cuenta está inactiva. Habla con la Mesa Directiva.");
                 return;
             }
+            Intentos.exito(correo);
             HttpSession s = req.getSession(true);
+            req.changeSessionId();                 // evita "session fixation": el id de sesión cambia al entrar
+            Sesion.renovarCsrf(s);
             s.setAttribute(Sesion.USUARIO, m);
             s.setAttribute(Sesion.PERMISOS, dao.permisos(m.getIdMiembro()));
+            s.setAttribute("ultimaRevision", System.currentTimeMillis());
             s.setMaxInactiveInterval(60 * 60 * 4);
             ir(req, resp, m.isDebeCambiarPassword() ? "/cambiar-password" : "/inicio");
         } catch (SQLException e) { fallo(req, resp, e); }
+    }
+
+    private void loginError(HttpServletRequest req, HttpServletResponse resp, String correo, String msg) throws ServletException, IOException {
+        req.setAttribute("error", msg);
+        req.setAttribute("correo", correo);
+        vista(req, resp, "login");
     }
 
     private void cambiarPassword(HttpServletRequest req, HttpServletResponse resp) throws SQLException, ServletException, IOException {
@@ -70,7 +88,9 @@ public class LoginServlet extends BaseServlet {
         else if (!nueva.equals(repite)) error = "Las contraseñas nuevas no coinciden.";
         else if (nueva.equals(actual)) error = "La nueva contraseña debe ser distinta a la temporal.";
         if (error != null) { req.setAttribute("error", error); vista(req, resp, "cambiar-password"); return; }
+        if (nueva.length() > 72) { req.setAttribute("error", "La contraseña puede tener como máximo 72 caracteres."); vista(req, resp, "cambiar-password"); return; }
         dao.registrarPassword(u.getIdMiembro(), Password.hash(nueva), false);
+        req.changeSessionId();
         u.setDebeCambiarPassword(false);
         Sesion.ok(req, "Listo, tu contraseña quedó actualizada.");
         ir(req, resp, "/inicio");

@@ -37,7 +37,7 @@
     <c:if test="${pagina < paginas}"><a class="pill-link" href="${base}&p=${pagina + 1}">Siguiente →</a></c:if></div>
 </div>
 
-<form class="card" id="correccion" method="post" action="${ctx}/admin/historico"><h2>Registrar corrección</h2><p>Ej.: alguien eligió el nombre equivocado en su autoevaluación (flujo B4 de la guía)</p>
+<form class="card" id="correccion" method="post" action="${ctx}/admin/historico"><input type="hidden" name="_csrf" value="${sessionScope.csrf}"><h2>Registrar corrección</h2><p>Ej.: alguien eligió el nombre equivocado en su autoevaluación (flujo B4 de la guía)</p>
   <div class="form-row" style="align-items:flex-end">
     <div class="field"><label>Miembro</label><select class="input" name="cMiembro" required><option value="">—</option><c:forEach var="m" items="${miembrosLista}"><option value="${m.idMiembro}"><c:out value="${m.nombre}"/></option></c:forEach></select></div>
     <div class="field"><label>Figura</label><select class="input" name="cFigura" required><option value="">—</option><c:forEach var="f" items="${figurasLista}"><option value="${f.idFigura}"><c:out value="${f.nombre}"/></option></c:forEach></select></div>

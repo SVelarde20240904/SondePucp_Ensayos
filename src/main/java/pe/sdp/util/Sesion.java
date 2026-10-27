@@ -6,6 +6,10 @@ import jakarta.servlet.http.HttpSession;
 import pe.sdp.beans.Miembro;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.SecureRandom;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.Set;
 
@@ -43,6 +47,35 @@ public final class Sesion {
         error(req, "No tienes permiso para entrar a esa sección.");
         resp.sendRedirect(req.getContextPath() + "/inicio");
         return false;
+    }
+
+    // ---------- CSRF ----------
+    /** Nombre del campo oculto que llevan todos los formularios POST y de la variable de sesión. */
+    public static final String CSRF = "csrf";
+    private static final SecureRandom RANDOM = new SecureRandom();
+
+    /** Devuelve el token CSRF de la sesión (lo crea si no existe). */
+    public static String csrf(HttpSession s) {
+        Object t = s.getAttribute(CSRF);
+        if (t == null) { t = nuevoToken(); s.setAttribute(CSRF, t); }
+        return (String) t;
+    }
+
+    public static void renovarCsrf(HttpSession s) { s.setAttribute(CSRF, nuevoToken()); }
+
+    /** ¿El formulario trae el mismo token que la sesión? (comparación en tiempo constante) */
+    public static boolean csrfValido(HttpServletRequest req) {
+        HttpSession s = req.getSession(false);
+        Object esperado = s == null ? null : s.getAttribute(CSRF);
+        String recibido = req.getParameter("_csrf");
+        return esperado != null && recibido != null
+                && MessageDigest.isEqual(((String) esperado).getBytes(StandardCharsets.UTF_8), recibido.getBytes(StandardCharsets.UTF_8));
+    }
+
+    private static String nuevoToken() {
+        byte[] b = new byte[32];
+        RANDOM.nextBytes(b);
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(b);
     }
 
     public static void ok(HttpServletRequest req, String msg) { req.getSession().setAttribute("flashOk", msg); }

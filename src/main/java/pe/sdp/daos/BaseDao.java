@@ -1,30 +1,60 @@
 package pe.sdp.daos;
 
-import java.io.InputStream;
+import org.apache.tomcat.jdbc.pool.DataSource;
+import org.apache.tomcat.jdbc.pool.PoolProperties;
+import pe.sdp.util.Config;
+
 import java.sql.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.Properties;
 
-/** Conexión JDBC común. Lee los datos de src/main/resources/db.properties. */
+/**
+ * Conexión JDBC común, con POOL de conexiones (tomcat-jdbc, ya viene dentro de Tomcat):
+ * en vez de abrir una conexión nueva a MySQL en cada consulta, se reusan las que ya están abiertas.
+ * Los datos de conexión salen de pe.sdp.util.Config (variables de entorno o db.properties).
+ */
 public abstract class BaseDao {
 
-    private static final Properties CONF = new Properties();
+    private static volatile DataSource pool;
 
-    static {
-        try (InputStream in = BaseDao.class.getClassLoader().getResourceAsStream("db.properties")) {
-            if (in == null) throw new IllegalStateException("No se encontró db.properties");
-            CONF.load(in);
-            Class.forName(CONF.getProperty("db.driver"));
-        } catch (Exception e) {
-            throw new ExceptionInInitializerError(e);
+    private static DataSource pool() {
+        if (pool == null) {
+            synchronized (BaseDao.class) {
+                if (pool == null) {
+                    PoolProperties p = new PoolProperties();
+                    p.setDriverClassName(Config.dbDriver());
+                    p.setUrl(Config.dbUrl());
+                    p.setUsername(Config.dbUser());
+                    p.setPassword(Config.dbPassword());
+                    p.setInitialSize(2);
+                    p.setMinIdle(2);
+                    p.setMaxIdle(10);
+                    p.setMaxActive(20);
+                    p.setMaxWait(10_000);
+                    p.setTestOnBorrow(true);            // si MySQL cortó la conexión, se descarta y se abre otra
+                    p.setValidationQuery("SELECT 1");
+                    p.setValidationInterval(30_000);
+                    p.setTimeBetweenEvictionRunsMillis(60_000);
+                    p.setRemoveAbandoned(true);         // conexiones olvidadas sin cerrar se recuperan
+                    p.setRemoveAbandonedTimeout(120);
+                    p.setLogAbandoned(true);
+                    DataSource ds = new DataSource();
+                    ds.setPoolProperties(p);
+                    pool = ds;
+                }
+            }
         }
+        return pool;
+    }
+
+    /** Lo llama el listener al apagar la aplicación. */
+    public static void cerrarPool() {
+        if (pool != null) { pool.close(true); pool = null; }
     }
 
     protected Connection getConnection() throws SQLException {
-        return DriverManager.getConnection(CONF.getProperty("db.url"),
-                CONF.getProperty("db.user"), CONF.getProperty("db.password"));
+        return pool().getConnection();
     }
 
     // ---------- ayudas para leer columnas que pueden ser NULL ----------

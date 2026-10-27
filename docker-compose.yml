@@ -1,0 +1,54 @@
+# =====================================================================
+#  Para un VPS propio (DigitalOcean, Hetzner, etc.) o para probar en tu laptop con Docker.
+#  Levanta 3 cosas: MySQL, la app y Caddy (pone HTTPS gratis con Let's Encrypt).
+#
+#  1. Copia .env.ejemplo a .env y llena las claves y tu dominio
+#  2. docker compose up -d --build
+#  3. Carga los datos una sola vez (ver README → "Publicar")
+# =====================================================================
+services:
+  db:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?pon MYSQL_ROOT_PASSWORD en .env}
+      MYSQL_DATABASE: sdp_ensayos
+      MYSQL_USER: sdp
+      MYSQL_PASSWORD: ${DB_PASSWORD:?pon DB_PASSWORD en .env}
+      TZ: America/Lima
+    command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci"]
+    volumes:
+      - mysql-datos:/var/lib/mysql          # los datos sobreviven a reinicios y actualizaciones
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      retries: 10
+    # sin "ports": MySQL NO queda expuesto a internet, solo la app lo ve
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_URL: jdbc:mysql://db:3306/sdp_ensayos?serverTimezone=America/Lima&useUnicode=true&characterEncoding=UTF-8
+      DB_USER: sdp
+      DB_PASSWORD: ${DB_PASSWORD}
+      SDP_ENTORNO: produccion
+      SDP_FORZAR_HTTPS: ${SDP_FORZAR_HTTPS:-true}
+      SDP_ADMIN_CORREO: ${SDP_ADMIN_CORREO:-}
+      SDP_ADMIN_CLAVE: ${SDP_ADMIN_CLAVE:-}
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    depends_on: [app]
+    ports: ["80:80", "443:443"]
+    command: caddy reverse-proxy --from ${DOMINIO:?pon DOMINIO en .env} --to app:8080
+    volumes:
+      - caddy-datos:/data                    # certificados HTTPS
+
+volumes:
+  mysql-datos:
+  caddy-datos:

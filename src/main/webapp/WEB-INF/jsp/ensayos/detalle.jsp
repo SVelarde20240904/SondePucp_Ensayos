@@ -13,7 +13,7 @@
   <c:if test="${perm.contains('REGISTRAR_FIGURAS_ENSENADAS')}"><a class="pill-link" href="${ctx}/ensayos/figuras?id=${ensayo.idEnsayo}">Figuras enseñadas</a></c:if>
   <span class="spacer"></span><sdp:tag texto="${ensayo.estadoTexto}" tono="${ensayo.estadoTono}"/>
   <c:if test="${ensayo.estado == 'PROGRAMADO' or ensayo.estado == 'BORRADOR'}">
-    <form method="post" action="${ctx}/ensayos/detalle" class="inline-form"><input type="hidden" name="id" value="${ensayo.idEnsayo}">
+    <form method="post" action="${ctx}/ensayos/detalle" class="inline-form"><input type="hidden" name="_csrf" value="${sessionScope.csrf}"><input type="hidden" name="id" value="${ensayo.idEnsayo}">
       <c:if test="${ensayo.pasado or ensayo.estado == 'PROGRAMADO'}"><button class="btn btn-secondary btn-sm" name="action" value="cerrar">Marcar como cerrado</button></c:if>
       <button class="btn btn-danger btn-sm" name="action" value="cancelar" onclick="return confirm('¿Cancelar este ensayo?')">Cancelar ensayo</button></form>
   </c:if>
@@ -62,7 +62,7 @@
         <div><c:out value="${a.miembro}"/><sdp:code valor="${empty a.estadoReal ? '' : a.estadoReal}"/></div></c:if></c:forEach>
     </div>
   </div>
-  <form class="card w-540" method="post" action="${ctx}/ensayos/detalle"><h2>Notas del ensayo</h2>
+  <form class="card w-540" method="post" action="${ctx}/ensayos/detalle"><input type="hidden" name="_csrf" value="${sessionScope.csrf}"><h2>Notas del ensayo</h2>
     <input type="hidden" name="id" value="${ensayo.idEnsayo}">
     <textarea class="input" name="notas" rows="5" placeholder="Qué se trabajó, qué faltó, pendientes para el próximo…"><c:out value="${ensayo.notas}"/></textarea>
     <div class="inline"><button class="btn btn-secondary btn-sm" name="action" value="notas">Guardar notas</button>

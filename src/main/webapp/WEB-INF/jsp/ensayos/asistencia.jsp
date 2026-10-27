@@ -1,6 +1,6 @@
 <c:set var="titulo" value="Tomar asistencia"/><c:set var="menu" value="Tomar asistencia"/>
 <%@ include file="/WEB-INF/jsp/includes/top.jspf" %>
-<form method="post" action="${ctx}/ensayos/asistencia" class="stack" style="gap:24px">
+<form method="post" action="${ctx}/ensayos/asistencia" class="stack" style="gap:24px"><input type="hidden" name="_csrf" value="${sessionScope.csrf}">
 <input type="hidden" name="idEnsayo" value="${ensayo.idEnsayo}">
 <section class="hero"><div class="titles"><span class="kicker">Ensayos</span><h1>Asistencia · ${ensayo.diaLargo} ${ensayo.fechaCorta}</h1>
   <p>Marca cómo llegó cada persona. Quien no confirmó también puede marcarse.</p></div>

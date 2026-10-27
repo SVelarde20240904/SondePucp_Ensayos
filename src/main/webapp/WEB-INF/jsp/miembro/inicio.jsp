@@ -36,7 +36,7 @@
           <li><sdp:icono n="clock"/>${proximo.horario}</li>
           <c:forEach var="ind" items="${proximo.indicaciones}" varStatus="s"><li><sdp:icono n="${s.index == 0 ? 'clip' : 'drop'}"/><c:out value="${ind}"/></li></c:forEach>
         </ul>
-        <form method="post" action="${ctx}/confirmar-asistencia" class="inline">
+        <form method="post" action="${ctx}/confirmar-asistencia" class="inline"><input type="hidden" name="_csrf" value="${sessionScope.csrf}">
           <input type="hidden" name="idEnsayo" value="${proximo.idEnsayo}">
           <c:choose>
             <c:when test="${proximo.miConfirmacion == 'SI'}"><span class="tag ok">Confirmado</span><a class="btn btn-secondary btn-sm" href="${ctx}/confirmar-asistencia">Ya no puedo</a></c:when>

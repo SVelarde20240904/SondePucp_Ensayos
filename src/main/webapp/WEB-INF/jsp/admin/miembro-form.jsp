@@ -1,7 +1,7 @@
 <c:set var="nuevo" value="${m.idMiembro == 0}"/>
 <c:set var="titulo" value="${nuevo ? 'Nuevo miembro' : 'Editar miembro'}"/><c:set var="menu" value="Miembros"/>
 <%@ include file="/WEB-INF/jsp/includes/top.jspf" %>
-<form method="post" action="${ctx}/admin/miembros/${nuevo ? 'nuevo' : 'editar'}" class="stack" style="gap:24px">
+<form method="post" action="${ctx}/admin/miembros/${nuevo ? 'nuevo' : 'editar'}" class="stack" style="gap:24px"><input type="hidden" name="_csrf" value="${sessionScope.csrf}">
 <input type="hidden" name="idMiembro" value="${nuevo ? '' : m.idMiembro}">
 <section class="hero"><div class="titles"><span class="kicker">Administración › Miembros</span><h1>${titulo}</h1>
   <p><c:choose><c:when test="${nuevo}">Al guardar, aparece en las listas y puede confirmar asistencia. Tendrá nivel cuando haga su primera autoevaluación.</c:when>

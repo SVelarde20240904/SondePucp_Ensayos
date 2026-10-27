@@ -13,7 +13,7 @@
   <p>${sessionScope.usuario.debeCambiarPassword ? 'Entraste con una contraseña temporal. Elige una tuya para seguir.' : 'Elige una contraseña nueva.'}</p>
 </section>
 <section class="login-side">
-  <form class="login-form" method="post" action="${ctx}/cambiar-password">
+  <form class="login-form" method="post" action="${ctx}/cambiar-password"><input type="hidden" name="_csrf" value="${sessionScope.csrf}">
     <div><h2>Nueva contraseña</h2><p class="muted small">Mínimo 8 caracteres</p></div>
     <c:if test="${not empty error}"><div class="flash bad">⚠ <c:out value="${error}"/></div></c:if>
     <div class="field"><label for="actual">Contraseña actual (o temporal)</label><input class="input" id="actual" name="actual" type="password" required autofocus></div>

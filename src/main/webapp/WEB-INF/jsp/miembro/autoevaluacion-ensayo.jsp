@@ -1,6 +1,6 @@
 <c:set var="titulo" value="Autoevaluación del ensayo"/><c:set var="menu" value="Autoevaluación"/>
 <%@ include file="/WEB-INF/jsp/includes/top.jspf" %>
-<form method="post" action="${ctx}/autoevaluacion" class="stack" style="gap:24px">
+<form method="post" action="${ctx}/autoevaluacion" class="stack" style="gap:24px"><input type="hidden" name="_csrf" value="${sessionScope.csrf}">
 <input type="hidden" name="idEnsayo" value="${ensayo.idEnsayo}">
 <section class="hero"><div class="titles"><span class="kicker">Mi espacio</span><h1>¿Cómo te fue en el ensayo?</h1>
   <p>${ensayo.fechaLarga} · se trabajaron ${fn:length(figuras)} figuras de tu nivel</p></div>

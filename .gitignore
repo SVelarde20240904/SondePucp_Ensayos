@@ -1,0 +1,16 @@
+# Compilados
+target/
+*.war
+*.class
+# IntelliJ / VS Code
+.idea/
+*.iml
+.vscode/
+# Claves y configuración local: NUNCA a GitHub
+.env
+# Datos reales de los miembros: NUNCA a GitHub
+db/seed.sql
+*.xlsx
+*.xls
+*.csv
+*.sql.gz

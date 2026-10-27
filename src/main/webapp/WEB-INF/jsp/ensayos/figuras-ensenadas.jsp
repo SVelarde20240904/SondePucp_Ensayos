@@ -1,6 +1,6 @@
 <c:set var="titulo" value="Figuras enseñadas"/><c:set var="menu" value="Figuras enseñadas"/>
 <%@ include file="/WEB-INF/jsp/includes/top.jspf" %>
-<form method="post" action="${ctx}/ensayos/figuras" class="stack" style="gap:24px">
+<form method="post" action="${ctx}/ensayos/figuras" class="stack" style="gap:24px"><input type="hidden" name="_csrf" value="${sessionScope.csrf}">
 <input type="hidden" name="idEnsayo" value="${ensayo.idEnsayo}">
 <section class="hero"><div class="titles"><span class="kicker">Ensayos</span><h1>¿Qué figuras se enseñaron?</h1>
   <p>${ensayo.fechaLarga} · al guardar, cada asistente puede hacer su autoevaluación del ensayo</p></div>

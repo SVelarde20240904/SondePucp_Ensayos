@@ -33,12 +33,12 @@
 <div class="card"><h2>Figuras inactivas</h2><p>No aparecen en la mano, en las autoevaluaciones ni en los cálculos. Su historial se conserva.</p>
   <table class="table"><thead><tr><th>Figura</th><th>Evaluaciones</th><th>Desactivada</th><th>Por</th><th></th></tr></thead><tbody>
     <c:forEach var="f" items="${inactivas}"><tr><td><c:out value="${f.nombre}"/></td><td>${f.NEvaluaciones}</td><td>${f.fechaBajaTexto}</td><td><c:out value="${f.bajaPor}"/></td>
-      <td><form method="post" action="${ctx}/admin/figuras/editar" class="inline-form"><input type="hidden" name="idFigura" value="${f.idFigura}"><button class="btn btn-ghost btn-sm" name="action" value="reactivar">Reactivar</button></form></td></tr></c:forEach>
+      <td><form method="post" action="${ctx}/admin/figuras/editar" class="inline-form"><input type="hidden" name="_csrf" value="${sessionScope.csrf}"><input type="hidden" name="idFigura" value="${f.idFigura}"><button class="btn btn-ghost btn-sm" name="action" value="reactivar">Reactivar</button></form></td></tr></c:forEach>
     <c:if test="${empty inactivas}"><tr><td colspan="5" class="empty">No hay figuras inactivas.</td></tr></c:if>
   </tbody></table>
 </div>
 
-<form class="card" method="post" action="${ctx}/admin/figuras"><h2>¿Quién cuenta para el color de las figuras?</h2><p>La mediana solo usa a los miembros activos con estas frecuencias</p>
+<form class="card" method="post" action="${ctx}/admin/figuras"><input type="hidden" name="_csrf" value="${sessionScope.csrf}"><h2>¿Quién cuenta para el color de las figuras?</h2><p>La mediana solo usa a los miembros activos con estas frecuencias</p>
   <div class="inline" style="gap:12px">
     <c:forEach var="r" items="${reglas}">
       <label class="setting card" style="flex-direction:row;padding:10px 14px;background:var(--bg);border:0"><span class="bold">${r.key == 'EQUIPO_ENSAYOS' ? 'Equipo de ensayos' : fn:substring(r.key,0,1).concat(fn:toLowerCase(fn:substring(r.key,1,20)))}</span>

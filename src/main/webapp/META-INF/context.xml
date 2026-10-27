@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Cookies con SameSite=Lax: otra web no puede mandar formularios usando tu sesión -->
+<Context>
+  <CookieProcessor sameSiteCookies="lax"/>
+</Context>

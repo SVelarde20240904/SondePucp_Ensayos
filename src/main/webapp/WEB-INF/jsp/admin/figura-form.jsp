@@ -1,7 +1,7 @@
 <c:set var="nueva" value="${empty f}"/>
 <c:set var="titulo" value="${nueva ? 'Nueva figura' : 'Editar figura'}"/><c:set var="menu" value="Figuras"/>
 <%@ include file="/WEB-INF/jsp/includes/top.jspf" %>
-<form method="post" action="${ctx}/admin/figuras/${nueva ? 'nueva' : 'editar'}" class="stack" style="gap:24px">
+<form method="post" action="${ctx}/admin/figuras/${nueva ? 'nueva' : 'editar'}" class="stack" style="gap:24px"><input type="hidden" name="_csrf" value="${sessionScope.csrf}">
 <input type="hidden" name="idFigura" value="${nueva ? '' : f.idFigura}">
 <section class="hero"><div class="titles"><span class="kicker">Administración › Mano de figuras</span>
   <h1>${nueva ? 'Nueva figura' : 'Editar figura · '}<c:if test="${not nueva}"><c:out value="${f.nombre}"/></c:if></h1>

@@ -17,7 +17,7 @@
           </c:choose></div>
         <span class="big-date${s.first ? '' : ' blue'}" style="font-size:48px">${e.fechaCorta}</span><b>${e.tipoTexto}</b>
         <ul class="icon-list"><li><sdp:icono n="pin"/><c:out value="${e.lugar}"/></li><li><sdp:icono n="clock"/>${e.horario}</li></ul>
-        <form method="post" action="${ctx}/confirmar-asistencia" class="stack" style="gap:10px">
+        <form method="post" action="${ctx}/confirmar-asistencia" class="stack" style="gap:10px"><input type="hidden" name="_csrf" value="${sessionScope.csrf}">
           <input type="hidden" name="idEnsayo" value="${e.idEnsayo}">
           <input class="input" name="motivo" placeholder="Si no puedes ir: ¿por qué? (opcional)" value="<c:out value='${e.miMotivo}'/>">
           <div class="inline">

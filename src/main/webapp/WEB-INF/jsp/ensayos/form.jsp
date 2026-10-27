@@ -1,6 +1,6 @@
 <c:set var="titulo" value="${ensayo.idEnsayo == 0 ? 'Nuevo ensayo' : 'Editar ensayo'}"/><c:set var="menu" value="Ensayos"/>
 <%@ include file="/WEB-INF/jsp/includes/top.jspf" %>
-<form method="post" action="${ctx}/ensayos/${ensayo.idEnsayo == 0 ? 'nuevo' : 'editar'}" class="stack" style="gap:24px">
+<form method="post" action="${ctx}/ensayos/${ensayo.idEnsayo == 0 ? 'nuevo' : 'editar'}" class="stack" style="gap:24px"><input type="hidden" name="_csrf" value="${sessionScope.csrf}">
 <input type="hidden" name="idEnsayo" value="${ensayo.idEnsayo == 0 ? '' : ensayo.idEnsayo}">
 <section class="hero"><div class="titles"><span class="kicker">Ensayos</span><h1>${titulo}</h1><p>Al publicarlo, todos los miembros pueden confirmar asistencia</p></div>
   <div class="actions"><button class="btn btn-secondary" name="publicar" value="borrador">Guardar borrador</button><button class="btn btn-primary" name="publicar" value="si">Publicar ensayo</button></div>

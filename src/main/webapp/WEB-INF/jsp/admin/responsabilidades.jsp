@@ -16,7 +16,7 @@
           <td><c:choose><c:when test="${not empty e.cumplidoPor}"><b><c:out value="${e.cumplidoPor}"/></b><small>${e.cumplimientoTexto}</small></c:when><c:otherwise>—</c:otherwise></c:choose></td>
           <td><sdp:tag texto="${e.estadoTexto}" tono="${e.estadoTono}"/><c:if test="${e.cobertura}"> <span class="tag info">Cobertura</span></c:if><c:if test="${e.justificada}"> <span class="tag neutral" title="${e.motivoJustificacion}">Justificada</span></c:if></td>
           <td><c:if test="${empty e.cumplidoPor}">
-            <form method="post" action="${ctx}/admin/responsabilidades" class="inline" style="flex-wrap:nowrap"><input type="hidden" name="semana" value="${semana}"><input type="hidden" name="idEncargo" value="${e.idEncargo}">
+            <form method="post" action="${ctx}/admin/responsabilidades" class="inline" style="flex-wrap:nowrap"><input type="hidden" name="_csrf" value="${sessionScope.csrf}"><input type="hidden" name="semana" value="${semana}"><input type="hidden" name="idEncargo" value="${e.idEncargo}">
               <select class="input" name="cumplidoPor" style="width:150px;padding:6px 10px"><c:forEach var="m" items="${activos}"><option value="${m.idMiembro}" ${m.idMiembro == e.idResponsable ? 'selected' : ''}><c:out value="${m.nombre}"/></option></c:forEach></select>
               <button class="btn btn-ghost btn-sm" name="action" value="cumplir">Cumplido</button>
               <c:if test="${e.estado == 'NO_CUMPLIDA' and not e.justificada}"><input class="input" name="motivo" placeholder="Motivo" style="width:120px;padding:6px 10px"><button class="btn btn-secondary btn-sm" name="action" value="justificar">Justificar</button></c:if>
@@ -25,7 +25,7 @@
       <c:if test="${empty lista}"><tr><td colspan="6" class="empty">No hay encargos asignados esta semana.</td></tr></c:if>
       </tbody></table>
     </div>
-    <form class="card" method="post" action="${ctx}/admin/responsabilidades"><h2>Asignar encargo</h2>
+    <form class="card" method="post" action="${ctx}/admin/responsabilidades"><input type="hidden" name="_csrf" value="${sessionScope.csrf}"><h2>Asignar encargo</h2>
       <input type="hidden" name="semana" value="${semana}">
       <div class="form-row" style="align-items:flex-end">
         <div class="field"><label>Encargo</label><select class="input" name="idTipo"><c:forEach var="t" items="${tipos}"><option value="${t.idTipo}"><c:out value="${t.nombre}"/></option></c:forEach></select></div>

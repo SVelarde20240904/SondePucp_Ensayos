@@ -1,6 +1,6 @@
 <c:set var="titulo" value="Autoevaluación mensual"/><c:set var="menu" value="Autoevaluación"/>
 <%@ include file="/WEB-INF/jsp/includes/top.jspf" %>
-<form method="post" action="${ctx}/autoevaluacion" class="stack" style="gap:24px">
+<form method="post" action="${ctx}/autoevaluacion" class="stack" style="gap:24px"><input type="hidden" name="_csrf" value="${sessionScope.csrf}">
 <section class="hero"><div class="titles"><span class="kicker">Mi espacio</span><h1>Autoevaluación mensual · ${mes}</h1>
   <p>Marca qué tan bien sabes cada figura. Esta evaluación reemplaza tus colores anteriores (puede subir o bajar).</p></div>
   <div class="actions"><div style="min-width:220px"><p class="small bold" style="text-align:right;margin-bottom:6px">${respondidas} de ${total} con color</p>

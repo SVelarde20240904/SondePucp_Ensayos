@@ -52,6 +52,19 @@ public abstract class BaseServlet extends HttpServlet {
     /** Errores de BD: se muestran como aviso en vez de una pantalla en blanco. */
     protected void fallo(HttpServletRequest req, HttpServletResponse resp, Exception e) throws ServletException {
         log("Error de base de datos", e);
-        throw new ServletException("No se pudo completar la operación: " + e.getMessage(), e);
+        throw new ServletException(mensajeBd(e), e);
+    }
+
+    /**
+     * Mensaje para el usuario: las reglas de la BD (triggers con SIGNAL, SQLSTATE 45000) se muestran tal cual
+     * porque están escritas para personas; cualquier otro error técnico se queda solo en el log del servidor.
+     */
+    protected static String mensajeBd(Exception e) {
+        Throwable t = e;
+        while (t != null) {
+            if (t instanceof java.sql.SQLException sql && "45000".equals(sql.getSQLState())) return sql.getMessage();
+            t = t.getCause();
+        }
+        return "No se pudo completar la operación. Si se repite, avísale al admin.";
     }
 }

@@ -17,9 +17,10 @@
   </ul>
 </section>
 <section class="login-side">
-  <form class="login-form" method="post" action="${ctx}/login">
+  <form class="login-form" method="post" action="${ctx}/login"><input type="hidden" name="_csrf" value="${sessionScope.csrf}">
     <div><h2>Iniciar sesión</h2><p class="muted small">Usa tu correo PUCP</p></div>
     <c:if test="${not empty error}"><div class="flash bad">⚠ <c:out value="${error}"/></div></c:if>
+    <c:if test="${empty error and not empty sessionScope.flashError}"><div class="flash bad">⚠ <c:out value="${sessionScope.flashError}"/></div></c:if><c:remove var="flashError" scope="session"/>
     <div class="field"><label for="correo">Correo</label><input class="input" id="correo" name="correo" type="email" value="<c:out value='${correo}'/>" placeholder="a2024xxxx@pucp.edu.pe" required autofocus></div>
     <div class="field"><label for="password">Contraseña</label><input class="input" id="password" name="password" type="password" placeholder="••••••••" required></div>
     <button class="btn btn-primary btn-block" type="submit">Ingresar</button>

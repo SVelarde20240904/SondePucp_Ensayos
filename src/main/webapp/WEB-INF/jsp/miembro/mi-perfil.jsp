@@ -1,6 +1,6 @@
 <c:set var="titulo" value="Mi perfil"/><c:set var="menu" value="Mi perfil"/>
 <%@ include file="/WEB-INF/jsp/includes/top.jspf" %>
-<form method="post" action="${ctx}/perfil" class="stack" style="gap:24px">
+<form method="post" action="${ctx}/perfil" class="stack" style="gap:24px"><input type="hidden" name="_csrf" value="${sessionScope.csrf}">
 <section class="hero"><div class="titles"><span class="kicker">Mi espacio</span><h1>Mi perfil</h1><p>Tus datos dentro de Son de PUCP</p></div>
   <div class="actions"><button class="btn btn-primary" type="submit">Guardar cambios</button></div><span class="star"></span></section>
 <div class="row top">

@@ -18,8 +18,15 @@
     </jsp-property-group>
   </jsp-config>
 
+  <!-- Cookie de sesión: invisible para JavaScript (HttpOnly), solo por cookie (nunca ;jsessionid en la URL).
+       "Secure" la pone Tomcat sola cuando la conexión es HTTPS; SameSite=Lax está en META-INF/context.xml -->
   <session-config>
     <session-timeout>240</session-timeout>
+    <cookie-config>
+      <name>SDPSESSION</name>
+      <http-only>true</http-only>
+    </cookie-config>
+    <tracking-mode>COOKIE</tracking-mode>
   </session-config>
 
   <error-page>

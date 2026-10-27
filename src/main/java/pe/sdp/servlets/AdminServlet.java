@@ -181,13 +181,13 @@ public class AdminServlet extends BaseServlet {
                         }
                         case "quitar" -> {
                             try { roles.quitar(entero(req, "idMiembro"), entero(req, "idRol")); Sesion.ok(req, "Rol quitado. La persona sigue siendo Miembro."); }
-                            catch (SQLException ex) { Sesion.error(req, "No se pudo quitar: " + ex.getMessage()); }
+                            catch (SQLException ex) { log("No se pudo quitar", ex); Sesion.error(req, "No se pudo quitar: " + mensajeBd(ex)); }
                         }
                         default -> {
                             Set<String> marcados = new HashSet<>();
                             for (String p : Collections.list(req.getParameterNames())) if (p.startsWith("perm_")) marcados.add(p.substring(5));
                             roles.guardarMatriz(marcados);
-                            Sesion.ok(req, "Permisos guardados. Se aplican desde el próximo inicio de sesión de cada persona.");
+                            Sesion.ok(req, "Permisos guardados. A cada persona le llegan en máximo 2 minutos (sin cerrar sesión).");
                         }
                     }
                     ir(req, resp, "/admin/roles");
@@ -261,7 +261,7 @@ public class AdminServlet extends BaseServlet {
                 ir(req, resp, volver);
             }
         } catch (SQLException ex) {
-            Sesion.error(req, ex.getMessage().contains("admin") ? "Debe quedar al menos un admin." : "No se pudo guardar: " + ex.getMessage());
+            log("No se pudo guardar", ex); Sesion.error(req, String.valueOf(ex.getMessage()).contains("admin") ? "Debe quedar al menos un admin." : "No se pudo guardar: " + mensajeBd(ex));
             ir(req, resp, volver);
         }
     }
