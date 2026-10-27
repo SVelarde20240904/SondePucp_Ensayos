@@ -1,0 +1,50 @@
+<c:set var="u" value="${sessionScope.usuario}"/>
+<c:set var="perm" value="${sessionScope.permisos}"/>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title><c:out value="${titulo}"/> · Son de PUCP</title>
+<link rel="stylesheet" href="${ctx}/css/sdp.css">
+</head>
+<body>
+<div class="app">
+<aside class="sidebar">
+  <div class="brand"><img src="${ctx}/img/logo-sdp-dorado.png" alt="Son de PUCP"><span>TEAM ENSAYOS</span></div>
+  <div class="nav-title">Mi espacio</div>
+  <nav class="nav">
+    <a class="${menu == 'Inicio' ? 'active' : ''}" href="${ctx}/inicio">Inicio</a>
+    <a class="${menu == 'Confirmar asistencia' ? 'active' : ''}" href="${ctx}/confirmar-asistencia">Confirmar asistencia</a>
+    <a class="${menu == 'Autoevaluación' ? 'active' : ''}" href="${ctx}/autoevaluacion?tipo=mensual">Autoevaluación</a>
+    <a class="${menu == 'Mi historial' ? 'active' : ''}" href="${ctx}/mi-historial">Mi historial</a>
+    <a class="${menu == 'Mi perfil' ? 'active' : ''}" href="${ctx}/perfil">Mi perfil</a>
+  </nav>
+  <c:if test="${perm.contains('GESTIONAR_ENSAYOS') or perm.contains('VER_CRONOGRAMA') or perm.contains('TOMAR_ASISTENCIA') or perm.contains('REGISTRAR_FIGURAS_ENSENADAS')}">
+    <div class="nav-title">Ensayos</div>
+    <nav class="nav">
+      <c:if test="${perm.contains('GESTIONAR_ENSAYOS')}"><a class="${menu == 'Ensayos' ? 'active' : ''}" href="${ctx}/ensayos">Ensayos</a></c:if>
+      <c:if test="${perm.contains('VER_CRONOGRAMA')}"><a class="${menu == 'Cronograma sugerido' ? 'active' : ''}" href="${ctx}/ensayos/cronograma">Cronograma sugerido</a></c:if>
+      <c:if test="${perm.contains('TOMAR_ASISTENCIA')}"><a class="${menu == 'Tomar asistencia' ? 'active' : ''}" href="${ctx}/ensayos/asistencia">Tomar asistencia</a></c:if>
+      <c:if test="${perm.contains('REGISTRAR_FIGURAS_ENSENADAS')}"><a class="${menu == 'Figuras enseñadas' ? 'active' : ''}" href="${ctx}/ensayos/figuras">Figuras enseñadas</a></c:if>
+    </nav>
+  </c:if>
+  <c:if test="${perm.contains('GESTIONAR_MIEMBROS') or perm.contains('GESTIONAR_FIGURAS') or perm.contains('ASIGNAR_RESPONSABILIDADES') or perm.contains('GESTIONAR_HISTORICO') or perm.contains('ASIGNAR_ROLES')}">
+    <div class="nav-title">Administración</div>
+    <nav class="nav">
+      <c:if test="${perm.contains('GESTIONAR_MIEMBROS')}"><a class="${menu == 'Miembros' ? 'active' : ''}" href="${ctx}/admin/miembros">Miembros</a></c:if>
+      <c:if test="${perm.contains('GESTIONAR_FIGURAS')}"><a class="${menu == 'Figuras' ? 'active' : ''}" href="${ctx}/admin/figuras">Figuras</a></c:if>
+      <c:if test="${perm.contains('ASIGNAR_RESPONSABILIDADES')}"><a class="${menu == 'Responsabilidades' ? 'active' : ''}" href="${ctx}/admin/responsabilidades">Responsabilidades</a></c:if>
+      <c:if test="${perm.contains('GESTIONAR_HISTORICO')}"><a class="${menu == 'Histórico' ? 'active' : ''}" href="${ctx}/admin/historico">Histórico</a></c:if>
+      <c:if test="${perm.contains('ASIGNAR_ROLES')}"><a class="${menu == 'Roles y permisos' ? 'active' : ''}" href="${ctx}/admin/roles">Roles y permisos</a></c:if>
+    </nav>
+  </c:if>
+  <div class="grow"></div>
+  <div class="flags"><span class="flag pe"></span><span class="flag cu"></span><a class="logout" href="${ctx}/logout">Cerrar sesión</a></div>
+  <a class="user-card" href="${ctx}/perfil"><span class="avatar">${u.iniciales}</span>
+    <span><c:out value="${u.nombre}"/><small>${u.admin ? 'Admin' : u.rolBaileTexto}${u.equipoEnsayos ? ' · Equipo de ensayos' : (u.admin ? '' : ' · '.concat(u.frecuenciaTexto))}</small></span></a>
+</aside>
+<main class="main">
+<div class="content">
+<c:if test="${not empty sessionScope.flashOk}"><div class="flash ok">✓ <c:out value="${sessionScope.flashOk}"/></div><c:remove var="flashOk" scope="session"/></c:if>
+<c:if test="${not empty sessionScope.flashError}"><div class="flash bad">⚠ <c:out value="${sessionScope.flashError}"/></div><c:remove var="flashError" scope="session"/></c:if>

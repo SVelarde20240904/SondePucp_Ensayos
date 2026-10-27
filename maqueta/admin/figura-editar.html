@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Editar figura · Son de PUCP</title>
+<link rel="stylesheet" href="../css/sdp.css">
+</head>
+<body>
+<div class="app">
+<aside class="sidebar"><div class="brand"><img src="../img/logo-sdp-dorado.png" alt="Son de PUCP"><span>TEAM ENSAYOS</span></div><div class="nav-title">MI ESPACIO</div><nav class="nav"><a href="../miembro/inicio.html">Inicio</a><a href="../miembro/confirmar-asistencia.html">Confirmar asistencia</a><a href="../miembro/autoevaluacion-mensual.html">Autoevaluación</a><a href="../miembro/mi-historial.html">Mi historial</a><a href="../miembro/mi-perfil.html">Mi perfil</a></nav><div class="nav-title">ENSAYOS</div><nav class="nav"><a href="../ensayos/historial.html">Ensayos</a><a href="../ensayos/cronograma.html">Cronograma sugerido</a><a href="../ensayos/asistencia.html">Tomar asistencia</a><a href="../ensayos/figuras-ensenadas.html">Figuras enseñadas</a></nav><div class="nav-title">ADMINISTRACIÓN</div><nav class="nav"><a href="../admin/miembros.html">Miembros</a><a class="active" href="../admin/figuras.html">Figuras</a><a href="../admin/responsabilidades.html">Responsabilidades</a><a href="../admin/historico.html">Histórico</a><a href="../admin/roles.html">Roles y permisos</a></nav><div class="grow"></div><div class="flags"><span class="flag pe"></span><span class="flag cu"></span></div><a class="user-card" href="../miembro/mi-perfil.html"><span class="avatar">SV</span><span>Sergio Velarde<small>Admin · Equipo de ensayos</small></span></a></aside>
+<main class="main">
+<form class="content" method="post" action="figuras?action=editar"><section class="hero"><div class="titles"><span class="kicker">Administración › Mano de figuras</span><h1>Editar figura · Pulpo</h1><p>Nivel AMARILLO · 6 evaluaciones · enseñada en 2 ensayos</p></div><div class=actions><a class="btn btn-secondary" href="figuras.html">Cancelar</a><button class="btn btn-primary" type="submit">Guardar cambios</button></div><span class="star"></span></section>
+<div class="grid-4"><div class="card stat"><b class=""><span class="chip amarillo">Amarillo</span></b><span>color actual (mediana)</span></div><div class="card stat"><b class="">6</b><span>evaluaciones</span></div><div class="card stat"><b class="c-amarillo">33%</b><span>la saben (Verde o Azul)</span></div><div class="card stat"><b class="c-primary">2</b><span>veces enseñada</span></div></div>
+<div class="row top">
+ <div class="card grow"><h2>Datos de la figura</h2>
+  <div class="form-row"><div class="field"><label for="nombre">Nombre *</label><input class="input" id="nombre" name="nombre" type="text" value="Pulpo" placeholder="" required></div><div class="field"><label for="posicion">Posición en la mano</label><select class="input" id="posicion" name="posicion"><option>Al final de la mano</option><option>Después de 2 pa 2</option><option>Después de 70 compl. arriba</option><option>Después de 70 Habanero</option><option>Después de 70 santiaguero</option><option>Después de Bajanda</option><option>Después de Batido SDP</option><option>Después de Botala por atrás</option><option>Después de Carrusel</option><option>Después de Coyote</option><option>Después de Enchufla para arriba</option><option>Después de Enchufla pistola</option><option>Después de Enredala compl.</option><option>Después de Expreso Polar</option><option>Después de Festival de Patines</option><option>Después de Festival de pelotas</option><option>Después de Flor Cubana</option><option>Después de Frozen</option><option>Después de H Derecha M izq</option><option>Después de Hélice</option><option>Después de Mezcla cubana</option><option>Después de Mujer Policía</option><option>Después de Pasarela</option><option>Después de Paseala por atrás</option><option>Después de Paseo Abierto</option><option>Después de Paseo Cerrado</option><option>Después de Paseo hacia arriba</option><option>Después de Paseo SDP cerrado</option><option>Después de Patin a lo moderno</option><option>Después de Patin mixto</option><option>Después de Pelota Loca</option><option>Después de Pies en la clave</option><option selected>Después de Pilón</option><option>Después de Puente</option><option>Después de Puente complicado</option><option>Después de Pulpo</option><option>Después de Pájaro Loco</option><option>Después de Ven que Voy</option></select></div></div>
+  <div class="field"><label for="descripcion">Descripción o nota</label><textarea class="input" id="descripcion" name="descripcion" rows="3"></textarea></div>
+ </div>
+ <div class="stack w-440">
+  <div class="card" style="border-color:var(--amarillo-soft)"><h2>Desactivar</h2><p>Sale de la mano, de las autoevaluaciones y del cálculo de niveles. Se conserva todo su historial y se puede reactivar cuando quieras.</p>
+   <div><button class="btn btn-secondary" type="submit">Desactivar figura</button></div></div>
+  <div class="card" style="border-color:var(--rojo-soft)"><h2>Eliminar</h2><p>Borra la figura para siempre. Solo se permite si nunca se evaluó ni se enseñó (por ejemplo, si se creó por error).</p>
+   <div><button class="btn btn-secondary" type="button" disabled style="opacity:.45;cursor:not-allowed">Eliminar figura</button></div>
+   <div class="note warn">No disponible: tiene 6 evaluaciones y se enseñó en 2 ensayos. Desactívala en su lugar.</div></div>
+ </div>
+</div>
+<input type="hidden" name="idFigura" value="34"></form>
+<footer class="team-bar"><strong>TEAM ENSAYOS - SDP</strong><span class="emojis">⚾😑💃🏻🦉🐥🌈🌕🐧👀🍄🍗</span></footer>
+</main>
+</div>
+</body>
+</html>

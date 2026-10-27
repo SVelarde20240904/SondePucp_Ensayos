@@ -1,0 +1,140 @@
+erDiagram
+    MIEMBRO ||--o{ MIEMBRO_ROL : tiene
+    ROL_SISTEMA ||--o{ MIEMBRO_ROL : asignado
+    ROL_SISTEMA ||--o{ ROL_PERMISO : incluye
+    PERMISO ||--o{ ROL_PERMISO : otorgado
+
+    MIEMBRO ||--o{ EVALUACION : "color actual"
+    FIGURA ||--o{ EVALUACION : evaluada
+    MIEMBRO ||--o{ HISTORIAL_EVALUACION : cambia
+    FIGURA ||--o{ HISTORIAL_EVALUACION : registra
+    PERIODO_AUTOEVALUACION |o--o{ HISTORIAL_EVALUACION : mensual
+    ENSAYO |o--o{ HISTORIAL_EVALUACION : "del ensayo"
+
+    ENSAYO ||--o{ ASISTENCIA : convoca
+    MIEMBRO ||--o{ ASISTENCIA : confirma
+    ENSAYO ||--o{ ENSAYO_FIGURA : ensena
+    FIGURA ||--o{ ENSAYO_FIGURA : ensenada
+    ENSAYO ||--o{ ENSAYO_DICTANTE : dictan
+    MIEMBRO ||--o{ ENSAYO_DICTANTE : dicta
+    ENSAYO ||--o{ ENSAYO_INDICACION : indica
+
+    TIPO_ENCARGO ||--o{ ENCARGO : clasifica
+    MIEMBRO ||--o{ ENCARGO : responsable
+    MIEMBRO |o--o{ ENCARGO : "cumplido por"
+    ENSAYO |o--o{ ENCARGO : semana
+
+    MIEMBRO {
+        int id_miembro PK
+        varchar nombre UK
+        varchar nombre_completo
+        char codigo_pucp UK
+        varchar correo UK
+        varchar password_hash
+        enum rol_baile "LEADER FOLLOWER"
+        enum frecuencia "REGULAR OCASIONAL EVENTUAL"
+        enum estado "ACTIVO INACTIVO"
+    }
+    ROL_SISTEMA {
+        tinyint id_rol PK
+        varchar codigo "MIEMBRO EQUIPO_ENSAYOS ADMIN"
+    }
+    MIEMBRO_ROL {
+        int id_miembro PK,FK
+        tinyint id_rol PK,FK
+    }
+    PERMISO {
+        smallint id_permiso PK
+        varchar codigo UK
+        enum seccion
+    }
+    ROL_PERMISO {
+        tinyint id_rol PK,FK
+        smallint id_permiso PK,FK
+    }
+    REGLA_CONTEO_COLOR {
+        enum clave PK "REGULAR OCASIONAL EVENTUAL EQUIPO_ENSAYOS"
+        bool cuenta
+    }
+    FIGURA {
+        int id_figura PK
+        varchar nombre UK
+        smallint orden
+        bool activa
+    }
+    EVALUACION {
+        int id_miembro PK,FK
+        int id_figura PK,FK
+        enum color "ROJO AMARILLO VERDE AZUL"
+        datetime fecha_actualizacion
+    }
+    HISTORIAL_EVALUACION {
+        int id_historial PK
+        int id_miembro FK
+        int id_figura FK
+        enum color_anterior
+        enum color_nuevo
+        enum fuente "CARGA_INICIAL MENSUAL ENSAYO CORRECCION"
+        bool aplicado "0 = ignorado por solo sube"
+        int id_ensayo FK
+        int id_periodo FK
+        int registrado_por FK
+        datetime fecha
+    }
+    PERIODO_AUTOEVALUACION {
+        int id_periodo PK
+        smallint anio
+        tinyint mes
+        datetime fecha_apertura
+        datetime fecha_cierre
+    }
+    ENSAYO {
+        int id_ensayo PK
+        enum tipo "GENERAL COMPETENCIA NIVELACION EXHIBICION"
+        date fecha
+        time hora_inicio
+        time hora_fin
+        varchar lugar
+        datetime cierre_confirmacion
+        enum estado "BORRADOR PROGRAMADO CERRADO CANCELADO"
+        text notas
+    }
+    ASISTENCIA {
+        int id_ensayo PK,FK
+        int id_miembro PK,FK
+        enum confirmacion "SI NO SIN_RESPUESTA"
+        varchar motivo
+        enum estado_real "AP AN TJ TI FJ FI"
+    }
+    ENSAYO_FIGURA {
+        int id_ensayo PK,FK
+        int id_figura PK,FK
+        enum nivel
+        int dicto FK
+    }
+    ENSAYO_DICTANTE {
+        int id_ensayo PK,FK
+        int id_miembro PK,FK
+    }
+    ENSAYO_INDICACION {
+        int id_indicacion PK
+        int id_ensayo FK
+        varchar texto
+    }
+    TIPO_ENCARGO {
+        smallint id_tipo PK
+        varchar nombre UK
+        bool activo
+    }
+    ENCARGO {
+        int id_encargo PK
+        smallint id_tipo FK
+        int id_ensayo FK
+        date semana
+        int responsable FK
+        datetime plazo
+        int cumplido_por FK
+        datetime fecha_cumplimiento
+        bool exonerado
+        bool justificada
+    }

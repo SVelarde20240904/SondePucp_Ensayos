@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mi perfil · Son de PUCP</title>
+<link rel="stylesheet" href="../css/sdp.css">
+</head>
+<body>
+<div class="app">
+<aside class="sidebar"><div class="brand"><img src="../img/logo-sdp-dorado.png" alt="Son de PUCP"><span>TEAM ENSAYOS</span></div><div class="nav-title">MI ESPACIO</div><nav class="nav"><a href="../miembro/inicio.html">Inicio</a><a href="../miembro/confirmar-asistencia.html">Confirmar asistencia</a><a href="../miembro/autoevaluacion-mensual.html">Autoevaluación</a><a href="../miembro/mi-historial.html">Mi historial</a><a class="active" href="../miembro/mi-perfil.html">Mi perfil</a></nav><div class="grow"></div><div class="flags"><span class="flag pe"></span><span class="flag cu"></span></div><a class="user-card" href="../miembro/mi-perfil.html"><span class="avatar">CR</span><span>Camila Reymundo<small>Follower · Regular</small></span></a></aside>
+<main class="main">
+<form class="content" method="post" action="perfil?action=guardar"><section class="hero"><div class="titles"><span class="kicker">Mi espacio</span><h1>Mi perfil</h1><p>Tus datos dentro de Son de PUCP</p></div><div class=actions><button class="btn btn-primary" type="submit">Guardar cambios</button></div><span class="star"></span></section>
+<div class="row top">
+ <div class="card flyer w-300 center" style="align-items:center;padding:28px 24px">
+   <div class="avatar" style="width:132px;height:132px;font-size:44px;background:var(--ink);color:var(--accent);border:6px solid var(--accent);font-family:var(--display)">CR</div>
+   <a class="link c-accent" href="#">Cambiar foto</a>
+   <h1 style="font-size:22px">Camila Reymundo</h1>
+   <div class="inline" style="justify-content:center"><span class="tag info role">Follower</span><span class="chip verde">Verde</span></div>
+   <ul class="icon-list"><li><svg viewBox="0 0 24 24"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/></svg>Miembro desde abril 2026</li><li><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>Frecuencia: Regular</li></ul>
+ </div>
+ <div class="stack grow">
+  <div class="card"><h2>Datos personales</h2><p>Los mismos que pedimos en la convocatoria</p>
+    <div class="form-row"><div class="field"><label for="nombreCompleto">Nombre completo</label><input class="input" id="nombreCompleto" name="nombreCompleto" value="Camila Reymundo …"></div><div class="field"><label for="nombre">Nombre en el sistema</label><input class="input" id="nombre" name="nombre" value="Camila Reymundo"></div></div>
+    <div class="form-row"><div class="field"><label for="codigo">Código PUCP</label><input class="input" id="codigo" name="codigo" value="2023xxxx"></div><div class="field"><label for="facultad">Facultad</label><input class="input" id="facultad" name="facultad" value="Ciencias e Ingeniería"></div></div>
+    <div class="form-row"><div class="field"><label for="correo">Correo</label><input class="input" id="correo" name="correo" value="a2023xxxx@pucp.edu.pe"></div><div class="field"><label for="celular">Celular</label><input class="input" id="celular" name="celular" value="9xx xxx xxx"></div></div></div>
+  <div class="card"><h2>En el grupo</h2><p>Solo el admin puede cambiar estos datos. Tu rol de baile se registra una sola vez al ingresar.</p>
+    <div class="form-row"><div class="field"><label for="rol">Rol de baile</label><input class="input" id="rol" name="rol" value="🔒  Follower" readonly></div><div class="field"><label for="frecuencia">Frecuencia</label><input class="input" id="frecuencia" name="frecuencia" value="🔒  Regular" readonly></div><div class="field"><label for="estado">Estado</label><input class="input" id="estado" name="estado" value="🔒  Activo" readonly></div></div></div>
+  <div class="card"><h2>Cuenta y avisos</h2>
+    <label class="setting"><span>Recordarme confirmar asistencia (viernes 6 pm)</span><span class="switch"><input type="checkbox" name="avisoAsistencia" checked><span></span></span></label><label class="setting"><span>Avisarme cuando abra la autoevaluación mensual</span><span class="switch"><input type="checkbox" name="avisoMensual" checked><span></span></span></label><label class="setting"><span>Avisarme cuando haya autoevaluación del ensayo</span><span class="switch"><input type="checkbox" name="avisoEnsayo"><span></span></span></label>
+    <div class="inline"><button class="btn btn-secondary" type="button">Cambiar contraseña</button><a class="btn btn-ghost" href="../index.html">Cerrar sesión</a></div></div>
+ </div>
+</div></form>
+<footer class="team-bar"><strong>TEAM ENSAYOS - SDP</strong><span class="emojis">⚾😑💃🏻🦉🐥🌈🌕🐧👀🍄🍗</span></footer>
+</main>
+</div>
+</body>
+</html>

@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Editar miembro · Son de PUCP</title>
+<link rel="stylesheet" href="../css/sdp.css">
+</head>
+<body>
+<div class="app">
+<aside class="sidebar"><div class="brand"><img src="../img/logo-sdp-dorado.png" alt="Son de PUCP"><span>TEAM ENSAYOS</span></div><div class="nav-title">MI ESPACIO</div><nav class="nav"><a href="../miembro/inicio.html">Inicio</a><a href="../miembro/confirmar-asistencia.html">Confirmar asistencia</a><a href="../miembro/autoevaluacion-mensual.html">Autoevaluación</a><a href="../miembro/mi-historial.html">Mi historial</a><a href="../miembro/mi-perfil.html">Mi perfil</a></nav><div class="nav-title">ENSAYOS</div><nav class="nav"><a href="../ensayos/historial.html">Ensayos</a><a href="../ensayos/cronograma.html">Cronograma sugerido</a><a href="../ensayos/asistencia.html">Tomar asistencia</a><a href="../ensayos/figuras-ensenadas.html">Figuras enseñadas</a></nav><div class="nav-title">ADMINISTRACIÓN</div><nav class="nav"><a class="active" href="../admin/miembros.html">Miembros</a><a href="../admin/figuras.html">Figuras</a><a href="../admin/responsabilidades.html">Responsabilidades</a><a href="../admin/historico.html">Histórico</a><a href="../admin/roles.html">Roles y permisos</a></nav><div class="grow"></div><div class="flags"><span class="flag pe"></span><span class="flag cu"></span></div><a class="user-card" href="../miembro/mi-perfil.html"><span class="avatar">SV</span><span>Sergio Velarde<small>Admin · Equipo de ensayos</small></span></a></aside>
+<main class="main">
+<form class="content" method="post" action="miembros?action=editar"><section class="hero"><div class="titles"><span class="kicker">Administración › Miembros</span><h1>Editar miembro</h1><p>Alexander Gil · nivel AMARILLO · miembro desde abril 2026</p></div><div class=actions><a class="btn btn-secondary" href="miembros.html">Cancelar</a><button class="btn btn-primary" type="submit">Guardar</button></div><span class="star"></span></section>
+<div class="row top">
+ <div class="stack grow">
+  <div class="card"><h2>Datos personales</h2><p>Los mismos que pedimos en la convocatoria</p>
+   <div class="form-row"><div class="field"><label for="nombre">Nombre en el sistema *</label><input class="input" id="nombre" name="nombre" type="text" value="Alexander Gil" placeholder="Nombre + apellido (único)" required></div><div class="field"><label for="nombreCompleto">Nombre completo *</label><input class="input" id="nombreCompleto" name="nombreCompleto" type="text" value="Miguel Alexander Gil Canchari" placeholder="" required></div></div>
+   <div class="form-row"><div class="field"><label for="codigoPucp">Código PUCP</label><input class="input" id="codigoPucp" name="codigoPucp" type="text" value="2021xxxx" placeholder="8 dígitos"></div><div class="field"><label for="facultad">Facultad</label><select class="input" id="facultad" name="facultad"><option selected>Ciencias e Ingeniería</option><option>Ciencias Sociales</option><option>Derecho</option><option>Gestión y Alta Dirección</option><option>Arte y Diseño</option><option>Arquitectura y Urbanismo</option><option>Letras y Ciencias Humanas</option><option>Educación</option><option>Psicología</option><option>Ciencias y Artes de la Comunicación</option><option>Estudios Generales Ciencias</option><option>Estudios Generales Letras</option><option>Egresado(a)</option></select></div></div>
+   <div class="form-row"><div class="field"><label for="correo">Correo PUCP *</label><input class="input" id="correo" name="correo" type="email" value="a2021xxxx@pucp.edu.pe" placeholder="a2026xxxx@pucp.edu.pe" required></div><div class="field"><label for="celular">Celular</label><input class="input" id="celular" name="celular" type="tel" value="9xx xxx xxx" placeholder="9xx xxx xxx"></div></div></div>
+  <div class="card"><h2>En el grupo</h2><p>Estos datos solo los puede cambiar un admin. El rol de baile se registra una vez.</p>
+   <div class="field"><span class="label">Rol de baile *</span><div class="pills"><label class="pill"><input type="radio" name="rolBaile" value="LEADER" checked required><span>Leader</span></label><label class="pill"><input type="radio" name="rolBaile" value="FOLLOWER" required><span>Follower</span></label></div></div>
+   <div class="form-row"><div class="field"><label for="frecuencia">Frecuencia *</label><select class="input" id="frecuencia" name="frecuencia"><option>Regular</option><option>Ocasional</option><option selected>Eventual</option></select></div><div class="field"><label for="fechaIngreso">Fecha de ingreso</label><input class="input" id="fechaIngreso" name="fechaIngreso" type="date" value="2026-04-11" placeholder=""></div></div></div>
+ </div>
+ <div class="stack w-440">
+  <div class="card"><h2>Roles en el sistema</h2><p>Define qué pantallas puede ver (ver Roles y permisos)</p><label class="check-item"><input type="checkbox" checked disabled> Miembro <span class="muted xs">(todos)</span></label><label class="check-item"><input type="checkbox" name="rolEquipo" value="1"> Equipo de ensayos <span class="muted xs">(no cuenta para el color)</span></label><label class="check-item"><input type="checkbox" name="rolAdmin" value="1"> Admin</label></div>
+  <div class="card"><h2>Acceso al sistema</h2><div class="inline"><span class="tag ok">Cuenta activada</span><span class="muted small">Último ingreso: 24/10/2026 18:40</span></div><div class="inline"><button class="btn btn-secondary" type="button">Restablecer contraseña</button></div></div><div class="card" style="border-color:var(--rojo-soft)"><h2>Dar de baja</h2><p>Si se retira del grupo, se inactiva: deja de contar para el color de las figuras y de aparecer en las listas, pero se conserva su historial. Se puede reactivar.</p><div class="form-row" style="align-items:flex-end"><div class="field"><label for="motivoBaja">Motivo</label><input class="input" id="motivoBaja" name="motivoBaja" type="text" value="" placeholder="Ej: se retiró del grupo"></div><div class="field" style="flex:none"><button class="btn btn-secondary" type="submit">Inactivar miembro</button></div></div><div class="note warn">Eliminar no está disponible: tiene asistencias y autoevaluaciones registradas. Solo se puede eliminar un alta hecha por error (sin ningún dato).</div></div>
+ </div>
+</div>
+<input type="hidden" name="idMiembro" value="7"></form>
+<footer class="team-bar"><strong>TEAM ENSAYOS - SDP</strong><span class="emojis">⚾😑💃🏻🦉🐥🌈🌕🐧👀🍄🍗</span></footer>
+</main>
+</div>
+</body>
+</html>

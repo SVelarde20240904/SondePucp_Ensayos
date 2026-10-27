@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nuevo ensayo · Son de PUCP</title>
+<link rel="stylesheet" href="../css/sdp.css">
+</head>
+<body>
+<div class="app">
+<aside class="sidebar"><div class="brand"><img src="../img/logo-sdp-dorado.png" alt="Son de PUCP"><span>TEAM ENSAYOS</span></div><div class="nav-title">MI ESPACIO</div><nav class="nav"><a href="../miembro/inicio.html">Inicio</a><a href="../miembro/confirmar-asistencia.html">Confirmar asistencia</a><a href="../miembro/autoevaluacion-mensual.html">Autoevaluación</a><a href="../miembro/mi-historial.html">Mi historial</a><a href="../miembro/mi-perfil.html">Mi perfil</a></nav><div class="nav-title">ENSAYOS</div><nav class="nav"><a class="active" href="../ensayos/historial.html">Ensayos</a><a href="../ensayos/cronograma.html">Cronograma sugerido</a><a href="../ensayos/asistencia.html">Tomar asistencia</a><a href="../ensayos/figuras-ensenadas.html">Figuras enseñadas</a></nav><div class="nav-title">ADMINISTRACIÓN</div><nav class="nav"><a href="../admin/miembros.html">Miembros</a><a href="../admin/figuras.html">Figuras</a><a href="../admin/responsabilidades.html">Responsabilidades</a><a href="../admin/historico.html">Histórico</a><a href="../admin/roles.html">Roles y permisos</a></nav><div class="grow"></div><div class="flags"><span class="flag pe"></span><span class="flag cu"></span></div><a class="user-card" href="../miembro/mi-perfil.html"><span class="avatar">SV</span><span>Sergio Velarde<small>Admin · Equipo de ensayos</small></span></a></aside>
+<main class="main">
+<form class="content" method="post" action="ensayos?action=crear"><section class="hero"><div class="titles"><span class="kicker">Ensayos</span><h1>Nuevo ensayo</h1><p>Al publicarlo, todos los miembros pueden confirmar asistencia</p></div><div class=actions><button class="btn btn-secondary" type="submit">Guardar borrador</button><button class="btn btn-primary" type="submit">Publicar ensayo</button></div><span class="star"></span></section>
+<div class="row top">
+ <div class="stack grow">
+  <div class="card"><h2>Datos del ensayo</h2>
+   <div class="field"><span class="label">Tipo</span><div class="pills"><label class="pill"><input type="radio" name="tipo" value="ensayo-general" checked><span>Ensayo general</span></label><label class="pill"><input type="radio" name="tipo" value="ensayo-de-competencia"><span>Ensayo de competencia</span></label><label class="pill"><input type="radio" name="tipo" value="ensayo-de-nivelacion"><span>Ensayo de nivelación</span></label><label class="pill"><input type="radio" name="tipo" value="ensayo-de-exhibicion"><span>Ensayo de exhibición</span></label></div></div>
+   <div class="form-row"><div class="field"><label>Fecha</label><input class="input" type="date" name="fecha" value="2026-10-31"></div>
+     <div class="field"><label>Hora inicio</label><input class="input" type="time" name="horaInicio" value="14:00"></div>
+     <div class="field"><label>Hora fin</label><input class="input" type="time" name="horaFin" value="16:00"></div></div>
+   <div class="form-row"><div class="field"><label>Lugar</label><input class="input" name="lugar" value="Explanada del polideportivo"></div>
+     <div class="field"><label>Cierre de confirmación</label><input class="input" type="datetime-local" name="cierreConfirmacion" value="2026-10-30T23:59"></div></div>
+  </div>
+  <div class="card"><h2>¿Quiénes del equipo de ensayos dictan?</h2><p>Sirve para emparejar niveles que solo tienen un rol</p>
+   <div class="pills"><label class="pill"><input type="checkbox" name="dictan" value="sergio-v-leader" checked><span>Sergio V. · Leader</span></label><label class="pill"><input type="checkbox" name="dictan" value="antony-p-leader" checked><span>Antony P. · Leader</span></label><label class="pill"><input type="checkbox" name="dictan" value="pierina-p-follower"><span>Pierina P. · Follower</span></label><label class="pill"><input type="checkbox" name="dictan" value="claudia-a-follower"><span>Claudia A. · Follower</span></label><label class="pill"><input type="checkbox" name="dictan" value="maricielo-m-leader"><span>Maricielo M. · Leader</span></label><label class="pill"><input type="checkbox" name="dictan" value="gabriela-a-follower"><span>Gabriela A. · Follower</span></label></div></div>
+  <div class="card"><h2>Indicaciones</h2><p>Aparecen en el flyer y en la pantalla del miembro</p>
+   <div class="form-row"><input class="input" name="indicacion" value="No olvidar llegar temprano"></div>
+   <div class="form-row"><input class="input" name="indicacion" value="No olvidar traer su agüita"></div>
+   <a class="link" href="#">+ Agregar indicación</a></div>
+  <div class="card"><h2>Avisos</h2>
+   <label class="setting"><span>Notificar al grupo al publicar</span><span class="switch"><input type="checkbox" name="notificar" checked><span></span></span></label><label class="setting"><span>Recordatorio a quienes no respondan (24 h antes)</span><span class="switch"><input type="checkbox" name="recordatorio" checked><span></span></span></label><label class="setting"><span>Repetir cada sábado hasta fin de ciclo</span><span class="switch"><input type="checkbox" name="repetir"><span></span></span></label></div>
+ </div>
+ <div class="stack w-440" style="gap:12px">
+  <span class="label">VISTA PREVIA DEL FLYER</span>
+  <div class="flyer-preview"><h3>ENSAYOS<br>GENERALES</h3><p>Casinerossss, ya están de vuelta los ensayos generales, prepárense para ruedear con todo!</p>
+   <span class="big-date">31/10</span>
+   <ul class="icon-list"><li><svg viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>Explanada del polideportivo</li><li><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>2:00 – 4:00 PM</li><li><svg viewBox="0 0 24 24"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/></svg>No olvidar llegar temprano</li><li><svg viewBox="0 0 24 24"><path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z"/></svg>No olvidar traer su agüita</li></ul>
+   <img class="logo" src="../img/logo-sdp-dorado.png" alt="Son de PUCP">
+   <div class="fbar">TEAM ENSAYOS - SDP<span>⚾😑💃🏻🦉🐥🌈🌕🐧👀🍄🍗</span></div></div>
+  <p class="muted xs">El título cambia según el tipo: ENSAYOS GENERALES / DE COMPETENCIA / DE NIVELACIÓN / DE EXHIBICIÓN</p>
+  <div class="inline"><button class="btn btn-secondary" type="button">Descargar flyer</button><button class="btn btn-ghost" type="button">Copiar para WhatsApp</button></div>
+ </div>
+</div></form>
+<footer class="team-bar"><strong>TEAM ENSAYOS - SDP</strong><span class="emojis">⚾😑💃🏻🦉🐥🌈🌕🐧👀🍄🍗</span></footer>
+</main>
+</div>
+</body>
+</html>
