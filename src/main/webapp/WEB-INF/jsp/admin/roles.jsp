@@ -38,7 +38,7 @@
     <div class="card"><h2>Buenas prácticas</h2>
       <p class="muted small">• Mínimo 2 admins para no quedarse sin acceso (la BD no deja quitar al último).</p>
       <p class="muted small">• Al quitar un rol, la persona sigue siendo Miembro.</p>
-      <p class="muted small">• Los cambios de permisos y roles le llegan a cada persona en máximo 2 minutos.</p></div>
+      <p class="muted small">• Los cambios de permisos y roles le llegan a cada persona al toque, en su siguiente clic (sin volver a iniciar sesión).</p></div>
   </div>
 </div>
 <%@ include file="/WEB-INF/jsp/includes/bottom.jspf" %>

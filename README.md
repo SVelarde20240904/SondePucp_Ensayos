@@ -93,7 +93,7 @@ src/main/webapp/
 | `/admin/historico` | admin | Búsqueda con filtros y paginación + correcciones |
 | `/admin/roles` | admin | Tabla de permisos y personas con rol |
 
-**Permisos:** cada servlet revisa el permiso con `Sesion.requiere(req, resp, "CODIGO")`, y el menú lateral solo muestra lo permitido. Los permisos salen de la tabla `rol_permiso`, así que cambiarlos en la pantalla *Roles y permisos* tiene efecto real: a cada persona le llegan en máximo 2 minutos, sin cerrar sesión.
+**Permisos:** cada servlet revisa el permiso con `Sesion.requiere(req, resp, "CODIGO")`, y el menú lateral solo muestra lo permitido. Los permisos salen de la tabla `rol_permiso`, así que cambiarlos en la pantalla *Roles y permisos* tiene efecto real: a cada persona le llegan en su siguiente clic, sin cerrar sesión.
 
 ## Seguridad incluida
 - Contraseñas con **BCrypt**: nunca se guardan en texto plano. Mínimo 8 caracteres, y la temporal se cambia sí o sí al primer ingreso.
@@ -103,7 +103,7 @@ src/main/webapp/
 - **Cookie de sesión** `HttpOnly`, solo por cookie (nunca `;jsessionid` en la URL), y `Secure` cuando hay HTTPS. El id de sesión **cambia al iniciar sesión** (contra *session fixation*).
 - **Freno contra adivinar contraseñas:** 5 intentos fallidos con un mismo correo (o 20 desde una misma IP) bloquean el login 15 minutos.
 - **HTTPS obligatorio en producción** (http → https y cabecera HSTS), más las cabeceras `X-Frame-Options`, `X-Content-Type-Options` y `Referrer-Policy`.
-- **Sesión obligatoria** con el filtro `AuthFilter` y permisos por acción. Cada 2 minutos se revisa en la BD que la cuenta siga activa: si el admin inactiva a alguien, su sesión se cierra sola.
+- **Sesión obligatoria** con el filtro `AuthFilter` y permisos por acción. Se revisa en la BD que la cuenta siga activa y con qué permisos: cada 2 minutos, y al instante cuando un admin cambia roles, permisos o estados (si inactiva a alguien, su sesión se cierra en su siguiente clic).
 - **Pool de conexiones** (`tomcat-jdbc`) en vez de abrir una conexión por consulta.
 - Los errores técnicos no se muestran al usuario: solo van al log. Las reglas de la BD (triggers) sí se muestran, porque están escritas para personas.
 - Reglas críticas protegidas en la BD con triggers: no quedarse sin admin, no quitar el rol Miembro, no borrar figuras ni miembros con historial.

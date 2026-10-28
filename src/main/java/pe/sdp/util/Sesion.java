@@ -49,6 +49,14 @@ public final class Sesion {
         return false;
     }
 
+    // ---------- Cambios de roles/permisos ----------
+    private static volatile long ultimoCambio = 0;
+
+    /** Avisar que cambiaron roles, permisos o el estado de alguien: todas las sesiones se revisan en su siguiente clic. */
+    public static void permisosCambiaron() { ultimoCambio = System.currentTimeMillis(); }
+
+    public static long ultimoCambio() { return ultimoCambio; }
+
     // ---------- CSRF ----------
     /** Nombre del campo oculto que llevan todos los formularios POST y de la variable de sesión. */
     public static final String CSRF = "csrf";

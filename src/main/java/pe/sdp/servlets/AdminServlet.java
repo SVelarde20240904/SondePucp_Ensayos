@@ -178,17 +178,17 @@ public class AdminServlet extends BaseServlet {
                     switch (accion(req, "permisos")) {
                         case "asignar" -> {
                             Integer m = entero(req, "idMiembro"), rol = entero(req, "idRol");
-                            if (m != null && rol != null && (rol == RolDao.EQUIPO || rol == RolDao.ADMIN)) { roles.asignar(m, rol, yo); Sesion.ok(req, "Rol asignado."); }
+                            if (m != null && rol != null && (rol == RolDao.EQUIPO || rol == RolDao.ADMIN)) { roles.asignar(m, rol, yo); Sesion.permisosCambiaron(); Sesion.ok(req, "Rol asignado."); }
                         }
                         case "quitar" -> {
-                            try { roles.quitar(entero(req, "idMiembro"), entero(req, "idRol")); Sesion.ok(req, "Rol quitado. La persona sigue siendo Miembro."); }
+                            try { roles.quitar(entero(req, "idMiembro"), entero(req, "idRol")); Sesion.permisosCambiaron(); Sesion.ok(req, "Rol quitado. La persona sigue siendo Miembro."); }
                             catch (SQLException ex) { log("No se pudo quitar", ex); Sesion.error(req, "No se pudo quitar: " + mensajeBd(ex)); }
                         }
                         default -> {
                             Set<String> marcados = new HashSet<>();
                             for (String p : Collections.list(req.getParameterNames())) if (p.startsWith("perm_")) marcados.add(p.substring(5));
-                            roles.guardarMatriz(marcados);
-                            Sesion.ok(req, "Permisos guardados. A cada persona le llegan en máximo 2 minutos (sin cerrar sesión).");
+                            roles.guardarMatriz(marcados); Sesion.permisosCambiaron();
+                            Sesion.ok(req, "Permisos guardados. A cada persona le llegan en su siguiente clic (sin cerrar sesión).");
                         }
                     }
                     ir(req, resp, "/admin/roles");
@@ -206,12 +206,12 @@ public class AdminServlet extends BaseServlet {
         switch (accion) {
             case "inactivar" -> {
                 if (id == yo) { Sesion.error(req, "No puedes inactivarte a ti mismo."); ir(req, resp, volver); return; }
-                miembros.inactivar(id, texto(req, "motivoBaja"), yo);
+                miembros.inactivar(id, texto(req, "motivoBaja"), yo); Sesion.permisosCambiaron();
                 Sesion.ok(req, "Miembro inactivado. Su historial se conserva.");
                 ir(req, resp, "/admin/miembros");
                 return;
             }
-            case "reactivar" -> { miembros.reactivar(id); Sesion.ok(req, "Miembro reactivado."); ir(req, resp, volver); return; }
+            case "reactivar" -> { miembros.reactivar(id); Sesion.permisosCambiaron(); Sesion.ok(req, "Miembro reactivado."); ir(req, resp, volver); return; }
             case "eliminar" -> {
                 if (miembros.eliminar(id)) { Sesion.ok(req, "Miembro eliminado."); ir(req, resp, "/admin/miembros"); }
                 else { Sesion.error(req, "No se puede eliminar: tiene historial. Inactívalo."); ir(req, resp, volver); }
@@ -250,7 +250,7 @@ public class AdminServlet extends BaseServlet {
                 Sesion.ok(req, m.getNombre() + " ya es parte del sistema. Contraseña temporal: " + temp);
                 ir(req, resp, "/admin/miembros/editar?id=" + nuevo);
             } else {
-                miembros.actualizar(m, equipo, admin, yo);
+                miembros.actualizar(m, equipo, admin, yo); Sesion.permisosCambiaron();
                 if ("restablecer".equals(accion)) {
                     // "Generar contraseña temporal" guarda TODO el formulario y recién genera la clave
                     String temp = Formato.passwordTemporal();

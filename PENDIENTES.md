@@ -11,11 +11,12 @@ Lista viva de mejoras. Lo que se termina pasa a **Hecho** con su commit.
 
 ## Ideas
 - [ ] **Activar cuentas en lote:** una tabla con los que no tienen cuenta, escribes los correos y se generan todas las claves temporales de una, con un mensaje de WhatsApp por persona.
-- [ ] **Link fijo** para el túnel de Cloudflare (requiere cuenta de Cloudflare y un dominio), o pasar a Railway.
+- [ ] **Link fijo** para el túnel de Cloudflare (requiere cuenta de Cloudflare y un dominio), o pasar a Railway. **Además Chrome marca los links `trycloudflare.com` como "sitio peligroso"** (dominio usado para phishing): con dominio propio desaparece el aviso.
 - [ ] Pantallas de **celular en Figma** (los mockups están solo en versión laptop).
 - [ ] Subir los logos reales a Figma.
 
 ## Hecho
+- [x] Los cambios de rol/permisos/estado llegan al instante (siguiente clic), sin volver a iniciar sesión. `PENDIENTE_COMMIT`
 - [x] **Bug:** las conexiones del pool podían quedar con una transacción abierta después de guardar una autoevaluación, y lo siguiente no se confirmaba en la BD (se perdía al reiniciar). Ahora cada conexión sale del pool en autocommit. `82cda2c`
 - [x] Corregir en el histórico con el mismo color que ya tiene avisa que no hay nada que corregir. `82cda2c`
 - [x] Guardar y generar contraseña temporal: guarda todo el formulario; si hay un error, el formulario vuelve con lo escrito. `a38eabd`

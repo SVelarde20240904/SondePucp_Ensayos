@@ -19,7 +19,7 @@ import java.sql.SQLException;
  *  2. /salud responde "ok" (para el chequeo del hosting)
  *  3. CSRF: todo POST debe traer el token de la sesión (campo oculto _csrf)
  *  4. sin sesión → /login · con contraseña temporal → /cambiar-password
- *  5. cada 2 minutos revisa en la BD que la cuenta siga activa y recarga sus permisos
+ *  5. revisa en la BD que la cuenta siga activa y recarga sus permisos: cada 2 minutos, o al instante si un admin cambió roles/permisos
  * Los permisos de cada sección los revisa cada servlet con Sesion.requiere(...)
  */
 @WebFilter("/*")
@@ -102,7 +102,8 @@ public class AuthFilter implements Filter {
         HttpSession s = req.getSession();
         Long ultima = (Long) s.getAttribute(ULTIMA_REVISION);
         long ahora = System.currentTimeMillis();
-        if (ultima != null && ahora - ultima < REVISAR_CADA_MS) return true;
+        // se vuelve a leer de la BD cada 2 minutos, o al toque si un admin cambió roles/permisos/estados
+        if (ultima != null && ahora - ultima < REVISAR_CADA_MS && ultima > Sesion.ultimoCambio()) return true;
         try {
             Miembro bd = dao.obtener(Sesion.idUsuario(req));
             if (bd == null || !bd.isActivo() || bd.getPasswordHash() == null) return false;
