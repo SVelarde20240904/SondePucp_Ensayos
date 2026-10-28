@@ -1,0 +1,50 @@
+# =====================================================================
+#  PROBAR EN TU LAPTOP la versión final (la misma imagen que iría al hosting), gratis.
+#
+#    docker compose -f docker-compose.local.yml up -d --build
+#
+#  - La app queda en http://localhost:8080 (y en http://IP-DE-TU-LAPTOP:8080 desde tu celular en la misma Wi-Fi)
+#  - La primera vez crea la BD vacía con db/schema.sql. Los datos reales se cargan aparte (ver README → "Probar antes de comprar hosting")
+#  - Para apagar: docker compose -f docker-compose.local.yml down   (los datos se quedan guardados)
+#  - Para borrar TODO y empezar de cero: ... down -v
+# =====================================================================
+services:
+  db:
+    image: mysql:8.4
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root-local}
+      MYSQL_DATABASE: sdp_ensayos
+      MYSQL_USER: sdp
+      MYSQL_PASSWORD: ${DB_PASSWORD:-sdp-local}
+      TZ: America/Lima
+    command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci"]
+    volumes:
+      - mysql-local:/var/lib/mysql
+      - ./db/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro   # solo corre la primera vez
+    ports:
+      - "127.0.0.1:3307:3306"     # por si quieres entrar con MySQL Workbench (puerto 3307, solo desde tu laptop)
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p${MYSQL_ROOT_PASSWORD:-root-local}"]
+      interval: 5s
+      retries: 20
+
+  app:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      DB_URL: jdbc:mysql://db:3306/sdp_ensayos?serverTimezone=America/Lima&useUnicode=true&characterEncoding=UTF-8
+      DB_USER: sdp
+      DB_PASSWORD: ${DB_PASSWORD:-sdp-local}
+      # desarrollo = deja entrar a las cuentas de prueba @sdp.test · produccion = como en el hosting
+      SDP_ENTORNO: ${SDP_ENTORNO:-desarrollo}
+      # sin HTTPS en tu laptop; con un túnel (cloudflared) el HTTPS lo pone el túnel
+      SDP_FORZAR_HTTPS: ${SDP_FORZAR_HTTPS:-false}
+      SDP_ADMIN_CORREO: ${SDP_ADMIN_CORREO:-}
+      SDP_ADMIN_CLAVE: ${SDP_ADMIN_CLAVE:-}
+
+volumes:
+  mysql-local:

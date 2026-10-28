@@ -111,6 +111,31 @@ src/main/webapp/
 
 ---
 
+## Probar antes de comprar hosting (gratis)
+
+**1. En tu laptop, igual que en producción** (necesitas [Docker Desktop](https://www.docker.com/products/docker-desktop/)):
+```bash
+docker compose -f docker-compose.local.yml up -d --build      # la primera vez tarda unos minutos (baja Maven, Tomcat y MySQL)
+docker compose -f docker-compose.local.yml exec -T db mysql -uroot -proot-local --default-character-set=utf8mb4 < db/seed.sql
+docker compose -f docker-compose.local.yml exec -T db mysql -uroot -proot-local --default-character-set=utf8mb4 < db/dev/usuarios_prueba.sql   # cuentas @sdp.test
+```
+Entras a **http://localhost:8080** con `sergio.velarde@sdp.test` / `sdp12345`. Es la misma imagen que correría en el hosting.
+En PowerShell de Windows, `<` no funciona: usa `Get-Content db/seed.sql -Encoding UTF8 | docker compose -f docker-compose.local.yml exec -T db mysql -uroot -proot-local --default-character-set=utf8mb4`.
+
+**2. Desde tu celular:** conéctalo a la misma Wi-Fi que la laptop y entra a `http://IP-DE-TU-LAPTOP:8080`. La IP la ves con `ipconfig` (Windows) o `ifconfig` (Mac). Si no carga, dale permiso a Docker en el firewall.
+
+**3. Un mini piloto con gente de fuera, con HTTPS:** usa un túnel gratis de Cloudflare (no pide cuenta):
+```bash
+cloudflared tunnel --url http://localhost:8080
+```
+Te da un link `https://algo-random.trycloudflare.com` que cualquiera puede abrir desde su celular **mientras tu laptop esté prendida** (el link cambia cada vez). Para eso usa el modo producción:
+```bash
+SDP_ENTORNO=produccion SDP_ADMIN_CORREO=tu@pucp.edu.pe SDP_ADMIN_CLAVE=una-clave-larga docker compose -f docker-compose.local.yml up -d
+```
+En producción las cuentas `@sdp.test` quedan bloqueadas. El link es público, así que usa una clave fuerte.
+
+**4. Cuando ya te convenza:** pasa a Railway (ver *Publicar*). Te dan crédito de prueba al inicio.
+
 ## Publicar (para el piloto)
 
 El proyecto trae un **`Dockerfile`**: compila con Maven, corre en Tomcat 10.1 sin las apps de ejemplo, con un usuario sin privilegios y ya preparado para estar detrás del HTTPS del hosting. Sirve igual para Railway, Render o un VPS. La app queda en la raíz del dominio (`https://tu-dominio/login`).
