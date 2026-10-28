@@ -3,6 +3,7 @@
 Lista viva de mejoras. Lo que se termina pasa a **Hecho** con su commit.
 
 ## Feedback del piloto
+- [ ] **Editar figuras desde la ficha de miembro (equipo de ensayos):** en *Fichas de miembros*, poder cambiar el color de cada figura de la persona ahí mismo (por ejemplo, después de verla en el ensayo), con el cambio registrado en el histórico (quién lo hizo y por qué).
 - [ ] **El túnel se cae al cambiar de red o suspender la laptop** y el link cambia. Para el piloto: dejar la laptop fija con internet estable, usar `--protocol http2`, o pasar a link fijo (Cloudflare con dominio, o Railway).
 
 ## Ideas
