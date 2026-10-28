@@ -65,7 +65,7 @@
   <c:choose>
     <c:when test="${empty faltan}"><p class="empty">${empty yo.nivel ? 'Aún no te has autoevaluado.' : '¡No te falta ninguna figura con color! 🎉'}</p></c:when>
     <c:otherwise>
-      <table class="table"><thead><tr><th>Figura</th><th>Nivel de la figura</th><th>Mi color</th><th>Última actualización</th></tr></thead><tbody>
+      <table class="table cards-compact"><thead><tr><th>Figura</th><th>Nivel de la figura</th><th>Mi color</th><th>Última actualización</th></tr></thead><tbody>
       <c:forEach var="e" items="${faltan}"><tr><td><c:out value="${e.figura}"/></td><td><sdp:chip color="${e.colorFigura}"/></td><td><sdp:chip color="${e.color}"/></td><td>${e.actualizacionTexto}</td></tr></c:forEach>
       </tbody></table>
     </c:otherwise>

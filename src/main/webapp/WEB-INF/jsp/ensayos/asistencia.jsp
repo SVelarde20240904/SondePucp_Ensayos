@@ -11,16 +11,16 @@
   <span class="c-amarillo bold">“Sin respuesta” = no marcó la encuesta</span></div>
 
 <div class="card"><h2>Miembros</h2><p>Primero los que confirmaron · ${ensayo.confirmados} confirmados, ${ensayo.sinRespuesta} sin respuesta</p>
-  <table class="table"><thead><tr><th>Miembro</th><th>Rol</th><th>Nivel</th><th>Confirmó</th><th>Asistencia real</th></tr></thead><tbody>
+  <table class="table cards-compact"><thead><tr><th>Miembro</th><th>Rol</th><th>Nivel</th><th>Confirmó</th><th>Asistencia real</th></tr></thead><tbody>
   <c:forEach var="a" items="${filas}">
     <tr><td><c:out value="${a.miembro}"/><c:if test="${a.equipoEnsayos}"> <span class="tag info">ENS</span></c:if><c:if test="${not empty a.motivo}"><small>Motivo: <c:out value="${a.motivo}"/></small></c:if></td>
-      <td><span class="tag info role">${a.rolTexto}</span></td><td><sdp:chip color="${a.nivel}"/></td>
+      <td class="no-label"><span class="tag info role">${a.rolTexto}</span></td><td class="no-label"><sdp:chip color="${a.nivel}"/></td>
       <td><sdp:tag texto="${a.confirmacion == 'SI' ? 'Sí' : (a.confirmacion == 'NO' ? 'No' : 'Sin respuesta')}" tono="${a.confirmacion == 'SI' ? 'ok' : (a.confirmacion == 'NO' ? 'neutral' : 'warn')}"/></td>
-      <td><div class="seg">
+      <td class="no-label"><div class="seg">
         <c:forEach var="c" items="${['AP','AN','TJ','TI','FJ','FI']}">
           <label class="${c == 'AN' ? 'AP' : c}"><input type="radio" name="asis_${a.idMiembro}" value="${c}" ${a.estadoReal == c ? 'checked' : ''}><span>${c}</span></label>
         </c:forEach>
-        <label><input type="radio" name="asis_${a.idMiembro}" value="" ${empty a.estadoReal ? 'checked' : ''}><span title="Sin marcar">·</span></label>
+        <label class="none"><input type="radio" name="asis_${a.idMiembro}" value="" ${empty a.estadoReal ? 'checked' : ''}><span title="Sin marcar">·</span></label>
       </div></td></tr>
   </c:forEach>
   </tbody></table>

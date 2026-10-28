@@ -40,6 +40,23 @@ Aplicación web Java (Servlets + JSP + JDBC + MySQL) que reemplaza al Excel **Ma
 
 ---
 
+## Diseño mobile first
+
+Lo van a usar sobre todo desde el celular, así que `css/sdp.css` está escrito **mobile first**: las reglas base son para celular y se va agrandando con `min-width`.
+
+| Ancho | Cómo se ve |
+|---|---|
+| **< 600 px** (celular) | Barra superior con ☰ que abre el menú como cajón. **Barra de pestañas abajo** (Inicio · Asistencia · Autoevaluar · Historial · Perfil). Todo en una columna, y las tablas se vuelven tarjetas |
+| **600–899 px** (tablet) | Grillas de 2 columnas y formularios en fila. Sigue con la barra superior y las pestañas |
+| **900 px+** (laptop) | Menú lateral fijo, como en los mockups de Figma |
+| **1100 px+** | Paneles lado a lado (columna principal más una columna lateral) |
+
+- **Tablas → tarjetas:** `js/sdp.js` copia el título de cada columna a sus celdas (`data-label`) y el CSS las muestra como tarjetas. Con `class="cards-compact"` los tags y chips van en una sola línea (*Tomar asistencia*, *Inicio*), y con `class="no-cards"` una tabla se queda como tabla. Sin JavaScript, la tabla se desliza de costado.
+- **Hecho para el dedo:** botones de 44 px mínimo y campos de 16 px de letra (así iPhone no hace zoom al escribir). En la autoevaluación los 4 colores ocupan todo el ancho, y en la asistencia los 7 códigos entran en una fila.
+- La fila de la autoevaluación se acomoda según el ancho de **su tarjeta** (*container query*), no de la pantalla.
+- El reporte A4 se achica para entrar en el celular y se imprime en tamaño real.
+- Se probó sin desbordes horizontales a 360 px, 768 px y 1366 px, en las 23 pantallas de la maqueta y las 17 rutas de la app.
+
 ## Estructura
 
 ```
@@ -54,7 +71,7 @@ src/main/webapp/
 ├── WEB-INF/jsp/{miembro,ensayos,admin}/*.jsp   vistas
 ├── WEB-INF/jsp/includes/                       top.jspf (menú según permisos) · bottom.jspf · taglibs.jspf
 ├── WEB-INF/tags/                               <sdp:chip> <sdp:tag> <sdp:code> <sdp:cambio> <sdp:icono>
-├── css/sdp.css · img/                          estilos y logos
+├── css/sdp.css · js/sdp.js · img/              estilos (mobile first), tablas→tarjetas, logos
 ```
 
 ## Rutas

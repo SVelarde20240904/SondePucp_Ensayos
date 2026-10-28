@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Reporte de ensayo ${ensayo.fechaCorta} · Son de PUCP</title><link rel="stylesheet" href="${ctx}/css/sdp.css"></head>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="theme-color" content="#1C19A9">
+<title>Reporte de ensayo ${ensayo.fechaCorta} · Son de PUCP</title><link rel="stylesheet" href="${ctx}/css/sdp.css"><script src="${ctx}/js/sdp.js" defer></script></head>
 <body class="report-body">
 <div class="toolbar"><a class="btn btn-secondary" href="${ctx}/ensayos/detalle?id=${ensayo.idEnsayo}">← Volver al ensayo</a><span class="spacer"></span>
   <button class="btn btn-primary" onclick="window.print()">🖨 Imprimir / Guardar PDF</button></div>

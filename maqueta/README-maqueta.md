@@ -78,3 +78,7 @@ Cuando lo pases a JSP, los nombres tipo `color_2-pa-2` se cambian por el id de l
 - Los selectores de color y de asistencia funcionan solo con CSS (radio buttons), sin JavaScript.
 - El reporte usa `@page A4` y `@media print`: “Imprimir / Guardar PDF” lo deja listo en dos hojas.
 - Hay un responsive básico (el menú pasa arriba en pantallas angostas); se puede afinar después.
+
+
+## Celular, tablet y laptop
+El CSS es **mobile first**. Para ver la versión de celular, abre cualquier página y achica la ventana, o usa el modo dispositivo del navegador (F12 → ícono de celular). Debajo de 900 px aparecen la barra superior con ☰ (menú tipo cajón) y la barra de pestañas de abajo, y las tablas se vuelven tarjetas (`js/sdp.js`).

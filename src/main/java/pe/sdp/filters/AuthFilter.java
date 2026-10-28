@@ -57,7 +57,7 @@ public class AuthFilter implements Filter {
         }
         cabeceras(req, resp);
 
-        boolean estatica = ruta.startsWith("/css/") || ruta.startsWith("/img/") || ruta.equals("/favicon.ico");
+        boolean estatica = ruta.startsWith("/css/") || ruta.startsWith("/js/") || ruta.startsWith("/img/") || ruta.equals("/favicon.ico");
         if (estatica) { chain.doFilter(request, response); return; }
 
         // 2. CSRF

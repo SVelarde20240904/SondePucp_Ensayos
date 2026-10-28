@@ -2,9 +2,9 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="theme-color" content="#1C19A9">
 <title>Cambiar contraseña · Son de PUCP</title>
-<link rel="stylesheet" href="${ctx}/css/sdp.css">
+<link rel="stylesheet" href="${ctx}/css/sdp.css"><script src="${ctx}/js/sdp.js" defer></script>
 </head>
 <body class="login">
 <section class="login-brand">
