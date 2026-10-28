@@ -36,6 +36,7 @@
       <c:if test="${perm.contains('VER_CRONOGRAMA')}"><a class="${menu == 'Cronograma sugerido' ? 'active' : ''}" href="${ctx}/ensayos/cronograma">Cronograma sugerido</a></c:if>
       <c:if test="${perm.contains('TOMAR_ASISTENCIA')}"><a class="${menu == 'Tomar asistencia' ? 'active' : ''}" href="${ctx}/ensayos/asistencia">Tomar asistencia</a></c:if>
       <c:if test="${perm.contains('REGISTRAR_FIGURAS_ENSENADAS')}"><a class="${menu == 'Figuras enseñadas' ? 'active' : ''}" href="${ctx}/ensayos/figuras">Figuras enseñadas</a></c:if>
+      <c:if test="${perm.contains('VER_CRONOGRAMA')}"><a class="${menu == 'Fichas de miembros' ? 'active' : ''}" href="${ctx}/ensayos/miembros">Fichas de miembros</a></c:if>
     </nav>
   </c:if>
   <c:if test="${perm.contains('GESTIONAR_MIEMBROS') or perm.contains('GESTIONAR_FIGURAS') or perm.contains('ASIGNAR_RESPONSABILIDADES') or perm.contains('GESTIONAR_HISTORICO') or perm.contains('ASIGNAR_ROLES')}">

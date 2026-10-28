@@ -6,18 +6,39 @@
     <c:if test="${perm.contains('IMPRIMIR_REPORTES')}"><a class="btn btn-primary" href="${ctx}/ensayos/reporte?id=${ensayo.idEnsayo}">🖨 Imprimir reporte</a></c:if></div>
   <span class="star"></span></section>
 
+<c:set var="tab" value="resumen"/><%@ include file="/WEB-INF/jsp/includes/ensayo-tabs.jspf" %>
 <div class="inline">
-  <a class="pill-link on" href="#resumen">Resumen</a>
-  <c:if test="${perm.contains('VER_CRONOGRAMA')}"><a class="pill-link" href="${ctx}/ensayos/cronograma?id=${ensayo.idEnsayo}">Cronograma sugerido</a></c:if>
-  <c:if test="${perm.contains('TOMAR_ASISTENCIA')}"><a class="pill-link" href="${ctx}/ensayos/asistencia?id=${ensayo.idEnsayo}">Tomar asistencia</a></c:if>
-  <c:if test="${perm.contains('REGISTRAR_FIGURAS_ENSENADAS')}"><a class="pill-link" href="${ctx}/ensayos/figuras?id=${ensayo.idEnsayo}">Figuras enseñadas</a></c:if>
   <span class="spacer"></span><sdp:tag texto="${ensayo.estadoTexto}" tono="${ensayo.estadoTono}"/>
   <c:if test="${ensayo.estado == 'PROGRAMADO' or ensayo.estado == 'BORRADOR'}">
     <form method="post" action="${ctx}/ensayos/detalle" class="inline-form"><input type="hidden" name="_csrf" value="${sessionScope.csrf}"><input type="hidden" name="id" value="${ensayo.idEnsayo}">
       <c:if test="${ensayo.pasado or ensayo.estado == 'PROGRAMADO'}"><button class="btn btn-secondary btn-sm" name="action" value="cerrar">Marcar como cerrado</button></c:if>
       <button class="btn btn-danger btn-sm" name="action" value="cancelar" onclick="return confirm('¿Cancelar este ensayo?')">Cancelar ensayo</button></form>
   </c:if>
+  <c:if test="${u.admin}">
+    <form method="post" action="${ctx}/ensayos/detalle" class="inline-form"><input type="hidden" name="_csrf" value="${sessionScope.csrf}"><input type="hidden" name="id" value="${ensayo.idEnsayo}">
+      <button class="btn btn-danger btn-sm" name="action" value="eliminar"
+        onclick="return confirm('¿ELIMINAR este ensayo para siempre?\n\nSe borran su asistencia, confirmaciones, figuras enseñadas y encargos.${ensayo.autoevaluaron > 0 ? '\\n' += ensayo.autoevaluaron += ' persona(s) se autoevaluaron: los colores que subieron se regresan.' : ''}\n\nÚsalo solo para ensayos de prueba o creados por error.')">🗑 Eliminar</button></form>
+  </c:if>
 </div>
+
+<c:if test="${ensayo.estado != 'CANCELADO' and ensayo.estado != 'BORRADOR'}">
+  <c:set var="okAsis" value="${ensayo.asistieron > 0}"/><c:set var="okFig" value="${ensayo.figurasEnsenadas > 0}"/><c:set var="okFecha" value="${ensayo.fechaHabilitaAutoeval}"/>
+  <c:choose>
+    <c:when test="${okAsis and okFig and okFecha and not ensayo.autoevalVencida}">
+      <div class="note ok">✓ Autoevaluación del ensayo habilitada: los ${ensayo.asistieron} asistentes ven el aviso en su Inicio hasta el ${ensayo.autoevalHasta} (${ensayo.autoevaluaron} ya la hicieron).</div>
+    </c:when>
+    <c:when test="${ensayo.autoevalVencida}">
+      <div class="note info">La autoevaluación de este ensayo ya cerró (se podía hasta el ${ensayo.autoevalHasta}). ${ensayo.autoevaluaron} persona(s) la hicieron.</div>
+    </c:when>
+    <c:otherwise>
+      <div class="note warn">Para que los asistentes vean el aviso de autoevaluación falta:
+        <c:if test="${not okAsis}"> · <a href="${ctx}/ensayos/asistencia?id=${ensayo.idEnsayo}">tomar asistencia</a></c:if>
+        <c:if test="${not okFig}"> · <a href="${ctx}/ensayos/figuras?id=${ensayo.idEnsayo}">registrar las figuras enseñadas</a></c:if>
+        <c:if test="${not okFecha}"> · que llegue el día del ensayo o marcarlo como cerrado</c:if>
+      </div>
+    </c:otherwise>
+  </c:choose>
+</c:if>
 
 <div class="grid-6" id="resumen">
   <div class="card stat"><b class="c-primary">${ensayo.asistieron}/${ensayo.esperados}</b><span>asistieron (${ensayo.porcentajeAsistencia}%)</span></div>

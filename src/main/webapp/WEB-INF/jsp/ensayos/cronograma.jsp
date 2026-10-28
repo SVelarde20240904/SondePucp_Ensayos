@@ -5,6 +5,7 @@
   <div class="actions"><a class="btn btn-secondary" href="${ctx}/ensayos/detalle?id=${ensayo.idEnsayo}">Ver ensayo</a>
     <c:if test="${perm.contains('REGISTRAR_FIGURAS_ENSENADAS')}"><a class="btn btn-primary" href="${ctx}/ensayos/figuras?id=${ensayo.idEnsayo}">Registrar figuras enseñadas</a></c:if></div>
   <span class="star"></span></section>
+<c:set var="tab" value="cronograma"/><%@ include file="/WEB-INF/jsp/includes/ensayo-tabs.jspf" %>
 
 <div class="grid-4">
   <div class="card stat"><b>${ensayo.confirmados}</b><span>confirmados (Sí voy)</span></div>

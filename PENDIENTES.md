@@ -3,14 +3,7 @@
 Lista viva de mejoras. Lo que se termina pasa a **Hecho** con su commit.
 
 ## Feedback del piloto
-- [ ] **Generar contraseña temporal sin perder lo escrito:** si llenas los datos de una persona y, sin guardar, le das a *Generar contraseña temporal*, se pierde lo que escribiste (hoy solo se guarda el correo). Debería guardar todo el formulario y recién después generar la clave.
-
-- [ ] **Histórico sin registros redundantes:** al llenar la autoevaluación mensual aparecen cambios "Azul → Azul" (el mismo color). Solo debería registrarse cuando el color cambia, o al menos ocultar esos registros en la pantalla de *Histórico*.
 - [ ] **El túnel se cae al cambiar de red o suspender la laptop** y el link cambia. Para el piloto: dejar la laptop fija con internet estable, usar `--protocol http2`, o pasar a link fijo (Cloudflare con dominio, o Railway).
-- [ ] **Ficha completa de cada miembro para el equipo de ensayos:** entrar al perfil de cualquier persona y ver de un vistazo qué figuras sabe y cuáles no (todas las figuras con su color, por nivel), su nivel, su asistencia y su historial. Hoy eso solo lo ve cada uno en *Mi historial*.
-- [ ] **Eliminar un ensayo de prueba (solo admin) — pedido otra vez en el piloto:** hoy solo se puede *Cancelar*. Agregar *Eliminar* para ensayos creados por error o de prueba, con confirmación y avisando si ya tiene asistencias o autoevaluaciones (que cambiaron colores). Mientras tanto: backup antes de probar y restaurar al terminar (ver README).
-- [ ] **Aviso de autoevaluación del ensayo al cerrarlo:** en la prueba, después de cerrar el ensayo no apareció el aviso. Hoy solo aparece si la *fecha* del ensayo ya pasó (últimos 7 días), la persona tiene asistencia AP/AN/TJ/TI y hay figuras enseñadas registradas; *cerrar* no influye. Debería activarse al cerrar el ensayo (aunque la fecha sea hoy o futura en pruebas), y si falta algo, el equipo debería ver por qué (ej. "registra las figuras enseñadas para habilitar la autoevaluación").
-- [ ] **Barra de pestañas del ensayo en las 4 pantallas:** en el detalle aparece la barra *Resumen · Cronograma sugerido · Tomar asistencia · Figuras enseñadas*, pero al entrar a una de ellas la barra desaparece y no hay cómo volver. Poner la misma barra arriba en las 4 (marcando dónde estás), más un "← Volver al ensayo".
 
 ## Por decidir / confirmar
 - [ ] La **"x"** del Excel: ¿significa *no marcó la encuesta* (así está hoy: SIN_RESPUESTA) o *marcó que no venía*? Si es lo segundo, hay un UPDATE en `db/README.md`.
@@ -23,6 +16,12 @@ Lista viva de mejoras. Lo que se termina pasa a **Hecho** con su commit.
 - [ ] Subir los logos reales a Figma.
 
 ## Hecho
+- [x] Guardar y generar contraseña temporal: guarda todo el formulario; si hay un error, el formulario vuelve con lo escrito. `PENDIENTE_COMMIT`
+- [x] Histórico y *Mi historial* ya no muestran los "Azul → Azul" (se siguen guardando por dentro para saber quién ya se autoevaluó). `PENDIENTE_COMMIT`
+- [x] *Ensayos → Fichas de miembros*: lista con filtros y ficha de cada persona (figuras por nivel con su color, "solo las que le faltan", últimos ensayos y cambios recientes). Desde *Tomar asistencia* el nombre abre su ficha. `PENDIENTE_COMMIT`
+- [x] Eliminar ensayo (solo admin): borra todo lo del ensayo y regresa los colores que subió su autoevaluación. `PENDIENTE_COMMIT`
+- [x] El aviso de autoevaluación se activa al cerrar el ensayo, y el detalle dice qué falta para habilitarlo. `PENDIENTE_COMMIT`
+- [x] Pestañas del ensayo (Resumen · Cronograma · Asistencia · Figuras) en sus 4 pantallas, con "← Volver al ensayo". `PENDIENTE_COMMIT`
 - [x] La clave temporal se muestra en la tarjeta *Acceso al sistema*, con el mensaje para WhatsApp, y no solo en el aviso verde de arriba. `070f4b1`
 - [x] *Generar contraseña temporal* guarda el correo y valida que no esté repetido. `070f4b1`
 - [x] Claves temporales más seguras (`SDP-XXXX-XXXX`). `070f4b1`

@@ -143,6 +143,9 @@ public class EvaluacionDao extends BaseDao {
     }
 
     // ---------------- Historial ----------------
+    // Los registros "mismo color" (ej. Azul → Azul al repetir la autoevaluación) se guardan igual,
+    // porque sirven para saber que la persona YA se autoevaluó, pero no se muestran: no son un cambio.
+    private static final String SIN_REPETIDOS = "AND NOT (h.color_anterior <=> h.color_nuevo) ";
 
     private static final String SELECT_HIST =
         "SELECT h.*, m.nombre AS miembro, f.nombre AS figura, r.nombre AS reg " +
@@ -169,7 +172,7 @@ public class EvaluacionDao extends BaseDao {
     }
 
     public List<HistorialEvaluacion> historialDe(int idMiembro, String fuente) throws SQLException {
-        String sql = SELECT_HIST + "WHERE h.id_miembro=? " + (fuente != null ? "AND h.fuente=? " : "") + "ORDER BY h.fecha DESC, h.id_historial DESC LIMIT 200";
+        String sql = SELECT_HIST + "WHERE h.id_miembro=? " + SIN_REPETIDOS + (fuente != null ? "AND h.fuente=? " : "") + "ORDER BY h.fecha DESC, h.id_historial DESC LIMIT 200";
         try (Connection c = getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setInt(1, idMiembro);
             if (fuente != null) ps.setString(2, fuente);
@@ -206,7 +209,7 @@ public class EvaluacionDao extends BaseDao {
 
     private List<Object> filtros(StringBuilder w, Integer idMiembro, Integer idFigura, String fuente, LocalDate desde, LocalDate hasta) {
         List<Object> p = new ArrayList<>();
-        w.append("WHERE 1=1 ");
+        w.append("WHERE 1=1 ").append(SIN_REPETIDOS);
         if (idMiembro != null) { w.append("AND h.id_miembro=? "); p.add(idMiembro); }
         if (idFigura != null) { w.append("AND h.id_figura=? "); p.add(idFigura); }
         if (fuente != null) { w.append("AND h.fuente=? "); p.add(fuente); }

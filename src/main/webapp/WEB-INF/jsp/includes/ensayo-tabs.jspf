@@ -1,0 +1,9 @@
+<%-- Pestañas de un ensayo: se ven igual en Resumen, Cronograma, Asistencia y Figuras enseñadas.
+     Antes de incluirlo: <c:set var="tab" value="resumen|cronograma|asistencia|figuras"/> --%>
+<nav class="inline ensayo-tabs" aria-label="Secciones del ensayo">
+  <c:if test="${tab != 'resumen'}"><a class="pill-link" href="${ctx}/ensayos/detalle?id=${ensayo.idEnsayo}">← Volver al ensayo</a><span class="tab-sep"></span></c:if>
+  <a class="pill-link${tab == 'resumen' ? ' on' : ''}" href="${ctx}/ensayos/detalle?id=${ensayo.idEnsayo}">Resumen</a>
+  <c:if test="${perm.contains('VER_CRONOGRAMA')}"><a class="pill-link${tab == 'cronograma' ? ' on' : ''}" href="${ctx}/ensayos/cronograma?id=${ensayo.idEnsayo}">Cronograma sugerido</a></c:if>
+  <c:if test="${perm.contains('TOMAR_ASISTENCIA')}"><a class="pill-link${tab == 'asistencia' ? ' on' : ''}" href="${ctx}/ensayos/asistencia?id=${ensayo.idEnsayo}">Tomar asistencia</a></c:if>
+  <c:if test="${perm.contains('REGISTRAR_FIGURAS_ENSENADAS')}"><a class="pill-link${tab == 'figuras' ? ' on' : ''}" href="${ctx}/ensayos/figuras?id=${ensayo.idEnsayo}">Figuras enseñadas</a></c:if>
+</nav>

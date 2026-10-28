@@ -197,7 +197,7 @@ public class AdminServlet extends BaseServlet {
         } catch (SQLException e) { fallo(req, resp, e); }
     }
 
-    private void postMiembro(HttpServletRequest req, HttpServletResponse resp, int yo) throws SQLException, IOException {
+    private void postMiembro(HttpServletRequest req, HttpServletResponse resp, int yo) throws SQLException, IOException, ServletException {
         if (!Sesion.requiere(req, resp, "GESTIONAR_MIEMBROS")) return;
         Integer id = entero(req, "idMiembro");
         String accion = accion(req, "guardar");
@@ -214,34 +214,6 @@ public class AdminServlet extends BaseServlet {
             case "eliminar" -> {
                 if (miembros.eliminar(id)) { Sesion.ok(req, "Miembro eliminado."); ir(req, resp, "/admin/miembros"); }
                 else { Sesion.error(req, "No se puede eliminar: tiene historial. Inactívalo."); ir(req, resp, volver); }
-                return;
-            }
-            case "restablecer" -> {
-                // Si escribieron el correo en el formulario, se guarda primero (sin correo no puede entrar)
-                Miembro actual = miembros.obtener(id);
-                String correo = texto(req, "correo");
-                if (correo != null) correo = correo.trim().toLowerCase();
-                if (correo != null && !correo.equalsIgnoreCase(String.valueOf(actual.getCorreo()))) {
-                    if (!correo.matches("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$")) {
-                        Sesion.error(req, "Ese correo no es válido. Corrígelo antes de generar la contraseña.");
-                        ir(req, resp, volver); return;
-                    }
-                    if (miembros.existeCorreo(correo, id)) {
-                        Sesion.error(req, "Ese correo ya lo usa otro miembro.");
-                        ir(req, resp, volver); return;
-                    }
-                    miembros.actualizarCorreo(id, correo);
-                } else if (actual.getCorreo() == null || actual.getCorreo().isBlank()) {
-                    Sesion.error(req, "Primero escribe su correo PUCP: sin correo no puede iniciar sesión.");
-                    ir(req, resp, volver); return;
-                }
-                String temp = Formato.passwordTemporal();
-                miembros.registrarPassword(id, Password.hash(temp), true);
-                var s = req.getSession();
-                s.setAttribute("claveGenerada", temp);
-                s.setAttribute("claveCorreo", correo != null ? correo : actual.getCorreo());
-                s.setAttribute("claveNombre", actual.getNombre());
-                ir(req, resp, volver + "#acceso");
                 return;
             }
             default -> { }
@@ -268,7 +240,7 @@ public class AdminServlet extends BaseServlet {
         else if (m.getCodigoPucp() != null && !m.getCodigoPucp().matches("\\d{8}")) error = "El código PUCP debe tener 8 dígitos.";
         else if (miembros.existeNombre(m.getNombre(), m.getIdMiembro())) error = "Ya existe un miembro con ese nombre en el sistema.";
         else if (miembros.existeCorreo(m.getCorreo(), m.getIdMiembro())) error = "Ese correo ya lo usa otro miembro.";
-        if (error != null) { Sesion.error(req, error); ir(req, resp, volver); return; }
+        if (error != null) { reabrirFormulario(req, resp, m, equipo, admin, error); return; }
 
         try {
             if (id == null) {
@@ -278,13 +250,47 @@ public class AdminServlet extends BaseServlet {
                 ir(req, resp, "/admin/miembros/editar?id=" + nuevo);
             } else {
                 miembros.actualizar(m, equipo, admin, yo);
-                Sesion.ok(req, "Cambios guardados.");
-                ir(req, resp, volver);
+                if ("restablecer".equals(accion)) {
+                    // "Generar contraseña temporal" guarda TODO el formulario y recién genera la clave
+                    String temp = Formato.passwordTemporal();
+                    miembros.registrarPassword(id, Password.hash(temp), true);
+                    var s = req.getSession();
+                    s.setAttribute("claveGenerada", temp);
+                    s.setAttribute("claveCorreo", m.getCorreo().toLowerCase());
+                    s.setAttribute("claveNombre", m.getNombre());
+                    Sesion.ok(req, "Cambios guardados y contraseña temporal generada (mírala en “Acceso al sistema”).");
+                    ir(req, resp, volver + "#acceso");
+                } else {
+                    Sesion.ok(req, "Cambios guardados.");
+                    ir(req, resp, volver);
+                }
             }
         } catch (SQLException ex) {
             log("No se pudo guardar", ex); Sesion.error(req, String.valueOf(ex.getMessage()).contains("admin") ? "Debe quedar al menos un admin." : "No se pudo guardar: " + mensajeBd(ex));
             ir(req, resp, volver);
         }
+    }
+
+    /** Si hay un error, vuelve a mostrar el formulario CON lo que se escribió (no se pierde nada). */
+    private void reabrirFormulario(HttpServletRequest req, HttpServletResponse resp, Miembro escrito, boolean equipo, boolean admin, String error)
+            throws SQLException, ServletException, IOException {
+        Miembro m = escrito;
+        if (escrito.getIdMiembro() != 0) {          // edición: se parte de la BD (estado, cuenta, nivel) y se pisa con lo escrito
+            m = miembros.obtener(escrito.getIdMiembro());
+            m.setNombre(escrito.getNombre()); m.setNombreCompleto(escrito.getNombreCompleto());
+            m.setCodigoPucp(escrito.getCodigoPucp()); m.setFacultad(escrito.getFacultad());
+            m.setCorreo(escrito.getCorreo()); m.setCelular(escrito.getCelular());
+            m.setRolBaile(escrito.getRolBaile()); m.setFrecuencia(escrito.getFrecuencia()); m.setFechaIngreso(escrito.getFechaIngreso());
+        } else {
+            m.setEstado("ACTIVO");
+        }
+        m.setEquipoEnsayos(equipo); m.setAdmin(admin);
+        Sesion.error(req, error);
+        req.setAttribute("m", m);
+        req.setAttribute("facultades", FACULTADES);
+        String temp = texto(req, "passwordTemporal");
+        req.setAttribute("passwordTemporal", temp != null ? temp : Formato.passwordTemporal());
+        vista(req, resp, "admin/miembro-form");
     }
 
     private void postFigura(HttpServletRequest req, HttpServletResponse resp, int yo) throws SQLException, IOException {

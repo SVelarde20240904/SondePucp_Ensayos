@@ -117,6 +117,11 @@ public class Ensayo {
     public String getHoraFinIso() { return horaFin == null ? "" : horaFin.toString(); }
     public String getCierreIso() { return cierreConfirmacion == null ? "" : cierreConfirmacion.toString().substring(0, 16); }
     /** Ya pasó la fecha (o se marcó como cerrado). */
+    /** La autoevaluación del ensayo se habilita si el ensayo ya fue (o es hoy) o si el equipo lo marcó como cerrado. */
+    public boolean isFechaHabilitaAutoeval() { return "CERRADO".equals(estado) || (fecha != null && !fecha.isAfter(java.time.LocalDate.now())); }
+    /** Hasta cuándo aparece el aviso (7 días después del ensayo). */
+    public String getAutoevalHasta() { return fecha == null ? "" : String.format("%02d/%02d", fecha.plusDays(7).getDayOfMonth(), fecha.plusDays(7).getMonthValue()); }
+    public boolean isAutoevalVencida() { return fecha != null && fecha.plusDays(7).isBefore(java.time.LocalDate.now()); }
     public boolean isPasado() { return "CERRADO".equals(estado) || (fecha != null && fecha.isBefore(java.time.LocalDate.now())); }
     public String getEstadoTexto() {
         if ("CANCELADO".equals(estado)) return "Cancelado";

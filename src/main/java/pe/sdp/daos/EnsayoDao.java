@@ -175,6 +175,41 @@ public class EnsayoDao extends BaseDao {
         }
     }
 
+    /**
+     * Elimina un ensayo (solo admin, para pruebas o errores) con todo lo suyo: asistencia, confirmaciones,
+     * figuras enseñadas, encargos y autoevaluaciones. Los colores que subieron por la autoevaluación de ESTE
+     * ensayo se regresan a como estaban (si nadie los cambió después).
+     * @return cuántos colores se regresaron
+     */
+    public int eliminar(int id) throws SQLException {
+        try (Connection c = getConnection()) {
+            c.setAutoCommit(false);
+            try {
+                int regresados = 0;
+                String hist = "SELECT h.id_miembro, h.id_figura, h.color_anterior, h.color_nuevo FROM historial_evaluacion h " +
+                              "WHERE h.id_ensayo=? AND h.aplicado=1 AND NOT (h.color_anterior <=> h.color_nuevo) ORDER BY h.id_historial DESC";
+                try (PreparedStatement ps = c.prepareStatement(hist)) {
+                    ps.setInt(1, id);
+                    try (ResultSet rs = ps.executeQuery();
+                         PreparedStatement up = c.prepareStatement("UPDATE evaluacion SET color=? WHERE id_miembro=? AND id_figura=? AND color=?");
+                         PreparedStatement del = c.prepareStatement("DELETE FROM evaluacion WHERE id_miembro=? AND id_figura=? AND color=?")) {
+                        while (rs.next()) {
+                            String antes = rs.getString("color_anterior"), despues = rs.getString("color_nuevo");
+                            int m = rs.getInt("id_miembro"), f = rs.getInt("id_figura");
+                            if (antes == null) { del.setInt(1, m); del.setInt(2, f); del.setString(3, despues); regresados += del.executeUpdate(); }
+                            else { up.setString(1, antes); up.setInt(2, m); up.setInt(3, f); up.setString(4, despues); regresados += up.executeUpdate(); }
+                        }
+                    }
+                }
+                for (String sql : new String[]{"DELETE FROM historial_evaluacion WHERE id_ensayo=?", "DELETE FROM encargo WHERE id_ensayo=?", "DELETE FROM ensayo WHERE id_ensayo=?"}) {
+                    try (PreparedStatement ps = c.prepareStatement(sql)) { ps.setInt(1, id); ps.executeUpdate(); }
+                }
+                c.commit();
+                return regresados;
+            } catch (SQLException ex) { c.rollback(); throw ex; }
+        }
+    }
+
     public void guardarNotas(int id, String notas, int autor) throws SQLException {
         try (Connection c = getConnection(); PreparedStatement ps = c.prepareStatement("UPDATE ensayo SET notas=?, notas_autor=? WHERE id_ensayo=?")) {
             setTexto(ps, 1, notas); ps.setInt(2, autor); ps.setInt(3, id); ps.executeUpdate();
@@ -370,7 +405,7 @@ public class EnsayoDao extends BaseDao {
     /** Último ensayo (máx. 7 días atrás) con figuras registradas que el miembro aún no autoevaluó. */
     public Ensayo autoevaluacionPendiente(int idMiembro) throws SQLException {
         String sql = "SELECT e.id_ensayo FROM ensayo e JOIN asistencia a ON a.id_ensayo=e.id_ensayo AND a.id_miembro=? AND a.estado_real IN ('AP','AN','TJ','TI') " +
-                     "WHERE e.fecha BETWEEN CURDATE() - INTERVAL 7 DAY AND CURDATE() AND EXISTS (SELECT 1 FROM ensayo_figura ef WHERE ef.id_ensayo=e.id_ensayo) " +
+                     "WHERE e.estado<>'CANCELADO' AND e.fecha >= CURDATE() - INTERVAL 7 DAY AND (e.fecha <= CURDATE() OR e.estado='CERRADO') AND EXISTS (SELECT 1 FROM ensayo_figura ef WHERE ef.id_ensayo=e.id_ensayo) " +
                      "AND NOT EXISTS (SELECT 1 FROM historial_evaluacion h WHERE h.id_ensayo=e.id_ensayo AND h.id_miembro=?) ORDER BY e.fecha DESC LIMIT 1";
         try (Connection c = getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setInt(1, idMiembro); ps.setInt(2, idMiembro);

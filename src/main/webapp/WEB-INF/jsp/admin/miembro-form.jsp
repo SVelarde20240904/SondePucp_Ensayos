@@ -62,8 +62,8 @@ Al entrar te va a pedir que pongas una tuya.</textarea>
             <c:remove var="claveGenerada" scope="session"/><c:remove var="claveCorreo" scope="session"/><c:remove var="claveNombre" scope="session"/>
           </c:if>
           <div class="inline"><sdp:tag texto="${m.cuentaActivada ? (m.debeCambiarPassword ? 'Con contraseña temporal' : 'Cuenta activada') : 'Sin contraseña'}" tono="${m.cuentaActivada and not m.debeCambiarPassword ? 'ok' : 'warn'}"/></div>
-          <div><button class="btn btn-secondary" name="action" value="restablecer" formnovalidate>Generar contraseña temporal</button></div>
-          <p class="muted xs">También guarda el correo que escribiste arriba. La clave aparece aquí mismo.</p></div>
+          <div><button class="btn btn-secondary" name="action" value="restablecer">Guardar y generar contraseña temporal</button></div>
+          <p class="muted xs">Guarda todo lo que escribiste en el formulario y genera la clave. La clave aparece aquí mismo.</p></div>
         <div class="card" style="border-color:var(--rojo-soft)">
           <c:choose>
             <c:when test="${m.activo}">

@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import pe.sdp.beans.*;
 import pe.sdp.daos.EnsayoDao;
+import pe.sdp.daos.EvaluacionDao;
 import pe.sdp.daos.FiguraDao;
 import pe.sdp.daos.MiembroDao;
 import pe.sdp.util.Formato;
@@ -26,6 +27,7 @@ import java.util.*;
  *  /ensayos/cronograma      cronograma sugerido
  *  /ensayos/asistencia      tomar asistencia real
  *  /ensayos/figuras         figuras enseñadas (habilita la autoevaluación del ensayo)
+ *  /ensayos/miembros        fichas de miembros (lista) · /ensayos/miembro?id= ficha completa
  */
 @WebServlet(urlPatterns = {"/ensayos", "/ensayos/*"})
 public class EnsayosServlet extends BaseServlet {
@@ -33,6 +35,7 @@ public class EnsayosServlet extends BaseServlet {
     private final EnsayoDao dao = new EnsayoDao();
     private final MiembroDao miembros = new MiembroDao();
     private final FiguraDao figuras = new FiguraDao();
+    private final EvaluacionDao evaluaciones = new EvaluacionDao();
 
     private String ruta(HttpServletRequest req) { return req.getPathInfo() == null ? "/" : req.getPathInfo(); }
 
@@ -112,6 +115,45 @@ public class EnsayosServlet extends BaseServlet {
                     req.setAttribute("equipo", miembros.equipoEnsayos());
                     vista(req, resp, "ensayos/figuras-ensenadas");
                 }
+                case "/miembros" -> {
+                    if (!Sesion.requiere(req, resp, "VER_CRONOGRAMA")) return;
+                    String filtro = texto(req, "filtro"), nivel = texto(req, "nivel");
+                    List<Miembro> lista = new ArrayList<>();
+                    for (Miembro m : miembros.listar(filtro, texto(req, "q"))) {
+                        if (nivel == null || ("SIN".equals(nivel) ? m.getNivel() == null : nivel.equals(m.getNivel()))) lista.add(m);
+                    }
+                    req.setAttribute("lista", lista);
+                    vista(req, resp, "ensayos/miembros");
+                }
+                case "/miembro" -> {
+                    if (!Sesion.requiere(req, resp, "VER_CRONOGRAMA")) return;
+                    Integer id = entero(req, "id");
+                    Miembro m = id == null ? null : miembros.obtener(id);
+                    if (m == null) { Sesion.error(req, "No encontré a ese miembro."); ir(req, resp, "/ensayos/miembros"); return; }
+                    // Figuras agrupadas por el nivel de la figura (AZUL = base → ROJO = avanzada)
+                    Map<String, List<Evaluacion>> porNivel = new LinkedHashMap<>();
+                    for (String n : List.of("AZUL", "VERDE", "AMARILLO", "ROJO", "SIN")) porNivel.put(n, new ArrayList<>());
+                    Map<String, int[]> sabe = new LinkedHashMap<>();   // nivel → [sabe, total]
+                    boolean soloFaltan = "1".equals(req.getParameter("faltan"));
+                    for (Evaluacion ev : evaluaciones.deMiembro(id)) {
+                        String n = ev.getColorFigura() == null ? "SIN" : ev.getColorFigura();
+                        int[] c = sabe.computeIfAbsent(n, k -> new int[2]);
+                        c[1]++;
+                        if ("VERDE".equals(ev.getColor()) || "AZUL".equals(ev.getColor())) c[0]++;
+                        if (!soloFaltan || !("VERDE".equals(ev.getColor()) || "AZUL".equals(ev.getColor()))) porNivel.get(n).add(ev);
+                    }
+                    porNivel.values().removeIf(List::isEmpty);
+                    req.setAttribute("m", m);
+                    req.setAttribute("porNivel", porNivel);
+                    req.setAttribute("sabe", sabe);
+                    req.setAttribute("soloFaltan", soloFaltan);
+                    req.setAttribute("resumen", evaluaciones.resumenMiembro(id));
+                    req.setAttribute("porcentaje", dao.porcentajeAsistencia(id));
+                    req.setAttribute("asistencias", dao.misAsistencias(id, 10));
+                    List<HistorialEvaluacion> h = evaluaciones.historialDe(id, null);
+                    req.setAttribute("historial", h.size() > 15 ? h.subList(0, 15) : h);
+                    vista(req, resp, "ensayos/miembro");
+                }
                 default -> resp.sendError(404);
             }
         } catch (SQLException e) { fallo(req, resp, e); }
@@ -179,8 +221,16 @@ public class EnsayosServlet extends BaseServlet {
                 case "/detalle" -> {
                     if (!Sesion.requiere(req, resp, "GESTIONAR_ENSAYOS")) return;
                     int id = entero(req, "id");
+                    if ("eliminar".equals(accion(req, "notas"))) {
+                        if (!Sesion.usuario(req).isAdmin()) { Sesion.error(req, "Solo un admin puede eliminar ensayos."); ir(req, resp, "/ensayos/detalle?id=" + id); return; }
+                        Ensayo e = dao.obtener(id);
+                        int regresados = dao.eliminar(id);
+                        Sesion.ok(req, "Ensayo del " + (e == null ? "" : e.getFechaCorta()) + " eliminado" + (regresados == 1 ? ". Se regresó 1 color que había subido su autoevaluación." : regresados > 1 ? ". Se regresaron " + regresados + " colores que había subido su autoevaluación." : "."));
+                        ir(req, resp, "/ensayos");
+                        return;
+                    }
                     switch (accion(req, "notas")) {
-                        case "cerrar" -> { dao.cambiarEstado(id, "CERRADO"); Sesion.ok(req, "Ensayo cerrado."); }
+                        case "cerrar" -> { dao.cambiarEstado(id, "CERRADO"); Sesion.ok(req, "Ensayo cerrado. Si ya registraste asistencia y figuras enseñadas, los asistentes ya ven el aviso para autoevaluarse."); }
                         case "cancelar" -> { dao.cambiarEstado(id, "CANCELADO"); Sesion.ok(req, "Ensayo cancelado."); }
                         default -> { dao.guardarNotas(id, texto(req, "notas"), yo); Sesion.ok(req, "Notas guardadas."); }
                     }

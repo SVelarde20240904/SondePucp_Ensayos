@@ -5,6 +5,7 @@
 <section class="hero"><div class="titles"><span class="kicker">Ensayos</span><h1>¿Qué figuras se enseñaron?</h1>
   <p>${ensayo.fechaLarga} · al guardar, cada asistente puede hacer su autoevaluación del ensayo</p></div>
   <div class="actions"><button class="btn btn-primary" type="submit">Guardar y habilitar autoevaluación</button></div><span class="star"></span></section>
+<c:set var="tab" value="figuras"/><%@ include file="/WEB-INF/jsp/includes/ensayo-tabs.jspf" %>
 
 <c:if test="${not empty sugeridas}"><div class="card"><h2>Sugeridas por el cronograma</h2><p>Las que más asistentes necesitan (márcalas abajo, en su nivel)</p>
   <div class="inline"><c:forEach var="f" items="${sugeridas}"><span class="tag info role"><c:out value="${f.figura}"/> · ${f.NAsistentes}</span></c:forEach></div></div></c:if>
