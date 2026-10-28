@@ -16,8 +16,8 @@ Lista viva de mejoras. Lo que se termina pasa a **Hecho** con su commit.
 - [ ] Subir los logos reales a Figma.
 
 ## Hecho
-- [x] **Bug:** las conexiones del pool podían quedar con una transacción abierta después de guardar una autoevaluación, y lo siguiente no se confirmaba en la BD (se perdía al reiniciar). Ahora cada conexión sale del pool en autocommit. `PENDIENTE_COMMIT`
-- [x] Corregir en el histórico con el mismo color que ya tiene avisa que no hay nada que corregir. `PENDIENTE_COMMIT`
+- [x] **Bug:** las conexiones del pool podían quedar con una transacción abierta después de guardar una autoevaluación, y lo siguiente no se confirmaba en la BD (se perdía al reiniciar). Ahora cada conexión sale del pool en autocommit. `82cda2c`
+- [x] Corregir en el histórico con el mismo color que ya tiene avisa que no hay nada que corregir. `82cda2c`
 - [x] Guardar y generar contraseña temporal: guarda todo el formulario; si hay un error, el formulario vuelve con lo escrito. `a38eabd`
 - [x] Histórico y *Mi historial* ya no muestran los "Azul → Azul" (se siguen guardando por dentro para saber quién ya se autoevaluó). `a38eabd`
 - [x] *Ensayos → Fichas de miembros*: lista con filtros y ficha de cada persona (figuras por nivel con su color, "solo las que le faltan", últimos ensayos y cambios recientes). Desde *Tomar asistencia* el nombre abre su ficha. `a38eabd`
