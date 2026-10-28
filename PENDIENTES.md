@@ -5,6 +5,9 @@ Lista viva de mejoras. Lo que se termina pasa a **Hecho** con su commit.
 ## Feedback del piloto
 - [ ] **Generar contraseña temporal sin perder lo escrito:** si llenas los datos de una persona y, sin guardar, le das a *Generar contraseña temporal*, se pierde lo que escribiste (hoy solo se guarda el correo). Debería guardar todo el formulario y recién después generar la clave.
 
+- [ ] **Histórico sin registros redundantes:** al llenar la autoevaluación mensual aparecen cambios "Azul → Azul" (el mismo color). Solo debería registrarse cuando el color cambia, o al menos ocultar esos registros en la pantalla de *Histórico*.
+- [ ] **El túnel se cae al cambiar de red o suspender la laptop** y el link cambia. Para el piloto: dejar la laptop fija con internet estable, usar `--protocol http2`, o pasar a link fijo (Cloudflare con dominio, o Railway).
+
 ## Por decidir / confirmar
 - [ ] La **"x"** del Excel: ¿significa *no marcó la encuesta* (así está hoy: SIN_RESPUESTA) o *marcó que no venía*? Si es lo segundo, hay un UPDATE en `db/README.md`.
 - [ ] Agregar el código **AN** (asistencia no planeada) a la maqueta y a Figma (en la app ya está).
