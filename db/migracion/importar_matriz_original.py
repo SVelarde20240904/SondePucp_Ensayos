@@ -4,7 +4,8 @@ Importa a la BD lo que FALTA desde la matriz original del grupo ("Matriz_Figuras
 hojas MATRIZ DE FIGURAS / ASISTENCIA / RESPONSABILIDADES DE LA SEMANA).
 
 Regla: lo que ya está en la BD (cargado desde la v2.6 o hecho en el piloto) MANDA. Este script solo agrega:
-  · colores de figuras que la persona todavía no tiene
+  · colores de figuras que la persona todavía no tiene (de Daniela Llano y Abigail Delgado, que acaban de llegar,
+    solo los de las figuras nuevas)
   · 4 figuras que faltaban (Peruana, La trenza, Adios con la Suegra, 8 de Mujeres). "Paseos" se ignora:
     en la web se dividió en Paseo Cerrado / Abierto / hacia arriba.
   · ensayos (fechas) que no existen, con su asistencia; y asistencias que falten en fechas que sí existen
@@ -47,6 +48,8 @@ ALIAS_RESP = {"antony": "Antony Palacios", "sergio": "Sergio Velarde", "pierina"
 FIGURA_ALIAS = {"botala para atras": "Botala por atrás"}
 FIGURAS_NUEVAS = ["Peruana", "La trenza", "Adios con la Suegra", "8 de Mujeres"]
 FIGURAS_IGNORADAS = {"paseos"}
+# Personas que acaban de llegar: de la matriz vieja solo se toman sus colores de las figuras nuevas
+SOLO_FIGURAS_NUEVAS = {"Daniela Llano", "Abigail Delgado"}
 COLORES = {"AZUL", "VERDE", "AMARILLO", "ROJO"}
 CONF = {"AP": "SI", "TJ": "SI", "TI": "SI", "FJ": "SI", "FI": "SI", "AN": "NO", "ANP": "NO"}
 TIPOS = ["FLYER Y SPEECH", "REGISTRAR ASISTENCIA Y FIGURAS", "RECOPILAR AUTOEVALUACIÓN", "ACTUALIZAR LA BD CON LA ATUOEVALUACIÓN",
@@ -84,6 +87,7 @@ for row in m.iter_rows(min_row=2, values_only=True):
     for i, mem in cols.items():
         v = row[i]
         v = v.strip().upper() if isinstance(v, str) else v
+        if mem in SOLO_FIGURAS_NUEVAS and fig not in FIGURAS_NUEVAS: continue
         if v in COLORES: celdas.append(f"({q(mem)},{q(fig)},'{v}')")
 w("\n-- 2. Colores: solo se agregan los que la persona todavía no tiene")
 w("DROP TEMPORARY TABLE IF EXISTS tmp_eval;")
