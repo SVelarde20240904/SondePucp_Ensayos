@@ -6,6 +6,11 @@ Lista viva de mejoras. Lo que se termina pasa a **Hecho** con su commit.
 - [ ] **Apodos:** campo *apodo* por miembro (ej. Ilo, Mimi, Mafer, Clau, Gaby), que se muestre junto al nombre en listas, cronograma, asistencia y fichas, y que sirva en el buscador (buscar "Ilo" encuentra a Enmanuel Vega). **Decidido:** cada uno pone su apodo en *Mi perfil*. Por definir: si en el celular se muestra solo el apodo o siempre el nombre completo.
 - [ ] **Fecha de nacimiento:** campo en *Mi perfil* (y en el formulario del admin) para luego hacer algo con los cumpleaños. Por definir qué: aviso en Inicio de los cumpleaños de la semana, lista de cumpleañeros del mes, saludo en el Inicio del cumpleañero, si se muestra el año o solo día y mes.
 - [ ] **Teams:** etiqueta del team de cada miembro (Ensayos, Talleres, Logística, Finanzas, RRPP, Comunica), visible en listas y fichas, con filtro por team. Es distinto del rol del sistema (que da permisos): estar en Team Ensayos como etiqueta no da permisos por sí solo. **Decidido:** se puede estar en más de un team ("dobletear"). Por definir: quién la asigna (admin o cada uno). Ayuda a extender el sistema a otros teams más adelante.
+- [ ] **Roles nuevos (decidido):**
+  - *Equipo de ensayos* (miembro de Team Ensayos): se queda como está; lo que ve es pertinente (ensayos, cronograma, asistencia, figuras enseñadas, fichas, reportes, responsabilidades).
+  - *Admin de Team Ensayos* (nuevo): lo anterior + **Figuras**, **Histórico** y **Responsabilidades**.
+  - *Owner* (reemplaza al Admin actual, por ahora solo Sergio): todo, incluido **Miembros** y **Roles y permisos**.
+  - Por definir: hoy *Equipo de ensayos* ya tiene Responsabilidades (¿se le quita y queda solo para el admin del team?); quién puede **eliminar ensayos** y **editar figuras desde la ficha** (¿admin del team?).
 - [ ] **Editar figuras desde la ficha de miembro (equipo de ensayos):** en *Fichas de miembros*, poder cambiar el color de cada figura de la persona ahí mismo (por ejemplo, después de verla en el ensayo), con el cambio registrado en el histórico (quién lo hizo y por qué).
 - [ ] **El túnel se cae al cambiar de red o suspender la laptop** y el link cambia. Para el piloto: dejar la laptop fija con internet estable, usar `--protocol http2`, o pasar a link fijo (Cloudflare con dominio, o Railway).
 
