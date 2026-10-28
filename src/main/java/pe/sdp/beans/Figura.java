@@ -20,6 +20,7 @@ public class Figura {
     private int nEnsenada;
     private boolean puedeEliminar;
     private int porcentajeSaben;
+    private String videoUrl;
 
     public int getIdFigura() { return idFigura; }
     public void setIdFigura(int idFigura) { this.idFigura = idFigura; }
@@ -45,6 +46,16 @@ public class Figura {
     public void setPuedeEliminar(boolean puedeEliminar) { this.puedeEliminar = puedeEliminar; }
     public int getPorcentajeSaben() { return porcentajeSaben; }
     public void setPorcentajeSaben(int porcentajeSaben) { this.porcentajeSaben = porcentajeSaben; }
+
+    public String getVideoUrl() { return videoUrl; }
+    public void setVideoUrl(String videoUrl) { this.videoUrl = videoUrl; }
+    public boolean isTieneVideo() { return videoUrl != null && !videoUrl.isBlank(); }
+    /** URL para mostrar el video dentro de la página (Drive o YouTube); null si no se puede embeber. */
+    public String getVideoEmbed() { return Formato.videoEmbed(videoUrl); }
+    public String getVideoOrigen() {
+        if (!isTieneVideo()) return null;
+        return videoUrl.contains("drive.google.com") ? "Google Drive" : (videoUrl.contains("youtu") ? "YouTube" : "el enlace");
+    }
 
     public String getFechaBajaTexto() { return fechaBaja == null ? "" : Formato.ddmmyyyy(fechaBaja.toLocalDate()); }
 

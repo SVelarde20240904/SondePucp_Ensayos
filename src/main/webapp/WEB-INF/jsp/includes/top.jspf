@@ -28,6 +28,7 @@
     <a class="${menu == 'Autoevaluación' ? 'active' : ''}" href="${ctx}/autoevaluacion?tipo=mensual">Autoevaluación</a>
     <a class="${menu == 'Mi historial' ? 'active' : ''}" href="${ctx}/mi-historial">Mi historial</a>
     <a class="${menu == 'Mi perfil' ? 'active' : ''}" href="${ctx}/perfil">Mi perfil</a>
+    <a class="${menu == 'Biblioteca' ? 'active' : ''}" href="${ctx}/biblioteca">Biblioteca de figuras</a>
   </nav>
   <c:if test="${perm.contains('GESTIONAR_ENSAYOS') or perm.contains('VER_CRONOGRAMA') or perm.contains('TOMAR_ASISTENCIA') or perm.contains('REGISTRAR_FIGURAS_ENSENADAS')}">
     <div class="nav-title">Ensayos</div>

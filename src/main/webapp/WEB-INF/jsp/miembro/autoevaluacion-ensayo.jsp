@@ -14,7 +14,7 @@
   <c:forEach var="f" items="${figuras}">
     <c:set var="act" value="${actual[f.idFigura]}"/>
     <c:set var="minimo" value="${act == 'AZUL' ? 4 : (act == 'VERDE' ? 3 : (act == 'AMARILLO' ? 2 : (act == 'ROJO' ? 1 : 0)))}"/>
-    <div class="eval-row"><div class="name"><c:out value="${f.figura}"/><small>Actual: <sdp:chip color="${act}"/></small></div>
+    <div class="eval-row"><div class="name"><c:out value="${f.figura}"/><c:if test="${conVideo.contains(f.idFigura)}"><a class="ver-fig" href="${ctx}/biblioteca/figura?id=${f.idFigura}" target="_blank" title="Ver el video de la figura">▶ ver</a></c:if><small>Actual: <sdp:chip color="${act}"/></small></div>
       <c:forEach var="c" items="${['ROJO','AMARILLO','VERDE','AZUL']}" varStatus="s">
         <label class="opt ${fn:toLowerCase(c)}"><input type="radio" name="color_${f.idFigura}" value="${c}" ${act == c ? 'checked' : ''} ${s.count < minimo ? 'disabled' : ''}><span>${fn:substring(c,0,1)}${fn:toLowerCase(fn:substring(c,1,10))}</span></label>
       </c:forEach>

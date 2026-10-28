@@ -53,6 +53,14 @@ public class AdminServlet extends BaseServlet {
                     req.setAttribute("activos", miembros.contarActivos());
                     vista(req, resp, "admin/miembros");
                 }
+                case "/miembros/activar" -> {
+                    if (!Sesion.requiere(req, resp, "GESTIONAR_MIEMBROS")) return;
+                    List<Miembro> pendientes = new ArrayList<>();
+                    for (Miembro x : miembros.listar("TODOS", null)) if (!x.isCuentaActivada() || x.isDebeCambiarPassword()) pendientes.add(x);
+                    req.setAttribute("pendientes", pendientes);
+                    req.setAttribute("enlace", enlaceLogin(req));
+                    vista(req, resp, "admin/miembros-activar");
+                }
                 case "/miembros/nuevo", "/miembros/editar" -> {
                     if (!Sesion.requiere(req, resp, "GESTIONAR_MIEMBROS")) return;
                     Miembro m;
@@ -135,6 +143,7 @@ public class AdminServlet extends BaseServlet {
         try {
             switch (ruta(req)) {
                 case "/miembros/nuevo", "/miembros/editar" -> postMiembro(req, resp, yo);
+                case "/miembros/activar" -> postActivarLote(req, resp);
                 case "/figuras/nueva", "/figuras/editar" -> postFigura(req, resp, yo);
                 case "/figuras" -> {
                     if (!Sesion.requiere(req, resp, "GESTIONAR_FIGURAS")) return;
@@ -207,11 +216,11 @@ public class AdminServlet extends BaseServlet {
             case "inactivar" -> {
                 if (id == yo) { Sesion.error(req, "No puedes inactivarte a ti mismo."); ir(req, resp, volver); return; }
                 miembros.inactivar(id, texto(req, "motivoBaja"), yo); Sesion.permisosCambiaron();
-                Sesion.ok(req, "Miembro inactivado. Su historial se conserva.");
+                Sesion.ok(req, "Miembro inactivado. Su historial se conserva." + recordatorioGrupo(miembros.obtener(id), false));
                 ir(req, resp, "/admin/miembros");
                 return;
             }
-            case "reactivar" -> { miembros.reactivar(id); Sesion.permisosCambiaron(); Sesion.ok(req, "Miembro reactivado."); ir(req, resp, volver); return; }
+            case "reactivar" -> { miembros.reactivar(id); Sesion.permisosCambiaron(); Sesion.ok(req, "Miembro reactivado." + recordatorioGrupo(miembros.obtener(id), true)); ir(req, resp, volver); return; }
             case "eliminar" -> {
                 if (miembros.eliminar(id)) { Sesion.ok(req, "Miembro eliminado."); ir(req, resp, "/admin/miembros"); }
                 else { Sesion.error(req, "No se puede eliminar: tiene historial. Inactívalo."); ir(req, resp, volver); }
@@ -247,7 +256,7 @@ public class AdminServlet extends BaseServlet {
             if (id == null) {
                 String temp = texto(req, "passwordTemporal") == null ? Formato.passwordTemporal() : texto(req, "passwordTemporal");
                 int nuevo = miembros.crear(m, Password.hash(temp), equipo, admin, yo);
-                Sesion.ok(req, m.getNombre() + " ya es parte del sistema. Contraseña temporal: " + temp);
+                Sesion.ok(req, m.getNombre() + " ya es parte del sistema. Contraseña temporal: " + temp + recordatorioGrupo(m, true));
                 ir(req, resp, "/admin/miembros/editar?id=" + nuevo);
             } else {
                 miembros.actualizar(m, equipo, admin, yo); Sesion.permisosCambiaron();
@@ -270,6 +279,53 @@ public class AdminServlet extends BaseServlet {
             log("No se pudo guardar", ex); Sesion.error(req, String.valueOf(ex.getMessage()).contains("admin") ? "Debe quedar al menos un admin." : "No se pudo guardar: " + mensajeBd(ex));
             ir(req, resp, volver);
         }
+    }
+
+    /**
+     * Activar cuentas en lote: por cada fila marcada con correo, guarda el correo y genera una clave temporal.
+     * Los resultados (claves) se muestran UNA vez en la misma pantalla y se borran de la sesión.
+     */
+    private void postActivarLote(HttpServletRequest req, HttpServletResponse resp) throws SQLException, IOException {
+        if (!Sesion.requiere(req, resp, "GESTIONAR_MIEMBROS")) return;
+        List<String[]> listos = new ArrayList<>();     // nombre, correo, clave
+        List<String> errores = new ArrayList<>();
+        Set<String> usados = new HashSet<>();
+        String[] ids = req.getParameterValues("activar");
+        if (ids != null) for (String sid : ids) {
+            Integer id = Formato.entero(sid);
+            if (id == null) continue;
+            Miembro m = miembros.obtener(id);
+            if (m == null || !m.isActivo()) continue;
+            String correo = texto(req, "correo_" + id);
+            correo = correo == null ? null : correo.trim().toLowerCase();
+            if (correo == null) { errores.add(m.getNombre() + ": falta el correo."); continue; }
+            if (!correo.matches("^[^@\\s]+@pucp\\.edu\\.pe$")) { errores.add(m.getNombre() + ": el correo debe ser @pucp.edu.pe (" + correo + ")."); continue; }
+            if (!usados.add(correo) || miembros.existeCorreo(correo, id)) { errores.add(m.getNombre() + ": " + correo + " ya lo usa otra persona."); continue; }
+            if (!correo.equalsIgnoreCase(String.valueOf(m.getCorreo()))) miembros.actualizarCorreo(id, correo);
+            String temp = Formato.passwordTemporal();
+            miembros.registrarPassword(id, Password.hash(temp), true);
+            listos.add(new String[]{m.getNombre(), correo, temp});
+        }
+        var s = req.getSession();
+        s.setAttribute("loteListos", listos);
+        s.setAttribute("loteErrores", errores);
+        if (listos.isEmpty() && errores.isEmpty()) Sesion.error(req, "Marca al menos una persona y escribe su correo.");
+        else if (!listos.isEmpty()) Sesion.ok(req, listos.size() + " cuenta(s) activada(s). Copia los mensajes de abajo ahora: las claves no se vuelven a mostrar.");
+        ir(req, resp, "/admin/miembros/activar");
+    }
+
+    /** Enlace al login tal como lo ve quien está usando la web (sirve detrás del túnel o del hosting). */
+    private static String enlaceLogin(HttpServletRequest req) {
+        int port = req.getServerPort();
+        boolean normal = ("https".equals(req.getScheme()) && port == 443) || ("http".equals(req.getScheme()) && port == 80);
+        return req.getScheme() + "://" + req.getServerName() + (normal ? "" : ":" + port) + req.getContextPath() + "/login";
+    }
+
+    /** Si ya hay videos en la biblioteca, recuerda agregar/sacar a la persona del Grupo de Google que tiene acceso a ellos. */
+    private String recordatorioGrupo(Miembro m, boolean agregar) throws SQLException {
+        if (m == null || m.getCorreo() == null || figuras.idsConVideo().isEmpty()) return "";
+        return agregar ? " 🎥 Recuerda agregar " + m.getCorreo() + " al Grupo de Google de los videos de figuras."
+                       : " 🎥 Recuerda sacar a " + m.getCorreo() + " del Grupo de Google de los videos de figuras.";
     }
 
     /** Si hay un error, vuelve a mostrar el formulario CON lo que se escribió (no se pierde nada). */
@@ -312,12 +368,14 @@ public class AdminServlet extends BaseServlet {
         if (nombre == null) { Sesion.error(req, "Escribe el nombre de la figura."); ir(req, resp, volver); return; }
         if (figuras.existeNombre(nombre, id == null ? 0 : id)) { Sesion.error(req, "Ya hay una figura activa con ese nombre."); ir(req, resp, volver); return; }
         Integer despues = entero(req, "despuesDe");
+        String video = texto(req, "videoUrl");
+        if (video != null && !Formato.videoValido(video)) { Sesion.error(req, "El enlace del video debe empezar con https:// (cópialo de Drive o YouTube)."); ir(req, resp, volver); return; }
         if (id == null) {
-            int nuevo = figuras.crear(nombre, texto(req, "descripcion"), despues, yo);
+            int nuevo = figuras.crear(nombre, texto(req, "descripcion"), video, despues, yo);
             Sesion.ok(req, "Figura “" + nombre + "” agregada. Tendrá color cuando el grupo la evalúe.");
             ir(req, resp, "/admin/figuras/editar?id=" + nuevo);
         } else {
-            figuras.actualizar(id, nombre, texto(req, "descripcion"), despues);
+            figuras.actualizar(id, nombre, texto(req, "descripcion"), video, despues);
             Sesion.ok(req, "Cambios guardados.");
             ir(req, resp, volver);
         }

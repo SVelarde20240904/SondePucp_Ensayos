@@ -19,13 +19,13 @@ import java.sql.SQLException;
  *  2. /salud responde "ok" (para el chequeo del hosting)
  *  3. CSRF: todo POST debe traer el token de la sesión (campo oculto _csrf)
  *  4. sin sesión → /login · con contraseña temporal → /cambiar-password
- *  5. revisa en la BD que la cuenta siga activa y recarga sus permisos: cada 2 minutos, o al instante si un admin cambió roles/permisos
+ *  5. revisa en la BD que la cuenta siga activa y recarga sus permisos: cada 20 segundos, o al instante si un admin cambió roles/permisos
  * Los permisos de cada sección los revisa cada servlet con Sesion.requiere(...)
  */
 @WebFilter("/*")
 public class AuthFilter implements Filter {
 
-    private static final long REVISAR_CADA_MS = 2 * 60_000L;
+    private static final long REVISAR_CADA_MS = 20_000L;   // respaldo; los cambios hechos desde la web llegan al instante
     private static final String ULTIMA_REVISION = "ultimaRevision";
 
     private final MiembroDao dao = new MiembroDao();
@@ -102,7 +102,7 @@ public class AuthFilter implements Filter {
         HttpSession s = req.getSession();
         Long ultima = (Long) s.getAttribute(ULTIMA_REVISION);
         long ahora = System.currentTimeMillis();
-        // se vuelve a leer de la BD cada 2 minutos, o al toque si un admin cambió roles/permisos/estados
+        // se vuelve a leer de la BD cada 20 segundos, o al toque si un admin cambió roles/permisos/estados
         if (ultima != null && ahora - ultima < REVISAR_CADA_MS && ultima > Sesion.ultimoCambio()) return true;
         try {
             Miembro bd = dao.obtener(Sesion.idUsuario(req));
@@ -124,7 +124,8 @@ public class AuthFilter implements Filter {
         resp.setHeader("Content-Security-Policy",
                 "default-src 'self'; img-src 'self' data:; " +
                 "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; " +
-                "script-src 'self' 'unsafe-inline'; form-action 'self'; frame-ancestors 'self'; base-uri 'self'; object-src 'none'");
+                "script-src 'self' 'unsafe-inline'; form-action 'self'; frame-ancestors 'self'; base-uri 'self'; object-src 'none'; " +
+                "frame-src https://drive.google.com https://www.youtube-nocookie.com");
         if (req.isSecure()) resp.setHeader("Strict-Transport-Security", "max-age=31536000");
     }
 }

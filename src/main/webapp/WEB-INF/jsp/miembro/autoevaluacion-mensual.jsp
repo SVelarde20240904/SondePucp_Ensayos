@@ -15,7 +15,7 @@
   <c:forEach var="col" items="${[columnaA, columnaB]}">
   <div class="card" style="gap:0">
     <c:forEach var="e" items="${col}">
-      <div class="eval-row"><div class="name"><c:out value="${e.figura}"/><c:if test="${empty e.colorFigura}"><small>Nueva · aún sin nivel</small></c:if></div>
+      <div class="eval-row"><div class="name"><c:out value="${e.figura}"/><c:if test="${conVideo.contains(e.idFigura)}"><a class="ver-fig" href="${ctx}/biblioteca/figura?id=${e.idFigura}" target="_blank" title="Ver el video de la figura">▶ ver</a></c:if><c:if test="${empty e.colorFigura}"><small>Nueva · aún sin nivel</small></c:if></div>
         <c:forEach var="c" items="${['ROJO','AMARILLO','VERDE','AZUL']}">
           <label class="opt ${fn:toLowerCase(c)}"><input type="radio" name="color_${e.idFigura}" value="${c}" ${e.color == c ? 'checked' : ''}><span>${fn:substring(c,0,1)}${fn:toLowerCase(fn:substring(c,1,10))}</span></label>
         </c:forEach>

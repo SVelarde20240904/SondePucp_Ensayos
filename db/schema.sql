@@ -94,7 +94,8 @@ CREATE TABLE figura (
   nombre     VARCHAR(60) NOT NULL UNIQUE,           -- un nombre repetido se reactiva, no se duplica
   orden      SMALLINT NULL,                         -- si llega NULL, el trigger la pone al final
   activa     TINYINT(1) NOT NULL DEFAULT 1,
-  descripcion VARCHAR(200) NULL,
+  descripcion VARCHAR(1000) NULL,                   -- pasos o notas (biblioteca de figuras)
+  video_url  VARCHAR(500) NULL,                     -- enlace a Drive/YouTube (Drive RESTRINGIDO al grupo de SDP)
   creado_por INT NULL,
   fecha_creacion DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   fecha_baja DATETIME NULL,

@@ -497,6 +497,18 @@ a.pill-link.on { background: var(--ink); color: #fff; border-color: var(--ink); 
 .fig-ficha { display: flex; align-items: center; justify-content: space-between; gap: 8px; background: var(--bg); border-radius: 10px; padding: 8px 10px; font-weight: 600; font-size: 13px; border: 1.5px solid transparent; }
 .fig-ficha.falta { background: #fff; border-color: var(--rojo-soft); }
 
+/* Biblioteca de figuras */
+.fig-link { color: var(--text); text-decoration: none !important; }
+.fig-link:hover { border-color: var(--primary); background: #fff; }
+.video-box { position: relative; width: 100%; aspect-ratio: 16 / 9; background: #000; border-radius: 12px; overflow: hidden; }
+.video-box iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.pre { white-space: pre-line; }
+.ver-fig { font-size: 11px; font-weight: 700; margin-left: 6px; white-space: nowrap; }
+
+/* Activar cuentas en lote */
+.lote-msg { display: flex; flex-direction: column; gap: 8px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+.lote-msg textarea { font-size: 13px; resize: vertical; }
+
 /* Pestañas de un ensayo */
 .ensayo-tabs { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 2px; scrollbar-width: none; }
 .ensayo-tabs::-webkit-scrollbar { display: none; }

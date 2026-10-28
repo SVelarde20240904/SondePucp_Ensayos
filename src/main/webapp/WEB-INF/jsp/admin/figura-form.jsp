@@ -26,7 +26,9 @@
       <div class="field"><label>Posición en la mano</label><select class="input" name="despuesDe">
         <option value="">${nueva ? 'Al final de la mano' : 'Dejar donde está'}</option>
         <c:forEach var="x" items="${todas}"><c:if test="${nueva or x.idFigura != f.idFigura}"><option value="${x.idFigura}" ${not nueva and x.idFigura == anterior ? 'selected' : ''}>Después de <c:out value="${x.nombre}"/></option></c:if></c:forEach></select></div></div>
-    <div class="field"><label>Descripción o nota (opcional)</label><textarea class="input" name="descripcion" rows="3" placeholder="Ej: variación de Hélice con salida por la derecha"><c:out value="${f.descripcion}"/></textarea></div>
+    <div class="field"><label>Descripción o pasos (opcional)</label><textarea class="input" name="descripcion" rows="4" maxlength="1000" placeholder="Ej: variación de Hélice con salida por la derecha. Se ve en la biblioteca de figuras."><c:out value="${f.descripcion}"/></textarea></div>
+    <div class="field"><label>Video (enlace de Google Drive o YouTube, opcional)</label><input class="input" type="url" name="videoUrl" maxlength="500" pattern="https://.*" value="<c:out value='${f.videoUrl}'/>" placeholder="https://drive.google.com/file/d/…/view"></div>
+    <p class="note warn" style="font-weight:500">🔒 En Drive, comparte el video <b>solo con el Grupo de Google de SDP</b> (Acceso general: <b>Restringido</b>, rol Lector, sin descarga). Nunca "Cualquier persona con el enlace": si el link se filtra, cualquiera vería nuestras figuras.</p>
   </div>
   <c:choose>
     <c:when test="${nueva}">

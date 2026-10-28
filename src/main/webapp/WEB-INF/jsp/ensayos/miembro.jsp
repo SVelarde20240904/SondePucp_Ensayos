@@ -25,7 +25,7 @@
           <span class="muted small">sabe ${sabe[e.key][0]} de ${sabe[e.key][1]}</span></div>
         <div class="fig-grid">
           <c:forEach var="ev" items="${e.value}">
-            <div class="fig-ficha ${ev.leFalta or empty ev.color ? 'falta' : ''}"><span><c:out value="${ev.figura}"/></span>
+            <div class="fig-ficha ${ev.leFalta or empty ev.color ? 'falta' : ''}"><span><a class="fig-link" href="${ctx}/biblioteca/figura?id=${ev.idFigura}"><c:out value="${ev.figura}"/></a></span>
               <c:choose><c:when test="${empty ev.color}"><span class="chip sin">Sin evaluar</span></c:when><c:otherwise><sdp:chip color="${ev.color}"/></c:otherwise></c:choose></div>
           </c:forEach>
         </div>

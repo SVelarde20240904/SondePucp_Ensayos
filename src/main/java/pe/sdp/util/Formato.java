@@ -84,6 +84,26 @@ public final class Formato {
     private static final SecureRandom RND = new SecureRandom();
 
     /** Contraseña temporal fácil de dictar: SDP-1234 */
+    /**
+     * Convierte un enlace de Google Drive o YouTube en la URL para mostrarlo dentro de la página.
+     * Drive: https://drive.google.com/file/d/ID/view → .../file/d/ID/preview
+     * YouTube: youtu.be/ID, youtube.com/watch?v=ID, /shorts/ID → youtube-nocookie.com/embed/ID
+     */
+    public static String videoEmbed(String url) {
+        if (url == null || !url.startsWith("https://")) return null;
+        java.util.regex.Matcher m;
+        m = java.util.regex.Pattern.compile("^https://drive\\.google\\.com/(?:file/d/|open\\?id=)([A-Za-z0-9_-]{10,})").matcher(url);
+        if (m.find()) return "https://drive.google.com/file/d/" + m.group(1) + "/preview";
+        m = java.util.regex.Pattern.compile("^https://(?:www\\.|m\\.)?(?:youtube\\.com/(?:watch\\?(?:.*&)?v=|shorts/|embed/)|youtu\\.be/)([A-Za-z0-9_-]{6,})").matcher(url);
+        if (m.find()) return "https://www.youtube-nocookie.com/embed/" + m.group(1);
+        return null;
+    }
+
+    /** ¿Es un enlace aceptable para el video? (https y de un sitio conocido) */
+    public static boolean videoValido(String url) {
+        return url != null && url.startsWith("https://") && url.length() <= 500 && !url.contains(" ") && !url.contains("\"");
+    }
+
     /** Clave temporal tipo SDP-K7M4-Q9XR: 8 caracteres al azar sin letras que se confundan (0/O, 1/I/L). */
     private static final String ALFABETO = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
     public static String passwordTemporal() {

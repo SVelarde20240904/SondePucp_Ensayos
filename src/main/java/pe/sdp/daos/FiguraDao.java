@@ -10,7 +10,7 @@ public class FiguraDao extends BaseDao {
 
     /** % de los que cuentan para el color que la marcan VERDE o AZUL. */
     private static final String SELECT =
-        "SELECT v.*, f.descripcion, b.nombre AS baja_nombre, " +
+        "SELECT v.*, f.descripcion, f.video_url, b.nombre AS baja_nombre, " +
         " (SELECT ROUND(100 * SUM(e.color IN ('VERDE','AZUL')) / NULLIF(COUNT(*),0)) FROM evaluacion e " +
         "   JOIN v_miembro_cuenta_color cc ON cc.id_miembro = e.id_miembro WHERE e.id_figura = v.id_figura) AS pct " +
         "FROM v_figura_admin v JOIN figura f ON f.id_figura = v.id_figura LEFT JOIN miembro b ON b.id_miembro = f.baja_por ";
@@ -22,6 +22,7 @@ public class FiguraDao extends BaseDao {
         f.setOrden(rs.getInt("orden"));
         f.setActiva(rs.getBoolean("activa"));
         f.setDescripcion(rs.getString("descripcion"));
+        f.setVideoUrl(rs.getString("video_url"));
         f.setFechaBaja(fechaHora(rs, "fecha_baja"));
         f.setBajaPor(rs.getString("baja_nombre"));
         f.setColor(rs.getString("color"));
@@ -63,19 +64,20 @@ public class FiguraDao extends BaseDao {
      * Alta de figura. despuesDe = id de la figura tras la cual va (null = al final).
      * Si el nombre ya existía (inactiva), se reactiva en vez de duplicarse.
      */
-    public int crear(String nombre, String descripcion, Integer despuesDe, int idAdmin) throws SQLException {
+    public int crear(String nombre, String descripcion, String videoUrl, Integer despuesDe, int idAdmin) throws SQLException {
         try (Connection c = getConnection()) {
             c.setAutoCommit(false);
             try {
                 Integer orden = despuesDe == null ? null : hacerEspacio(c, despuesDe);
-                String sql = "INSERT INTO figura (nombre, descripcion, orden, creado_por) VALUES (?,?,?,?) " +
-                             "ON DUPLICATE KEY UPDATE activa = 1, descripcion = VALUES(descripcion), id_figura = LAST_INSERT_ID(id_figura)";
+                String sql = "INSERT INTO figura (nombre, descripcion, video_url, orden, creado_por) VALUES (?,?,?,?,?) " +
+                             "ON DUPLICATE KEY UPDATE activa = 1, descripcion = VALUES(descripcion), video_url = VALUES(video_url), id_figura = LAST_INSERT_ID(id_figura)";
                 int id;
                 try (PreparedStatement ps = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
                     ps.setString(1, nombre.trim());
                     setTexto(ps, 2, descripcion);
-                    setEntero(ps, 3, orden);
-                    ps.setInt(4, idAdmin);
+                    setTexto(ps, 3, videoUrl);
+                    setEntero(ps, 4, orden);
+                    ps.setInt(5, idAdmin);
                     ps.executeUpdate();
                     try (ResultSet rs = ps.getGeneratedKeys()) { rs.next(); id = rs.getInt(1); }
                 }
@@ -85,12 +87,12 @@ public class FiguraDao extends BaseDao {
         }
     }
 
-    public void actualizar(int id, String nombre, String descripcion, Integer despuesDe) throws SQLException {
+    public void actualizar(int id, String nombre, String descripcion, String videoUrl, Integer despuesDe) throws SQLException {
         try (Connection c = getConnection()) {
             c.setAutoCommit(false);
             try {
-                try (PreparedStatement ps = c.prepareStatement("UPDATE figura SET nombre=?, descripcion=? WHERE id_figura=?")) {
-                    ps.setString(1, nombre.trim()); setTexto(ps, 2, descripcion); ps.setInt(3, id); ps.executeUpdate();
+                try (PreparedStatement ps = c.prepareStatement("UPDATE figura SET nombre=?, descripcion=?, video_url=? WHERE id_figura=?")) {
+                    ps.setString(1, nombre.trim()); setTexto(ps, 2, descripcion); setTexto(ps, 3, videoUrl); ps.setInt(4, id); ps.executeUpdate();
                 }
                 if (despuesDe != null && despuesDe != id) {
                     int orden = hacerEspacio(c, despuesDe);
@@ -135,6 +137,16 @@ public class FiguraDao extends BaseDao {
             ps.setInt(1, id);
             return ps.executeUpdate() == 1;
         }
+    }
+
+    /** Ids de las figuras activas que tienen video (para mostrar "▶ ver" en la autoevaluación). */
+    public java.util.Set<Integer> idsConVideo() throws SQLException {
+        java.util.Set<Integer> s = new java.util.HashSet<>();
+        try (Connection c = getConnection(); Statement st = c.createStatement();
+             ResultSet rs = st.executeQuery("SELECT id_figura FROM figura WHERE activa=1 AND video_url IS NOT NULL AND video_url<>''")) {
+            while (rs.next()) s.add(rs.getInt(1));
+        }
+        return s;
     }
 
     public boolean existeNombre(String nombre, int exceptoId) throws SQLException {

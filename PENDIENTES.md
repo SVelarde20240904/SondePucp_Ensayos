@@ -6,12 +6,13 @@ Lista viva de mejoras. Lo que se termina pasa a **Hecho** con su commit.
 - [ ] **El túnel se cae al cambiar de red o suspender la laptop** y el link cambia. Para el piloto: dejar la laptop fija con internet estable, usar `--protocol http2`, o pasar a link fijo (Cloudflare con dominio, o Railway).
 
 ## Ideas
-- [ ] **Activar cuentas en lote:** una tabla con los que no tienen cuenta, escribes los correos y se generan todas las claves temporales de una, con un mensaje de WhatsApp por persona.
 - [ ] **Link fijo** para el túnel de Cloudflare (requiere cuenta de Cloudflare y un dominio), o pasar a Railway. **Además Chrome marca los links `trycloudflare.com` como "sitio peligroso"** (dominio usado para phishing): con dominio propio desaparece el aviso.
-- [ ] **Biblioteca de figuras:** una página por figura con su nombre, nivel, posición en la mano, descripción/pasos y un video para verla. Lo más simple: un **enlace a Google Drive o YouTube** por figura (con vista previa embebida si es YouTube o Drive) en vez de subir videos al servidor, que pesan mucho. Accesible para todos los miembros desde su menú, y desde la autoevaluación o la ficha ("¿no te acuerdas cuál es? míralo aquí").
-  - **Privacidad de los videos:** NO usar "cualquiera con el enlace" ni YouTube no listado. Empezar con **Drive restringido**: carpeta compartida solo con un Grupo de Google de SDP (lector, sin descarga); si el link se filtra, Drive pide permiso. La web recuerda al admin agregar o sacar a la persona del grupo al darla de alta o de baja. Más adelante, con hosting: videos guardados dentro de la app y servidos solo con sesión iniciada.
 
 ## Hecho
+- [x] **Biblioteca de figuras** (*Mi espacio → Biblioteca de figuras*): todas las figuras por nivel con tu color, buscador y "solo con video"; cada figura con posición en la mano, descripción y video de Drive/YouTube embebido. "▶ ver" en la autoevaluación y en las fichas. Videos en **Drive restringido al Grupo de Google de SDP** (aviso en el formulario), y recordatorio de agregar/sacar del grupo al dar de alta o de baja. `PENDIENTE_COMMIT`
+- [x] **Activar cuentas en lote** (*Miembros → Activar cuentas en lote*): escribes correos, se generan todas las claves, con un mensaje de WhatsApp por persona (con el link) y la lista de correos para el Grupo de Google. `PENDIENTE_COMMIT`
+- [x] Permisos: respaldo de revisión cada 20 s (los cambios hechos desde la web ya llegaban al instante). `PENDIENTE_COMMIT`
+- [x] La BD se actualiza sola al arrancar la app (migraciones automáticas), sin correr scripts. `PENDIENTE_COMMIT`
 - [x] Confirmado: la **"x"** del Excel = no respondió la encuesta (SIN_RESPUESTA), como ya está en la BD.
 - [x] El código **AN** se queda como está (en la app; no hace falta en la maqueta).
 

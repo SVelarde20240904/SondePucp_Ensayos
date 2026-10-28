@@ -83,10 +83,12 @@ src/main/webapp/
 | `/confirmar-asistencia` | miembro | Sí voy / No puedo + motivo (reemplaza la encuesta de WhatsApp) |
 | `/autoevaluacion?tipo=mensual` | miembro | Mensual: reemplaza colores |
 | `/autoevaluacion?ensayo=ID` | miembro | Del ensayo: **solo sube** (los colores más bajos salen bloqueados) |
+| `/biblioteca` · `/biblioteca/figura?id=` | miembro | Biblioteca de figuras: nivel, posición en la mano, descripción y video (Drive/YouTube) |
 | `/mi-historial`, `/perfil` | miembro | Su historial; sus datos (no puede tocar rol, frecuencia ni estado) |
 | `/ensayos` · `/nuevo` · `/editar` · `/detalle` · `/reporte` | equipo de ensayos | Historial del ciclo, crear/editar, detalle con notas, cerrar/cancelar (eliminar: solo admin), reporte A4 |
 | `/ensayos/cronograma` · `/asistencia` · `/figuras` | equipo de ensayos | Cronograma sugerido, asistencia real, figuras enseñadas |
 | `/ensayos/miembros` · `/ensayos/miembro?id=` | equipo de ensayos | Fichas: qué figuras sabe y cuáles le faltan cada persona, por nivel |
+| `/admin/miembros/activar` | admin | Activar cuentas en lote: correos → claves temporales + mensajes de WhatsApp |
 | `/admin/miembros[/nuevo\|/editar]` | admin | Alta con contraseña temporal, edición, inactivar/reactivar, eliminar alta por error |
 | `/admin/figuras[/nueva\|/editar]` | admin | Alta, edición y orden, desactivar/reactivar, eliminar si no tiene uso, reglas de conteo |
 | `/admin/responsabilidades` | admin (y equipo, según permisos) | Asignar, marcar cumplido (detecta coberturas), justificar |

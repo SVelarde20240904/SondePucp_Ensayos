@@ -26,6 +26,11 @@ public class Arranque implements ServletContextListener {
             return;
         }
         try {
+            for (String m : dao.migrar()) LOG.info("SDP · BD actualizada: " + m);
+        } catch (Exception ex) {
+            LOG.severe("SDP · No se pudo actualizar la BD: " + ex.getMessage());
+        }
+        try {
             String correo = Config.get("SDP_ADMIN_CORREO", null, null);
             String clave = Config.get("SDP_ADMIN_CLAVE", null, null);
             if (correo != null && clave != null) {

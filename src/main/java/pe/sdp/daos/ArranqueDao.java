@@ -41,6 +41,31 @@ public class ArranqueDao extends BaseDao {
         }
     }
 
+    /**
+     * Migraciones automáticas: si la BD es de una versión anterior, le agrega lo que falta.
+     * Así basta con actualizar la app, sin correr scripts a mano. Devuelve qué se cambió.
+     */
+    public java.util.List<String> migrar() throws SQLException {
+        java.util.List<String> hecho = new java.util.ArrayList<>();
+        try (Connection c = getConnection()) {
+            if (!existeColumna(c, "figura", "video_url")) {
+                try (Statement st = c.createStatement()) {
+                    st.executeUpdate("ALTER TABLE figura ADD COLUMN video_url VARCHAR(500) NULL AFTER descripcion, MODIFY descripcion VARCHAR(1000) NULL");
+                }
+                hecho.add("figura.video_url (biblioteca de figuras)");
+            }
+        }
+        return hecho;
+    }
+
+    private static boolean existeColumna(Connection c, String tabla, String columna) throws SQLException {
+        try (PreparedStatement ps = c.prepareStatement(
+                "SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?")) {
+            ps.setString(1, tabla); ps.setString(2, columna);
+            try (ResultSet rs = ps.executeQuery()) { return rs.next(); }
+        }
+    }
+
     /** Cuántas cuentas de prueba (@sdp.test) hay activas: en producción no debería haber ninguna. */
     public int cuentasDePrueba() throws SQLException {
         try (Connection c = getConnection(); Statement st = c.createStatement();

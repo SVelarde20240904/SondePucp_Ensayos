@@ -26,6 +26,7 @@ public class MiEspacioServlet extends BaseServlet {
     private final MiembroDao miembros = new MiembroDao();
     private final EvaluacionDao evaluaciones = new EvaluacionDao();
     private final EnsayoDao ensayos = new EnsayoDao();
+    private final pe.sdp.daos.FiguraDao figuras = new pe.sdp.daos.FiguraDao();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -89,6 +90,7 @@ public class MiEspacioServlet extends BaseServlet {
     }
 
     private void autoevaluacion(HttpServletRequest req, HttpServletResponse resp, int yo) throws SQLException, ServletException, IOException {
+        req.setAttribute("conVideo", figuras.idsConVideo());   // "▶ ver" junto a las figuras que tienen video
         Integer idEnsayo = entero(req, "ensayo");
         if (idEnsayo == null) {
             Ensayo pendiente = ensayos.autoevaluacionPendiente(yo);
