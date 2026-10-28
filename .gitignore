@@ -17,3 +17,5 @@ db/seed.sql
 # Backups de la BD (tienen datos reales)
 backup-*.sql
 antes-de-pruebas*.sql
+db/actualizacion_*.sql
+actualizacion_*.sql
