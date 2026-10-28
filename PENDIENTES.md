@@ -12,6 +12,7 @@ Lista viva de mejoras. Lo que se termina pasa a **Hecho** con su commit.
 ## Ideas
 - [ ] **Activar cuentas en lote:** una tabla con los que no tienen cuenta, escribes los correos y se generan todas las claves temporales de una, con un mensaje de WhatsApp por persona.
 - [ ] **Link fijo** para el túnel de Cloudflare (requiere cuenta de Cloudflare y un dominio), o pasar a Railway. **Además Chrome marca los links `trycloudflare.com` como "sitio peligroso"** (dominio usado para phishing): con dominio propio desaparece el aviso.
+- [ ] **Biblioteca de figuras:** una página por figura con su nombre, nivel, posición en la mano, descripción/pasos y un video para verla. Lo más simple: un **enlace a Google Drive o YouTube** por figura (con vista previa embebida si es YouTube o Drive) en vez de subir videos al servidor, que pesan mucho. Accesible para todos los miembros desde su menú, y desde la autoevaluación o la ficha ("¿no te acuerdas cuál es? míralo aquí").
 - [ ] Pantallas de **celular en Figma** (los mockups están solo en versión laptop).
 - [ ] Subir los logos reales a Figma.
 
