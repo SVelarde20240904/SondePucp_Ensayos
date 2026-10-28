@@ -75,8 +75,7 @@ Las sentencias para cada caso están en `consultas.sql` (secciones E a N) y `pru
 58 miembros · 11 del equipo de ensayos · 1 admin (Sergio) · 37 figuras · 218 evaluaciones y su histórico (autoevaluación de octubre) · 13 ensayos (abril–junio) con 490 registros de asistencia · 33 encargos históricos.
 
 ## Decisiones y supuestos (revísalos)
-1. **La "x" de ASISTENCIA** se cargó como `SIN_RESPUESTA` (no marcó la encuesta), como me dijiste. La leyenda del Excel dice "Marcó que no venía al ensayo". Si es eso, corrígelo con:
-   `UPDATE asistencia SET confirmacion='NO' WHERE confirmacion='SIN_RESPUESTA' AND id_ensayo BETWEEN 1 AND 13;`
+1. **La "x" de ASISTENCIA** se cargó como `SIN_RESPUESTA`: no respondió la encuesta (**confirmado** por el equipo; la leyenda del Excel decía otra cosa, pero no aplica).
 2. Se agregó el código **AN** (asistencia no planeada: marcó que no, pero vino), que estaba en el Excel. Para la migración, AP/TJ/TI/FJ/FI se cargaron como `confirmacion='SI'` y AN como `'NO'`.
 3. Los ensayos históricos quedaron como tipo GENERAL: los sábados 2:00–4:00 PM y los otros días 8:00–10:00 PM. El del 06/06 no tiene asistencias registradas en el Excel.
 4. En los encargos históricos, el plazo es desconocido (NULL). Si se cumplió cuenta como A_TIEMPO; si no hay fecha de cumplimiento cuenta como NO_CUMPLIDA. "Cubrió X" se cargó como `cumplido_por = X`. Cuando había dos responsables ("Deyvid + Mafer"), se tomó el primero.
