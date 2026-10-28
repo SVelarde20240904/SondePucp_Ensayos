@@ -7,14 +7,21 @@
   <div class="card flyer w-300 center" style="align-items:center;padding:28px 24px">
     <div class="avatar" style="width:132px;height:132px;font-size:44px;background:var(--ink);color:var(--accent);border:6px solid var(--accent);font-family:var(--display)">${yo.iniciales}</div>
     <h1 style="font-size:22px"><c:out value="${yo.nombre}"/></h1>
+    <c:if test="${yo.tieneApodo}"><p class="muted" style="margin-top:-6px">“<c:out value="${yo.apodo}"/>”</p></c:if>
     <div class="inline" style="justify-content:center"><span class="tag info role">${yo.rolBaileTexto}</span><sdp:chip color="${yo.nivel}"/></div>
-    <ul class="icon-list"><li><sdp:icono n="clip"/>Miembro desde ${yo.miembroDesde}</li><li><sdp:icono n="clock"/>Frecuencia: ${yo.frecuenciaTexto}</li></ul>
+    <ul class="icon-list"><li><sdp:icono n="clip"/>Miembro desde ${yo.miembroDesde}</li><li><sdp:icono n="clock"/>Frecuencia: ${yo.frecuenciaTexto}</li>
+      <c:if test="${not empty yo.fechaNacimiento}"><li>🎂 Cumpleaños: ${yo.cumpleTexto}</li></c:if></ul>
+    <c:if test="${not empty yo.teams}"><div class="inline" style="justify-content:center;flex-wrap:wrap;gap:6px"><c:forEach var="t" items="${yo.teams}"><span class="tag info">Team <c:out value="${t}"/></span></c:forEach></div></c:if>
   </div>
   <div class="stack grow">
     <div class="card"><h2>Datos personales</h2><p>Los mismos que pedimos en la convocatoria</p>
       <div class="form-row">
         <div class="field"><label>Nombre completo</label><input class="input" name="nombreCompleto" value="<c:out value='${yo.nombreCompleto}'/>" required></div>
         <div class="field"><label>Nombre en el sistema</label><input class="input" value="<c:out value='${yo.nombre}'/>" readonly title="Lo cambia el admin"></div></div>
+      <div class="form-row">
+        <div class="field"><label>Apodo</label><input class="input" name="apodo" value="<c:out value='${yo.apodo}'/>" maxlength="30" placeholder="Cómo te dicen en el grupo (opcional)"></div>
+        <div class="field"><label>Fecha de nacimiento</label><input class="input" type="date" name="fechaNacimiento" value="${yo.fechaNacimientoIso}" max="${maxNacimiento}">
+          <span class="muted xs">Para saludarte en tu cumple 🎂. Los demás solo ven el día y el mes, nunca el año.</span></div></div>
       <div class="form-row">
         <div class="field"><label>Código PUCP</label><input class="input" name="codigoPucp" value="<c:out value='${yo.codigoPucp}'/>" pattern="\d{8}" placeholder="8 dígitos"></div>
         <div class="field"><label>Facultad</label><select class="input" name="facultad"><option value="">Elige tu facultad</option>
@@ -25,6 +32,7 @@
         <div class="field"><label>Celular</label><input class="input" type="tel" name="celular" value="<c:out value='${yo.celular}'/>"></div></div>
     </div>
     <div class="card"><h2>En el grupo</h2><p>Solo el admin puede cambiar estos datos. Tu rol de baile se registra una sola vez al ingresar.</p>
+      <div class="field"><label>Teams</label><input class="input" value="🔒  ${empty yo.teams ? 'Sin team asignado' : 'Team '.concat(fn:join(yo.teams.toArray(), ' · Team '))}" readonly></div>
       <div class="form-row">
         <div class="field"><label>Rol de baile</label><input class="input" value="🔒  ${yo.rolBaileTexto}" readonly></div>
         <div class="field"><label>Frecuencia</label><input class="input" value="🔒  ${yo.frecuenciaTexto}" readonly></div>

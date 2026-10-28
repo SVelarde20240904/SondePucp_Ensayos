@@ -14,7 +14,7 @@
       <c:if test="${ensayo.pasado or ensayo.estado == 'PROGRAMADO'}"><button class="btn btn-secondary btn-sm" name="action" value="cerrar">Marcar como cerrado</button></c:if>
       <button class="btn btn-danger btn-sm" name="action" value="cancelar" onclick="return confirm('¿Cancelar este ensayo?')">Cancelar ensayo</button></form>
   </c:if>
-  <c:if test="${u.admin}">
+  <c:if test="${perm.contains('ELIMINAR_ENSAYOS')}">
     <form method="post" action="${ctx}/ensayos/detalle" class="inline-form"><input type="hidden" name="_csrf" value="${sessionScope.csrf}"><input type="hidden" name="id" value="${ensayo.idEnsayo}">
       <button class="btn btn-danger btn-sm" name="action" value="eliminar"
         onclick="return confirm('¿ELIMINAR este ensayo para siempre?\n\nSe borran su asistencia, confirmaciones, figuras enseñadas y encargos.${ensayo.autoevaluaron > 0 ? '\\n' += ensayo.autoevaluaron += ' persona(s) se autoevaluaron: los colores que subieron se regresan.' : ''}\n\nÚsalo solo para ensayos de prueba o creados por error.')">🗑 Eliminar</button></form>

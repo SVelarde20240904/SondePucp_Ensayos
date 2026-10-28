@@ -19,6 +19,33 @@ public class EncargoDao extends BaseDao {
                      "LEFT JOIN miembro cp ON cp.id_miembro=v.cumplido_por WHERE v.semana=? ORDER BY v.plazo IS NULL, v.plazo, t.nombre";
         try (Connection c = getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
             setFecha(ps, 1, sabado);
+            return mapearLista(ps);
+        }
+    }
+
+    /** Las responsabilidades de una persona (a su cargo o que cubrió), de la más reciente a la más antigua. */
+    public List<Encargo> deMiembro(int idMiembro, int limite) throws SQLException {
+        String sql = "SELECT v.*, t.nombre AS tipo, r.nombre AS resp, cp.nombre AS cumple FROM v_encargo_estado v " +
+                     "JOIN tipo_encargo t ON t.id_tipo=v.id_tipo JOIN miembro r ON r.id_miembro=v.responsable " +
+                     "LEFT JOIN miembro cp ON cp.id_miembro=v.cumplido_por WHERE v.responsable=? OR v.cumplido_por=? " +
+                     "ORDER BY v.semana DESC, v.plazo IS NULL, v.plazo, t.nombre LIMIT ?";
+        try (Connection c = getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setInt(1, idMiembro); ps.setInt(2, idMiembro); ps.setInt(3, limite);
+            return mapearLista(ps);
+        }
+    }
+
+    /** Cuántas responsabilidades pendientes (aún en plazo) tiene a su cargo. */
+    public int pendientesDe(int idMiembro) throws SQLException {
+        try (Connection c = getConnection(); PreparedStatement ps = c.prepareStatement(
+                "SELECT COUNT(*) FROM v_encargo_estado WHERE responsable=? AND estado='PENDIENTE'")) {
+            ps.setInt(1, idMiembro);
+            try (ResultSet rs = ps.executeQuery()) { rs.next(); return rs.getInt(1); }
+        }
+    }
+
+    private List<Encargo> mapearLista(PreparedStatement ps) throws SQLException {
+        {
             List<Encargo> l = new ArrayList<>();
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {

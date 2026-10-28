@@ -1,6 +1,7 @@
 package pe.sdp.daos;
 
 import pe.sdp.beans.Miembro;
+import pe.sdp.beans.Team;
 
 import java.sql.*;
 import java.util.*;
@@ -14,7 +15,10 @@ public class MiembroDao extends BaseDao {
         " (SELECT COUNT(*) FROM asistencia a JOIN ensayo e ON e.id_ensayo=a.id_ensayo " +
         "   WHERE a.id_miembro=m.id_miembro AND e.estado<>'CANCELADO' AND e.fecha BETWEEN DATE_FORMAT(CURDATE(),'%Y-%m-01') AND CURDATE()) AS ensayos_mes, " +
         " (SELECT COUNT(*) FROM asistencia a JOIN ensayo e ON e.id_ensayo=a.id_ensayo " +
-        "   WHERE a.id_miembro=m.id_miembro AND a.estado_real IN ('AP','AN','TJ','TI') AND e.fecha BETWEEN DATE_FORMAT(CURDATE(),'%Y-%m-01') AND CURDATE()) AS asistidos_mes " +
+        "   WHERE a.id_miembro=m.id_miembro AND a.estado_real IN ('AP','AN','TJ','TI') AND e.fecha BETWEEN DATE_FORMAT(CURDATE(),'%Y-%m-01') AND CURDATE()) AS asistidos_mes, " +
+        " (SELECT GROUP_CONCAT(mr.id_rol) FROM miembro_rol mr WHERE mr.id_miembro=m.id_miembro) AS rol_ids, " +
+        " (SELECT GROUP_CONCAT(t.id_team ORDER BY t.orden) FROM miembro_team mt JOIN team t ON t.id_team=mt.id_team WHERE mt.id_miembro=m.id_miembro) AS team_ids, " +
+        " (SELECT GROUP_CONCAT(t.nombre ORDER BY t.orden SEPARATOR '|') FROM miembro_team mt JOIN team t ON t.id_team=mt.id_team WHERE mt.id_miembro=m.id_miembro) AS team_nombres " +
         "FROM miembro m JOIN v_miembro_admin v ON v.id_miembro = m.id_miembro ";
 
     private Miembro mapear(ResultSet rs) throws SQLException {
@@ -46,7 +50,19 @@ public class MiembroDao extends BaseDao {
         m.setCuentaColor(rs.getBoolean("cuenta_color"));
         m.setEnsayosMes(rs.getInt("ensayos_mes"));
         m.setAsistidosMes(rs.getInt("asistidos_mes"));
+        m.setApodo(rs.getString("apodo"));
+        m.setFechaNacimiento(fecha(rs, "fecha_nacimiento"));
+        m.setRolIds(ids(rs.getString("rol_ids")));
+        m.setTeamIds(ids(rs.getString("team_ids")));
+        String tn = rs.getString("team_nombres");
+        m.setTeams(tn == null ? new ArrayList<>() : new ArrayList<>(Arrays.asList(tn.split("\\|"))));
         return m;
+    }
+
+    private static Set<Integer> ids(String csv) {
+        Set<Integer> s = new LinkedHashSet<>();
+        if (csv != null) for (String x : csv.split(",")) if (!x.isBlank()) s.add(Integer.parseInt(x.trim()));
+        return s;
     }
 
     public Miembro buscarPorCorreo(String correo) throws SQLException {
@@ -63,8 +79,11 @@ public class MiembroDao extends BaseDao {
         }
     }
 
-    /** filtro: TODOS, LEADER, FOLLOWER, EQUIPO, INACTIVOS · busqueda: texto libre */
-    public List<Miembro> listar(String filtro, String busqueda) throws SQLException {
+    /** filtro: TODOS, LEADER, FOLLOWER, EQUIPO, INACTIVOS · busqueda: texto libre (nombre, nombre completo o apodo) */
+    public List<Miembro> listar(String filtro, String busqueda) throws SQLException { return listar(filtro, busqueda, null); }
+
+    /** Igual, y si idTeam no es null solo los de ese team. */
+    public List<Miembro> listar(String filtro, String busqueda, Integer idTeam) throws SQLException {
         StringBuilder sql = new StringBuilder(SELECT_ADMIN).append("WHERE 1=1 ");
         if ("INACTIVOS".equals(filtro)) sql.append("AND m.estado='INACTIVO' ");
         else {
@@ -72,12 +91,14 @@ public class MiembroDao extends BaseDao {
             if ("LEADER".equals(filtro) || "FOLLOWER".equals(filtro)) sql.append("AND m.rol_baile=? ");
             if ("EQUIPO".equals(filtro)) sql.append("AND v.es_equipo_ensayos=1 ");
         }
-        if (busqueda != null && !busqueda.isBlank()) sql.append("AND (m.nombre LIKE ? OR m.nombre_completo LIKE ?) ");
+        if (idTeam != null) sql.append("AND EXISTS (SELECT 1 FROM miembro_team mt WHERE mt.id_miembro=m.id_miembro AND mt.id_team=?) ");
+        if (busqueda != null && !busqueda.isBlank()) sql.append("AND (m.nombre LIKE ? OR m.nombre_completo LIKE ? OR m.apodo LIKE ?) ");
         sql.append("ORDER BY m.nombre");
         try (Connection c = getConnection(); PreparedStatement ps = c.prepareStatement(sql.toString())) {
             int i = 1;
             if ("LEADER".equals(filtro) || "FOLLOWER".equals(filtro)) ps.setString(i++, filtro);
-            if (busqueda != null && !busqueda.isBlank()) { ps.setString(i++, "%" + busqueda.trim() + "%"); ps.setString(i, "%" + busqueda.trim() + "%"); }
+            if (idTeam != null) ps.setInt(i++, idTeam);
+            if (busqueda != null && !busqueda.isBlank()) for (int k = 0; k < 3; k++) ps.setString(i++, "%" + busqueda.trim() + "%");
             List<Miembro> lista = new ArrayList<>();
             try (ResultSet rs = ps.executeQuery()) { while (rs.next()) lista.add(mapear(rs)); }
             return lista;
@@ -116,7 +137,7 @@ public class MiembroDao extends BaseDao {
     /** El propio miembro edita su perfil: NO puede tocar rol de baile, frecuencia ni estado. */
     public void actualizarPerfil(Miembro m) throws SQLException {
         String sql = "UPDATE miembro SET nombre_completo=?, codigo_pucp=?, facultad=?, correo=?, celular=?, " +
-                     "aviso_asistencia=?, aviso_mensual=?, aviso_ensayo=? WHERE id_miembro=?";
+                     "aviso_asistencia=?, aviso_mensual=?, aviso_ensayo=?, apodo=?, fecha_nacimiento=? WHERE id_miembro=?";
         try (Connection c = getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setString(1, m.getNombreCompleto());
             setTexto(ps, 2, m.getCodigoPucp());
@@ -126,47 +147,54 @@ public class MiembroDao extends BaseDao {
             ps.setBoolean(6, m.isAvisoAsistencia());
             ps.setBoolean(7, m.isAvisoMensual());
             ps.setBoolean(8, m.isAvisoEnsayo());
-            ps.setInt(9, m.getIdMiembro());
+            setTexto(ps, 9, m.getApodo());
+            setFecha(ps, 10, m.getFechaNacimiento());
+            ps.setInt(11, m.getIdMiembro());
             ps.executeUpdate();
         }
     }
 
     // ===================== ADMINISTRACIÓN =====================
 
-    /** Alta de miembro. El trigger le da el rol MIEMBRO; aquí se agregan los roles extra. */
-    public int crear(Miembro m, String passwordHash, boolean equipo, boolean admin, int idAdmin) throws SQLException {
+    /**
+     * Alta de miembro. El trigger le da el rol MIEMBRO; aquí se agregan los roles extra y sus teams.
+     * roles / teams en null = no se tocan.
+     */
+    public int crear(Miembro m, String passwordHash, Set<Integer> roles, Set<Integer> teams, int idAdmin) throws SQLException {
         String sql = "INSERT INTO miembro (nombre, nombre_completo, codigo_pucp, correo, celular, facultad, rol_baile, frecuencia, " +
-                     "fecha_ingreso, password_hash, debe_cambiar_password, creado_por) VALUES (?,?,?,?,?,?,?,?,?,?,1,?)";
+                     "fecha_ingreso, apodo, fecha_nacimiento, password_hash, debe_cambiar_password, creado_por) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,1,?)";
         try (Connection c = getConnection()) {
             c.setAutoCommit(false);
             try {
                 int id;
                 try (PreparedStatement ps = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
                     llenarDatos(ps, m);
-                    ps.setString(10, passwordHash);
-                    ps.setInt(11, idAdmin);
+                    ps.setString(12, passwordHash);
+                    ps.setInt(13, idAdmin);
                     ps.executeUpdate();
                     try (ResultSet rs = ps.getGeneratedKeys()) { rs.next(); id = rs.getInt(1); }
                 }
-                guardarRoles(c, id, equipo, admin, idAdmin);
+                guardarRoles(c, id, roles, idAdmin);
+                guardarTeams(c, id, teams, idAdmin);
                 c.commit();
                 return id;
             } catch (SQLException e) { c.rollback(); throw e; }
         }
     }
 
-    public void actualizar(Miembro m, boolean equipo, boolean admin, int idAdmin) throws SQLException {
+    public void actualizar(Miembro m, Set<Integer> roles, Set<Integer> teams, int idAdmin) throws SQLException {
         String sql = "UPDATE miembro SET nombre=?, nombre_completo=?, codigo_pucp=?, correo=?, celular=?, facultad=?, rol_baile=?, " +
-                     "frecuencia=?, fecha_ingreso=? WHERE id_miembro=?";
+                     "frecuencia=?, fecha_ingreso=?, apodo=?, fecha_nacimiento=? WHERE id_miembro=?";
         try (Connection c = getConnection()) {
             c.setAutoCommit(false);
             try {
                 try (PreparedStatement ps = c.prepareStatement(sql)) {
                     llenarDatos(ps, m);
-                    ps.setInt(10, m.getIdMiembro());
+                    ps.setInt(12, m.getIdMiembro());
                     ps.executeUpdate();
                 }
-                guardarRoles(c, m.getIdMiembro(), equipo, admin, idAdmin);
+                guardarRoles(c, m.getIdMiembro(), roles, idAdmin);
+                guardarTeams(c, m.getIdMiembro(), teams, idAdmin);
                 c.commit();
             } catch (SQLException e) { c.rollback(); throw e; }
         }
@@ -182,22 +210,69 @@ public class MiembroDao extends BaseDao {
         setTexto(ps, 7, m.getRolBaile());
         setTexto(ps, 8, m.getFrecuencia());
         setFecha(ps, 9, m.getFechaIngreso());
+        setTexto(ps, 10, m.getApodo());
+        setFecha(ps, 11, m.getFechaNacimiento());
     }
 
-    /** Pone o quita los roles EQUIPO_ENSAYOS (2) y ADMIN (3). El trigger impide quedarse sin admin. */
-    private void guardarRoles(Connection c, int id, boolean equipo, boolean admin, int idAdmin) throws SQLException {
-        int[][] roles = {{2, equipo ? 1 : 0}, {3, admin ? 1 : 0}};
-        for (int[] r : roles) {
-            if (r[1] == 1) {
-                try (PreparedStatement ps = c.prepareStatement("INSERT IGNORE INTO miembro_rol (id_miembro, id_rol, asignado_por) VALUES (?,?,?)")) {
-                    ps.setInt(1, id); ps.setInt(2, r[0]); ps.setInt(3, idAdmin); ps.executeUpdate();
-                }
-            } else {
-                try (PreparedStatement ps = c.prepareStatement("DELETE FROM miembro_rol WHERE id_miembro=? AND id_rol=?")) {
-                    ps.setInt(1, id); ps.setInt(2, r[0]); ps.executeUpdate();
+    /** Roles que se pueden poner o quitar (el 1, Miembro, lo tienen todos). El trigger impide quedarse sin Owner. */
+    public static final List<Integer> ROLES_EXTRA = List.of(2, 4, 5, 3);
+
+    private void guardarRoles(Connection c, int id, Set<Integer> roles, int idAdmin) throws SQLException {
+        if (roles == null) return;
+        // primero se agregan y luego se quitan: así un Owner que se edita a sí mismo no choca con el trigger
+        for (int rol : ROLES_EXTRA) if (roles.contains(rol)) {
+            try (PreparedStatement ps = c.prepareStatement("INSERT IGNORE INTO miembro_rol (id_miembro, id_rol, asignado_por) VALUES (?,?,?)")) {
+                ps.setInt(1, id); ps.setInt(2, rol); ps.setInt(3, idAdmin); ps.executeUpdate();
+            }
+        }
+        for (int rol : ROLES_EXTRA) if (!roles.contains(rol)) {
+            try (PreparedStatement ps = c.prepareStatement("DELETE FROM miembro_rol WHERE id_miembro=? AND id_rol=?")) {
+                ps.setInt(1, id); ps.setInt(2, rol); ps.executeUpdate();
+            }
+        }
+    }
+
+    private void guardarTeams(Connection c, int id, Set<Integer> teams, int idAdmin) throws SQLException {
+        if (teams == null) return;
+        try (PreparedStatement del = c.prepareStatement("DELETE FROM miembro_team WHERE id_miembro=?")) { del.setInt(1, id); del.executeUpdate(); }
+        try (PreparedStatement ps = c.prepareStatement("INSERT IGNORE INTO miembro_team (id_miembro, id_team, asignado_por) VALUES (?,?,?)")) {
+            for (int t : teams) { ps.setInt(1, id); ps.setInt(2, t); ps.setInt(3, idAdmin); ps.addBatch(); }
+            ps.executeBatch();
+        }
+    }
+
+    /** Los teams de SDP, en orden. */
+    public List<Team> teams() throws SQLException {
+        try (Connection c = getConnection(); Statement st = c.createStatement();
+             ResultSet rs = st.executeQuery("SELECT id_team, codigo, nombre FROM team ORDER BY orden, nombre")) {
+            List<Team> l = new ArrayList<>();
+            while (rs.next()) l.add(new Team(rs.getInt(1), rs.getString(2), rs.getString(3)));
+            return l;
+        }
+    }
+
+    /** Cumpleaños de los próximos "dias" días (incluye hoy), ordenados por cercanía. Solo miembros activos. */
+    public List<Miembro> cumpleanosProximos(int dias) throws SQLException {
+        java.time.LocalDate hoy = java.time.LocalDate.now(pe.sdp.util.Formato.ZONA);
+        List<Miembro> l = new ArrayList<>();
+        Map<Integer, Long> falta = new HashMap<>();
+        try (Connection c = getConnection(); Statement st = c.createStatement();
+             ResultSet rs = st.executeQuery("SELECT id_miembro, nombre, apodo, fecha_nacimiento FROM miembro WHERE estado='ACTIVO' AND fecha_nacimiento IS NOT NULL")) {
+            while (rs.next()) {
+                java.time.LocalDate n = rs.getDate(4).toLocalDate();
+                java.time.LocalDate prox;
+                try { prox = n.withYear(hoy.getYear()); } catch (java.time.DateTimeException e) { prox = java.time.LocalDate.of(hoy.getYear(), 3, 1); } // 29/02
+                if (prox.isBefore(hoy)) { try { prox = n.withYear(hoy.getYear() + 1); } catch (java.time.DateTimeException e) { prox = java.time.LocalDate.of(hoy.getYear() + 1, 3, 1); } }
+                long d = java.time.temporal.ChronoUnit.DAYS.between(hoy, prox);
+                if (d < dias) {
+                    Miembro m = new Miembro();
+                    m.setIdMiembro(rs.getInt(1)); m.setNombre(rs.getString(2)); m.setApodo(rs.getString(3)); m.setFechaNacimiento(n);
+                    l.add(m); falta.put(m.getIdMiembro(), d);
                 }
             }
         }
+        l.sort(Comparator.comparing(m -> falta.get(m.getIdMiembro())));
+        return l;
     }
 
     public void inactivar(int id, String motivo, int idAdmin) throws SQLException {

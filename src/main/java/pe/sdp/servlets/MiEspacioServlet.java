@@ -16,17 +16,19 @@ import pe.sdp.util.Sesion;
 
 import java.io.IOException;
 import java.sql.SQLException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 
 /** Mi espacio: Inicio, Confirmar asistencia, Autoevaluaciones, Mi historial y Mi perfil. */
-@WebServlet(urlPatterns = {"/inicio", "/confirmar-asistencia", "/autoevaluacion", "/mi-historial", "/perfil"})
+@WebServlet(urlPatterns = {"/inicio", "/confirmar-asistencia", "/autoevaluacion", "/mi-historial", "/perfil", "/mis-responsabilidades"})
 public class MiEspacioServlet extends BaseServlet {
 
     private final MiembroDao miembros = new MiembroDao();
     private final EvaluacionDao evaluaciones = new EvaluacionDao();
     private final EnsayoDao ensayos = new EnsayoDao();
     private final pe.sdp.daos.FiguraDao figuras = new pe.sdp.daos.FiguraDao();
+    private final pe.sdp.daos.EncargoDao encargos = new pe.sdp.daos.EncargoDao();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -50,9 +52,14 @@ public class MiEspacioServlet extends BaseServlet {
                     req.setAttribute("yo", miembros.obtener(yo));
                     vista(req, resp, "miembro/mi-historial");
                 }
+                case "/mis-responsabilidades" -> {
+                    req.setAttribute("lista", encargos.deMiembro(yo, 60));
+                    vista(req, resp, "miembro/mis-responsabilidades");
+                }
                 case "/perfil" -> {
                     req.setAttribute("yo", miembros.obtener(yo));
                     req.setAttribute("facultades", AdminServlet.FACULTADES);
+                    req.setAttribute("maxNacimiento", LocalDate.now().minusYears(14));
                     vista(req, resp, "miembro/mi-perfil");
                 }
             }
@@ -77,6 +84,8 @@ public class MiEspacioServlet extends BaseServlet {
         req.setAttribute("cierreMensual", Formato.fechaLarga(v[1].toLocalDate()));
         req.setAttribute("nFiguras", evaluaciones.deMiembro(yo).size());
         req.setAttribute("pendienteEnsayo", ensayos.autoevaluacionPendiente(yo));
+        req.setAttribute("misPendientes", encargos.pendientesDe(yo));
+        req.setAttribute("cumples", miembros.cumpleanosProximos(7));
         vista(req, resp, "miembro/inicio");
     }
 
@@ -167,12 +176,18 @@ public class MiEspacioServlet extends BaseServlet {
                     m.setFacultad(texto(req, "facultad"));
                     m.setCorreo(correo);
                     m.setCelular(texto(req, "celular"));
+                    String apodo = texto(req, "apodo");
+                    if (apodo != null && apodo.length() > 30) { Sesion.error(req, "El apodo puede tener hasta 30 letras."); ir(req, resp, "/perfil"); return; }
+                    if (!AdminServlet.fechaNacimientoValida(fecha(req, "fechaNacimiento"))) { Sesion.error(req, "Revisa tu fecha de nacimiento."); ir(req, resp, "/perfil"); return; }
+                    m.setApodo(apodo);
+                    m.setFechaNacimiento(fecha(req, "fechaNacimiento"));
                     m.setAvisoAsistencia(check(req, "avisoAsistencia"));
                     m.setAvisoMensual(check(req, "avisoMensual"));
                     m.setAvisoEnsayo(check(req, "avisoEnsayo"));
                     miembros.actualizarPerfil(m);
                     Miembro sesion = Sesion.usuario(req);
                     sesion.setNombreCompleto(m.getNombreCompleto()); sesion.setCorreo(m.getCorreo());
+                    sesion.setApodo(m.getApodo()); sesion.setFechaNacimiento(m.getFechaNacimiento());
                     Sesion.ok(req, "Tus datos quedaron guardados.");
                     ir(req, resp, "/perfil");
                 }

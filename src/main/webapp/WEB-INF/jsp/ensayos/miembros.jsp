@@ -6,25 +6,27 @@
 <div class="card">
   <form class="inline" method="get" action="${ctx}/ensayos/miembros">
     <input type="hidden" name="filtro" value="<c:out value='${param.filtro}'/>"><input type="hidden" name="nivel" value="<c:out value='${param.nivel}'/>">
-    <input class="input" name="q" value="<c:out value='${param.q}'/>" placeholder="Buscar por nombre…" style="max-width:280px">
+    <input class="input" name="q" value="<c:out value='${param.q}'/>" placeholder="Buscar por nombre o apodo…" style="max-width:280px">
+    <select class="input" name="team" style="max-width:200px" onchange="this.form.submit()"><option value="">Todos los teams</option>
+      <c:forEach var="t" items="${teams}"><option value="${t.idTeam}" ${param.team == t.idTeam ? 'selected' : ''}>Team <c:out value="${t.nombre}"/></option></c:forEach></select>
     <button class="btn btn-secondary btn-sm">Buscar</button>
   </form>
   <div class="inline">
     <c:forEach var="f" items="${['','LEADER','FOLLOWER','EQUIPO']}">
-      <c:url var="u1" value="/ensayos/miembros"><c:param name="filtro" value="${f}"/><c:param name="nivel" value="${param.nivel}"/><c:param name="q" value="${param.q}"/></c:url>
+      <c:url var="u1" value="/ensayos/miembros"><c:param name="filtro" value="${f}"/><c:param name="nivel" value="${param.nivel}"/><c:param name="q" value="${param.q}"/><c:param name="team" value="${param.team}"/></c:url>
       <a class="pill-link ${param.filtro == f or (empty param.filtro and empty f) ? 'on' : ''}" href="${u1}">${empty f ? 'Todos' : (f == 'LEADER' ? 'Leaders' : (f == 'FOLLOWER' ? 'Followers' : 'Equipo de ensayos'))}</a>
     </c:forEach>
   </div>
   <div class="inline">
     <span class="muted small">Nivel:</span>
     <c:forEach var="n" items="${['','AZUL','VERDE','AMARILLO','ROJO','SIN']}">
-      <c:url var="u2" value="/ensayos/miembros"><c:param name="filtro" value="${param.filtro}"/><c:param name="nivel" value="${n}"/><c:param name="q" value="${param.q}"/></c:url>
+      <c:url var="u2" value="/ensayos/miembros"><c:param name="filtro" value="${param.filtro}"/><c:param name="nivel" value="${n}"/><c:param name="q" value="${param.q}"/><c:param name="team" value="${param.team}"/></c:url>
       <a class="pill-link ${param.nivel == n or (empty param.nivel and empty n) ? 'on' : ''}" href="${u2}">${empty n ? 'Todos' : (n == 'SIN' ? 'Sin nivel' : fn:substring(n,0,1).concat(fn:toLowerCase(fn:substring(n,1,10))))}</a>
     </c:forEach>
   </div>
   <table class="table cards-compact"><thead><tr><th>Miembro</th><th>Rol</th><th>Nivel</th><th>Frecuencia</th><th>Asistencia (mes)</th><th></th></tr></thead><tbody>
   <c:forEach var="m" items="${lista}">
-    <tr><td><a href="${ctx}/ensayos/miembro?id=${m.idMiembro}"><c:out value="${m.nombre}"/></a><c:if test="${m.equipoEnsayos}"> <span class="tag info">ENS</span></c:if></td>
+    <tr><td><a href="${ctx}/ensayos/miembro?id=${m.idMiembro}"><c:out value="${m.nombreConApodo}"/></a><c:forEach var="t" items="${m.teams}"> <span class="tag info"><c:out value="${t}"/></span></c:forEach></td>
       <td class="no-label"><span class="tag info role">${m.rolBaileTexto}</span></td>
       <td class="no-label"><sdp:chip color="${m.nivel}"/></td>
       <td>${m.frecuenciaTexto}</td><td>${m.asistenciaMesTexto}</td>

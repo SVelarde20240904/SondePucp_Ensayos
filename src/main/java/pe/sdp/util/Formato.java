@@ -14,6 +14,8 @@ import java.util.Locale;
 public final class Formato {
 
     public static final Locale ES = new Locale("es", "PE");
+    /** Hora de Lima (el servidor puede estar en UTC). */
+    public static final java.time.ZoneId ZONA = java.time.ZoneId.of("America/Lima");
     public static final String[] COLORES = {"ROJO", "AMARILLO", "VERDE", "AZUL"};
     private static final DateTimeFormatter DDMM = DateTimeFormatter.ofPattern("dd/MM");
     private static final DateTimeFormatter DDMMYYYY = DateTimeFormatter.ofPattern("dd/MM/yyyy");
@@ -32,6 +34,8 @@ public final class Formato {
     public static boolean esColor(String c) { return valor(c) > 0; }
 
     public static String ddmm(LocalDate d) { return d == null ? "" : d.format(DDMM); }
+    /** "14 de marzo" (sin año). */
+    public static String diaMes(LocalDate d) { return d == null ? "" : d.getDayOfMonth() + " de " + d.getMonth().getDisplayName(java.time.format.TextStyle.FULL, ES); }
     public static String ddmmyyyy(LocalDate d) { return d == null ? "" : d.format(DDMMYYYY); }
     public static String ddmmHora(LocalDateTime d) { return d == null ? "" : d.format(DDMM_HHMM); }
     public static String hora(LocalTime t) { return t == null ? "" : t.format(HORA).replace("AM", "AM").replace("PM", "PM"); }

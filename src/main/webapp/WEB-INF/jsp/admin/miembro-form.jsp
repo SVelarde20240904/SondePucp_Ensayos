@@ -16,6 +16,9 @@
         <div class="field"><label>Nombre en el sistema *</label><input class="input" name="nombre" value="<c:out value='${m.nombre}'/>" placeholder="Nombre + apellido (único)" required></div>
         <div class="field"><label>Nombre completo *</label><input class="input" name="nombreCompleto" value="<c:out value='${m.nombreCompleto}'/>" required></div></div>
       <div class="form-row">
+        <div class="field"><label>Apodo</label><input class="input" name="apodo" value="<c:out value='${m.apodo}'/>" maxlength="30" placeholder="Ej: Ilo, Mimi (opcional)"></div>
+        <div class="field"><label>Fecha de nacimiento</label><input class="input" type="date" name="fechaNacimiento" value="${m.fechaNacimientoIso}"></div></div>
+      <div class="form-row">
         <div class="field"><label>Código PUCP</label><input class="input" name="codigoPucp" value="<c:out value='${m.codigoPucp}'/>" pattern="\d{8}" placeholder="8 dígitos"></div>
         <div class="field"><label>Facultad</label><select class="input" name="facultad"><option value="">—</option>
           <c:forEach var="f" items="${facultades}"><option ${m.facultad == f ? 'selected' : ''}>${f}</option></c:forEach>
@@ -36,10 +39,17 @@
   </div>
 
   <div class="stack w-440">
-    <div class="card"><h2>Roles en el sistema</h2><p>Define qué pantallas puede ver (ver Roles y permisos)</p>
+    <div class="card"><h2>Teams</h2><p>A qué teams de SDP pertenece (puede dobletear)</p>
+      <div class="pills">
+        <c:forEach var="t" items="${teams}"><label class="pill"><input type="checkbox" name="team" value="${t.idTeam}" ${m.teamIds.contains(t.idTeam) ? 'checked' : ''}><span><c:out value="${t.nombre}"/></span></label></c:forEach>
+      </div>
+    </div>
+    <div class="card"><h2>Roles en el sistema</h2><p>Define qué pantallas puede ver (ver Roles y permisos)<c:if test="${not perm.contains('ASIGNAR_ROLES')}"> · solo el Owner los cambia</c:if></p>
       <label class="check-item"><input type="checkbox" checked disabled> Miembro <span class="muted xs">(todos)</span></label>
-      <label class="check-item"><input type="checkbox" name="rolEquipo" value="1" ${m.equipoEnsayos ? 'checked' : ''}> Equipo de ensayos <span class="muted xs">(no cuenta para el color)</span></label>
-      <label class="check-item"><input type="checkbox" name="rolAdmin" value="1" ${m.admin ? 'checked' : ''}> Admin</label>
+      <c:forEach var="r" items="${roles}">
+        <label class="check-item"><input type="checkbox" name="rol" value="${r.idRol}" ${m.tieneRol(r.idRol) ? 'checked' : ''} ${perm.contains('ASIGNAR_ROLES') ? '' : 'disabled'}> <c:out value="${r.nombre}"/>
+          <c:if test="${r.codigo == 'EQUIPO_ENSAYOS'}"><span class="muted xs">(no cuenta para el color)</span></c:if></label>
+      </c:forEach>
     </div>
     <c:choose>
       <c:when test="${nuevo}">

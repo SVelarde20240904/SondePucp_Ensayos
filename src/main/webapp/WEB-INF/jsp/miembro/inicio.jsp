@@ -1,13 +1,29 @@
 <c:set var="titulo" value="Inicio"/><c:set var="menu" value="Inicio"/>
 <%@ include file="/WEB-INF/jsp/includes/top.jspf" %>
 <section class="hero"><div class="titles"><span class="kicker">Mi espacio</span>
-  <h1>¡Hola, <c:out value="${fn:split(yo.nombre, ' ')[0]}"/>! 👋</h1>
+  <h1><c:choose><c:when test="${yo.cumpleHoy}">¡Feliz cumpleaños, <c:out value="${yo.comoLlamarlo}"/>! 🎂🎉</c:when><c:otherwise>¡Hola, <c:out value="${yo.comoLlamarlo}"/>! 👋</c:otherwise></c:choose></h1>
   <p><c:choose><c:when test="${not empty proximo}">El ${proximo.fechaLarga} es el próximo ensayo</c:when><c:otherwise>Aún no hay un próximo ensayo publicado</c:otherwise></c:choose></p>
 </div><span class="star"></span></section>
 
 <c:if test="${not empty pendienteEnsayo}">
   <div class="note warn inline" style="justify-content:space-between">Tienes pendiente la autoevaluación del ensayo del ${pendienteEnsayo.fechaCorta} (toma un minuto).
     <a class="btn btn-primary btn-sm" href="${ctx}/autoevaluacion?ensayo=${pendienteEnsayo.idEnsayo}">Autoevaluarme</a></div>
+</c:if>
+
+<c:if test="${misPendientes > 0}">
+  <div class="note info inline" style="justify-content:space-between">Tienes ${misPendientes} responsabilidad${misPendientes == 1 ? '' : 'es'} pendiente${misPendientes == 1 ? '' : 's'} esta semana.
+    <a class="btn btn-secondary btn-sm" href="${ctx}/mis-responsabilidades">Ver</a></div>
+</c:if>
+
+<c:if test="${not empty cumples}">
+  <div class="card cumples"><h2>🎂 Cumpleaños de la semana</h2>
+    <div class="cumple-lista">
+      <c:forEach var="c" items="${cumples}">
+        <div class="cumple${c.cumpleHoy ? ' hoy' : ''}"><span class="avatar">${c.iniciales}</span>
+          <span><b><c:out value="${c.nombreConApodo}"/></b><small>${c.cumpleHoy ? '¡Hoy! Salúdalo 🎉' : c.cumpleTexto}</small></span></div>
+      </c:forEach>
+    </div>
+  </div>
 </c:if>
 
 <div class="grid-3">

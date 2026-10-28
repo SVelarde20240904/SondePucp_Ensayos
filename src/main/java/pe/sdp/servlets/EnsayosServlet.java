@@ -118,8 +118,10 @@ public class EnsayosServlet extends BaseServlet {
                 case "/miembros" -> {
                     if (!Sesion.requiere(req, resp, "VER_CRONOGRAMA")) return;
                     String filtro = texto(req, "filtro"), nivel = texto(req, "nivel");
+                    Integer team = entero(req, "team");
+                    req.setAttribute("teams", miembros.teams());
                     List<Miembro> lista = new ArrayList<>();
-                    for (Miembro m : miembros.listar(filtro, texto(req, "q"))) {
+                    for (Miembro m : miembros.listar(filtro, texto(req, "q"), team)) {
                         if (nivel == null || ("SIN".equals(nivel) ? m.getNivel() == null : nivel.equals(m.getNivel()))) lista.add(m);
                     }
                     req.setAttribute("lista", lista);
@@ -134,7 +136,8 @@ public class EnsayosServlet extends BaseServlet {
                     Map<String, List<Evaluacion>> porNivel = new LinkedHashMap<>();
                     for (String n : List.of("AZUL", "VERDE", "AMARILLO", "ROJO", "SIN")) porNivel.put(n, new ArrayList<>());
                     Map<String, int[]> sabe = new LinkedHashMap<>();   // nivel → [sabe, total]
-                    boolean soloFaltan = "1".equals(req.getParameter("faltan"));
+                    boolean editar = "1".equals(req.getParameter("editar")) && Sesion.tiene(req, "EDITAR_FIGURAS_MIEMBRO");
+                    boolean soloFaltan = "1".equals(req.getParameter("faltan")) && !editar;
                     for (Evaluacion ev : evaluaciones.deMiembro(id)) {
                         String n = ev.getColorFigura() == null ? "SIN" : ev.getColorFigura();
                         int[] c = sabe.computeIfAbsent(n, k -> new int[2]);
@@ -147,6 +150,7 @@ public class EnsayosServlet extends BaseServlet {
                     req.setAttribute("porNivel", porNivel);
                     req.setAttribute("sabe", sabe);
                     req.setAttribute("soloFaltan", soloFaltan);
+                    req.setAttribute("editar", editar);
                     req.setAttribute("resumen", evaluaciones.resumenMiembro(id));
                     req.setAttribute("porcentaje", dao.porcentajeAsistencia(id));
                     req.setAttribute("asistencias", dao.misAsistencias(id, 10));
@@ -222,7 +226,7 @@ public class EnsayosServlet extends BaseServlet {
                     if (!Sesion.requiere(req, resp, "GESTIONAR_ENSAYOS")) return;
                     int id = entero(req, "id");
                     if ("eliminar".equals(accion(req, "notas"))) {
-                        if (!Sesion.usuario(req).isAdmin()) { Sesion.error(req, "Solo un admin puede eliminar ensayos."); ir(req, resp, "/ensayos/detalle?id=" + id); return; }
+                        if (!Sesion.tiene(req, "ELIMINAR_ENSAYOS")) { Sesion.error(req, "Solo el admin o moderador de ensayos puede eliminar ensayos."); ir(req, resp, "/ensayos/detalle?id=" + id); return; }
                         Ensayo e = dao.obtener(id);
                         int regresados = dao.eliminar(id);
                         Sesion.ok(req, "Ensayo del " + (e == null ? "" : e.getFechaCorta()) + " eliminado" + (regresados == 1 ? ". Se regresó 1 color que había subido su autoevaluación." : regresados > 1 ? ". Se regresaron " + regresados + " colores que había subido su autoevaluación." : "."));
@@ -249,6 +253,25 @@ public class EnsayosServlet extends BaseServlet {
                     dao.registrarAsistencia(id, codigos, yo);
                     Sesion.ok(req, "Asistencia guardada (" + codigos.values().stream().filter(x -> !x.isEmpty()).count() + " personas).");
                     ir(req, resp, "/ensayos/asistencia?id=" + id);
+                }
+                case "/miembro" -> {
+                    // El admin / moderador de ensayos corrige las figuras de alguien desde su ficha (queda en el histórico)
+                    if (!Sesion.requiere(req, resp, "EDITAR_FIGURAS_MIEMBRO")) return;
+                    Integer id = entero(req, "idMiembro");
+                    if (id == null || miembros.obtener(id) == null) { ir(req, resp, "/ensayos/miembros"); return; }
+                    Map<Integer, String> colores = new HashMap<>();
+                    for (String p : Collections.list(req.getParameterNames())) {
+                        if (!p.startsWith("color_")) continue;
+                        Integer f = Formato.entero(p.substring(6));
+                        String c = req.getParameter(p);
+                        if (f != null && Formato.esColor(c)) colores.put(f, c);
+                    }
+                    String motivo = texto(req, "motivo");
+                    if (motivo != null && motivo.length() > 150) motivo = motivo.substring(0, 150);
+                    int n = evaluaciones.corregirVarias(id, colores, motivo == null ? "Editado desde su ficha" : "Desde su ficha: " + motivo, yo);
+                    if (n == 0) Sesion.error(req, "No cambiaste ningún color.");
+                    else Sesion.ok(req, n + (n == 1 ? " figura actualizada" : " figuras actualizadas") + ". Queda en el histórico como corrección.");
+                    ir(req, resp, "/ensayos/miembro?id=" + id);
                 }
                 case "/figuras" -> {
                     if (!Sesion.requiere(req, resp, "REGISTRAR_FIGURAS_ENSENADAS")) return;

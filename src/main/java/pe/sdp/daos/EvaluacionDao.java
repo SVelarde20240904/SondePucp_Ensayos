@@ -112,6 +112,20 @@ public class EvaluacionDao extends BaseDao {
         return true;
     }
 
+    /**
+     * Edición desde la ficha (equipo de ensayos): guarda como CORRECCION solo las figuras cuyo color cambió.
+     * Devuelve cuántas cambiaron.
+     */
+    public int corregirVarias(int idMiembro, Map<Integer, String> colores, String motivo, int quien) throws SQLException {
+        Map<Integer, String> actual = new HashMap<>();
+        for (Evaluacion e : deMiembro(idMiembro)) actual.put(e.getIdFigura(), e.getColor());
+        Map<Integer, String> cambios = new LinkedHashMap<>();
+        for (Map.Entry<Integer, String> e : colores.entrySet())
+            if (actual.containsKey(e.getKey()) && Formato.esColor(e.getValue()) && !e.getValue().equals(actual.get(e.getKey()))) cambios.put(e.getKey(), e.getValue());
+        if (cambios.isEmpty()) return 0;
+        return guardar(idMiembro, cambios, "CORRECCION", null, null, quien, motivo, false);
+    }
+
     private int guardar(int idMiembro, Map<Integer, String> colores, String fuente, Integer idEnsayo, Integer idPeriodo,
                         int registradoPor, String motivo, boolean soloSube) throws SQLException {
         int aplicados = 0;

@@ -49,9 +49,12 @@ public class AdminServlet extends BaseServlet {
                 case "/miembros" -> {
                     if (!Sesion.requiere(req, resp, "GESTIONAR_MIEMBROS")) return;
                     String filtro = texto(req, "filtro") == null ? "TODOS" : texto(req, "filtro");
+                    Integer team = entero(req, "team");
                     req.setAttribute("filtro", filtro);
                     req.setAttribute("q", texto(req, "q"));
-                    req.setAttribute("lista", miembros.listar(filtro, texto(req, "q")));
+                    req.setAttribute("team", team);
+                    req.setAttribute("teams", miembros.teams());
+                    req.setAttribute("lista", miembros.listar(filtro, texto(req, "q"), team));
                     req.setAttribute("activos", miembros.contarActivos());
                     vista(req, resp, "admin/miembros");
                 }
@@ -69,7 +72,7 @@ public class AdminServlet extends BaseServlet {
                     if (entero(req, "id") != null) m = miembros.obtener(entero(req, "id"));
                     else { m = new Miembro(); m.setFrecuencia("REGULAR"); m.setFechaIngreso(LocalDate.now()); m.setEstado("ACTIVO"); }
                     req.setAttribute("m", m);
-                    req.setAttribute("facultades", FACULTADES);
+                    datosFormulario(req);
                     req.setAttribute("passwordTemporal", Formato.passwordTemporal());
                     vista(req, resp, "admin/miembro-form");
                 }
@@ -130,6 +133,7 @@ public class AdminServlet extends BaseServlet {
                 case "/roles" -> {
                     if (!Sesion.requiere(req, resp, "ASIGNAR_ROLES")) return;
                     req.setAttribute("permisos", roles.matriz());
+                    req.setAttribute("roles", roles.rolesExtra());
                     req.setAttribute("personas", roles.personasConRol());
                     req.setAttribute("activos", miembros.listarActivos());
                     vista(req, resp, "admin/roles");
@@ -189,11 +193,14 @@ public class AdminServlet extends BaseServlet {
                     switch (accion(req, "permisos")) {
                         case "asignar" -> {
                             Integer m = entero(req, "idMiembro"), rol = entero(req, "idRol");
-                            if (m != null && rol != null && (rol == RolDao.EQUIPO || rol == RolDao.ADMIN)) { roles.asignar(m, rol, yo); Sesion.permisosCambiaron(); Sesion.ok(req, "Rol asignado."); }
+                            if (m != null && roles.esRolExtra(rol)) { roles.asignar(m, rol, yo); Sesion.permisosCambiaron(); Sesion.ok(req, "Rol asignado."); }
                         }
                         case "quitar" -> {
                             try { roles.quitar(entero(req, "idMiembro"), entero(req, "idRol")); Sesion.permisosCambiaron(); Sesion.ok(req, "Rol quitado. La persona sigue siendo Miembro."); }
-                            catch (SQLException ex) { log("No se pudo quitar", ex); Sesion.error(req, "No se pudo quitar: " + mensajeBd(ex)); }
+                            catch (SQLException ex) {
+                                log("No se pudo quitar", ex);
+                                Sesion.error(req, String.valueOf(ex.getMessage()).contains("admin") ? "No se puede: debe quedar al menos un Owner." : "No se pudo quitar: " + mensajeBd(ex));
+                            }
                         }
                         default -> {
                             Set<String> marcados = new HashSet<>();
@@ -243,7 +250,18 @@ public class AdminServlet extends BaseServlet {
         String fr = req.getParameter("frecuencia");
         m.setFrecuencia(List.of("REGULAR", "OCASIONAL", "EVENTUAL").contains(fr) ? fr : "REGULAR");
         m.setFechaIngreso(fecha(req, "fechaIngreso"));
-        boolean equipo = check(req, "rolEquipo"), admin = check(req, "rolAdmin");
+        m.setApodo(texto(req, "apodo"));
+        m.setFechaNacimiento(fecha(req, "fechaNacimiento"));
+        // Los roles solo los cambia quien puede asignar roles (Owner); si no, se quedan como están
+        Set<Integer> rolesMarcados = null;
+        if (Sesion.tiene(req, "ASIGNAR_ROLES")) {
+            rolesMarcados = new HashSet<>();
+            String[] rs = req.getParameterValues("rol");
+            if (rs != null) for (String r : rs) { Integer x = Formato.entero(r); if (x != null && MiembroDao.ROLES_EXTRA.contains(x)) rolesMarcados.add(x); }
+        }
+        Set<Integer> teamsMarcados = new HashSet<>();
+        String[] ts = req.getParameterValues("team");
+        if (ts != null) for (String t : ts) { Integer x = Formato.entero(t); if (x != null) teamsMarcados.add(x); }
 
         String error = null;
         if (m.getNombre() == null || m.getNombreCompleto() == null) error = "El nombre y el nombre completo son obligatorios.";
@@ -252,16 +270,18 @@ public class AdminServlet extends BaseServlet {
         else if (m.getCodigoPucp() != null && !m.getCodigoPucp().matches("\\d{8}")) error = "El código PUCP debe tener 8 dígitos.";
         else if (miembros.existeNombre(m.getNombre(), m.getIdMiembro())) error = "Ya existe un miembro con ese nombre en el sistema.";
         else if (miembros.existeCorreo(m.getCorreo(), m.getIdMiembro())) error = "Ese correo ya lo usa otro miembro.";
-        if (error != null) { reabrirFormulario(req, resp, m, equipo, admin, error); return; }
+        else if (m.getApodo() != null && m.getApodo().length() > 30) error = "El apodo puede tener hasta 30 letras.";
+        else if (!fechaNacimientoValida(m.getFechaNacimiento())) error = "Revisa la fecha de nacimiento.";
+        if (error != null) { reabrirFormulario(req, resp, m, rolesMarcados, teamsMarcados, error); return; }
 
         try {
             if (id == null) {
                 String temp = texto(req, "passwordTemporal") == null ? Formato.passwordTemporal() : texto(req, "passwordTemporal");
-                int nuevo = miembros.crear(m, Password.hash(temp), equipo, admin, yo);
+                int nuevo = miembros.crear(m, Password.hash(temp), rolesMarcados, teamsMarcados, yo);
                 Sesion.ok(req, m.getNombre() + " ya es parte del sistema. Contraseña temporal: " + temp + recordatorioGrupo(m, true));
                 ir(req, resp, "/admin/miembros/editar?id=" + nuevo);
             } else {
-                miembros.actualizar(m, equipo, admin, yo); Sesion.permisosCambiaron();
+                miembros.actualizar(m, rolesMarcados, teamsMarcados, yo); Sesion.permisosCambiaron();
                 if ("restablecer".equals(accion)) {
                     // "Generar contraseña temporal" guarda TODO el formulario y recién genera la clave
                     String temp = Formato.passwordTemporal();
@@ -278,7 +298,7 @@ public class AdminServlet extends BaseServlet {
                 }
             }
         } catch (SQLException ex) {
-            log("No se pudo guardar", ex); Sesion.error(req, String.valueOf(ex.getMessage()).contains("admin") ? "Debe quedar al menos un admin." : "No se pudo guardar: " + mensajeBd(ex));
+            log("No se pudo guardar", ex); Sesion.error(req, String.valueOf(ex.getMessage()).contains("admin") ? "Debe quedar al menos un Owner." : "No se pudo guardar: " + mensajeBd(ex));
             ir(req, resp, volver);
         }
     }
@@ -331,7 +351,7 @@ public class AdminServlet extends BaseServlet {
     }
 
     /** Si hay un error, vuelve a mostrar el formulario CON lo que se escribió (no se pierde nada). */
-    private void reabrirFormulario(HttpServletRequest req, HttpServletResponse resp, Miembro escrito, boolean equipo, boolean admin, String error)
+    private void reabrirFormulario(HttpServletRequest req, HttpServletResponse resp, Miembro escrito, Set<Integer> rolesMarcados, Set<Integer> teamsMarcados, String error)
             throws SQLException, ServletException, IOException {
         Miembro m = escrito;
         if (escrito.getIdMiembro() != 0) {          // edición: se parte de la BD (estado, cuenta, nivel) y se pisa con lo escrito
@@ -340,16 +360,30 @@ public class AdminServlet extends BaseServlet {
             m.setCodigoPucp(escrito.getCodigoPucp()); m.setFacultad(escrito.getFacultad());
             m.setCorreo(escrito.getCorreo()); m.setCelular(escrito.getCelular());
             m.setRolBaile(escrito.getRolBaile()); m.setFrecuencia(escrito.getFrecuencia()); m.setFechaIngreso(escrito.getFechaIngreso());
+            m.setApodo(escrito.getApodo()); m.setFechaNacimiento(escrito.getFechaNacimiento());
         } else {
             m.setEstado("ACTIVO");
         }
-        m.setEquipoEnsayos(equipo); m.setAdmin(admin);
+        if (rolesMarcados != null) { m.getRolIds().clear(); m.getRolIds().addAll(rolesMarcados); }
+        m.getTeamIds().clear(); m.getTeamIds().addAll(teamsMarcados);
         Sesion.error(req, error);
         req.setAttribute("m", m);
-        req.setAttribute("facultades", FACULTADES);
+        datosFormulario(req);
         String temp = texto(req, "passwordTemporal");
         req.setAttribute("passwordTemporal", temp != null ? temp : Formato.passwordTemporal());
         vista(req, resp, "admin/miembro-form");
+    }
+
+    /** Listas que necesita el formulario de miembro. */
+    private void datosFormulario(HttpServletRequest req) throws SQLException {
+        req.setAttribute("facultades", FACULTADES);
+        req.setAttribute("roles", roles.rolesExtra());
+        req.setAttribute("teams", miembros.teams());
+    }
+
+    /** Fecha de nacimiento razonable (o vacía): entre 1940 y hace 14 años. */
+    public static boolean fechaNacimientoValida(LocalDate d) {
+        return d == null || (d.getYear() >= 1940 && d.isBefore(LocalDate.now().minusYears(14)));
     }
 
     private void postFigura(HttpServletRequest req, HttpServletResponse resp, int yo) throws SQLException, IOException {

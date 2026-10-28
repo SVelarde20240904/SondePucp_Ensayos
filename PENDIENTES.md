@@ -3,23 +3,19 @@
 Lista viva de mejoras. Lo que se termina pasa a **Hecho** con su commit.
 
 ## Feedback del piloto
-- [ ] **Apodos:** campo *apodo* por miembro (ej. Ilo, Mimi, Mafer, Clau, Gaby), que se muestre junto al nombre en listas, cronograma, asistencia y fichas, y que sirva en el buscador (buscar "Ilo" encuentra a Enmanuel Vega). **Decidido:** cada uno pone su apodo en *Mi perfil*. Por definir: si en el celular se muestra solo el apodo o siempre el nombre completo.
-- [ ] **Fecha de nacimiento:** campo en *Mi perfil* (y en el formulario del admin) para luego hacer algo con los cumpleaños. Por definir qué: aviso en Inicio de los cumpleaños de la semana, lista de cumpleañeros del mes, saludo en el Inicio del cumpleañero, si se muestra el año o solo día y mes.
-- [ ] **Teams:** etiqueta del team de cada miembro (Ensayos, Talleres, Logística, Finanzas, RRPP, Comunica), visible en listas y fichas, con filtro por team. Es distinto del rol del sistema (que da permisos): estar en Team Ensayos como etiqueta no da permisos por sí solo. **Decidido:** se puede estar en más de un team ("dobletear"). Por definir: quién la asigna (admin o cada uno). Ayuda a extender el sistema a otros teams más adelante.
-- [ ] **Roles nuevos (decidido):**
-  - *Equipo de ensayos* (miembro de Team Ensayos): se queda como está; lo que ve es pertinente (ensayos, cronograma, asistencia, figuras enseñadas, fichas, reportes, responsabilidades).
-  - *Admin de Team Ensayos* (nuevo): lo anterior + **Figuras**, **Histórico** y **Responsabilidades**.
-  - *Owner* (reemplaza al Admin actual, por ahora solo Sergio): todo, incluido **Miembros** y **Roles y permisos**.
-  - *Moderador de Team Ensayos* (nuevo): **por ahora tiene los mismos permisos que el admin del team**, pero es un rol distinto (se crea aparte para que más adelante el admin reciba accesos extra que el moderador no).
-  - **Responsabilidades:** cada miembro del team ve **sus propias** responsabilidades (hoy no existe esa vista: crear "Mis responsabilidades"); la pantalla que monitorea **todas** es solo del admin del team (se le quita al rol *Equipo de ensayos*).
-  - **Eliminar ensayos** y **editar figuras desde la ficha:** solo admin y moderador de Team Ensayos (y Owner).
-- [ ] **Editar figuras desde la ficha de miembro (equipo de ensayos):** en *Fichas de miembros*, poder cambiar el color de cada figura de la persona ahí mismo (por ejemplo, después de verla en el ensayo), con el cambio registrado en el histórico (quién lo hizo y por qué).
 - [ ] **El túnel se cae al cambiar de red o suspender la laptop** y el link cambia. Para el piloto: dejar la laptop fija con internet estable, usar `--protocol http2`, o pasar a link fijo (Cloudflare con dominio, o Railway).
 
 ## Ideas
 - [ ] **Link fijo** para el túnel de Cloudflare (requiere cuenta de Cloudflare y un dominio), o pasar a Railway. **Además Chrome marca los links `trycloudflare.com` como "sitio peligroso"** (dominio usado para phishing): con dominio propio desaparece el aviso.
 
 ## Hecho
+- [x] **Roles nuevos:** *Owner* (antes Admin), *Admin de ensayos* y *Moderador de ensayos* (hoy con los mismos permisos que el admin, pero rol aparte). El Equipo de ensayos ya no ve el panel de todas las responsabilidades. *Roles y permisos* muestra una columna por rol y se puede asignar cualquiera. Solo el Owner cambia roles (también desde el formulario del miembro). `TANDA3`
+- [x] **Mis responsabilidades** (*Mi espacio*): cada uno ve sus encargos, los que cubrió y su estado; aviso en Inicio si tiene pendientes. `TANDA3`
+- [x] **Eliminar ensayos** y **editar figuras desde la ficha**: solo admin y moderador de ensayos (y Owner). En la ficha, "✏️ Editar figuras" muestra un selector por figura; lo cambiado queda en el histórico como corrección, con quién lo hizo y el motivo. `TANDA3`
+- [x] **Teams** (Ensayos, Talleres, Logística, Finanzas, RRPP, Comunica): se puede estar en varios; los asigna quien gestiona miembros; se ven en listas, fichas y Mi perfil, con filtro por team. Quien tenía el rol Equipo de ensayos quedó en el team Ensayos. `TANDA3`
+- [x] **Apodos:** cada uno lo pone en *Mi perfil*; se ve como "Enmanuel Vega (Ilo)" en listas, fichas y asistencia, el saludo de Inicio lo usa, y el buscador encuentra por apodo. `TANDA3`
+- [x] **Fecha de nacimiento y cumpleaños:** en *Mi perfil* y en el formulario del admin. Inicio muestra los cumpleaños de los próximos 7 días (solo día y mes, nunca el año) y al cumpleañero lo saluda. `TANDA3`
+- [x] **Respuestas que siguen llegando al Excel:** `db/migracion/importar_respuestas_excel.py` genera un SQL que solo agrega lo nuevo del HISTORICO (se puede correr con cada Excel). `TANDA3`
 - [x] **Biblioteca de figuras** (*Mi espacio → Biblioteca de figuras*): todas las figuras por nivel con tu color, buscador y "solo con video"; cada figura con posición en la mano, descripción y video de Drive/YouTube embebido. "▶ ver" en la autoevaluación y en las fichas. Videos en **Drive restringido al Grupo de Google de SDP** (aviso en el formulario), y recordatorio de agregar/sacar del grupo al dar de alta o de baja. `74169d4`
 - [x] **Activar cuentas en lote** (*Miembros → Activar cuentas en lote*): escribes correos, se generan todas las claves, con un mensaje de WhatsApp por persona (con el link) y la lista de correos para el Grupo de Google. `74169d4`
 - [x] Permisos: respaldo de revisión cada 20 s (los cambios hechos desde la web ya llegaban al instante). `74169d4`

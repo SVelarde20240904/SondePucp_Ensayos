@@ -34,6 +34,11 @@ public class Miembro {
     private boolean puedeEliminar;
     private int asistidosMes;
     private int ensayosMes;
+    private String apodo;
+    private LocalDate fechaNacimiento;
+    private java.util.Set<Integer> rolIds = new java.util.HashSet<>();
+    private java.util.Set<Integer> teamIds = new java.util.HashSet<>();
+    private java.util.List<String> teams = new java.util.ArrayList<>();
 
     public int getIdMiembro() { return idMiembro; }
     public void setIdMiembro(int idMiembro) { this.idMiembro = idMiembro; }
@@ -102,4 +107,31 @@ public class Miembro {
     public boolean isCuentaColor() { return cuentaColor; }
     public void setCuentaColor(boolean cuentaColor) { this.cuentaColor = cuentaColor; }
 
+
+    public String getApodo() { return apodo; }
+    public void setApodo(String apodo) { this.apodo = apodo; }
+    public LocalDate getFechaNacimiento() { return fechaNacimiento; }
+    public void setFechaNacimiento(LocalDate fechaNacimiento) { this.fechaNacimiento = fechaNacimiento; }
+    public java.util.Set<Integer> getRolIds() { return rolIds; }
+    public void setRolIds(java.util.Set<Integer> rolIds) { this.rolIds = rolIds; }
+    public java.util.Set<Integer> getTeamIds() { return teamIds; }
+    public void setTeamIds(java.util.Set<Integer> teamIds) { this.teamIds = teamIds; }
+    /** Nombres de sus teams, en orden (Ensayos, Talleres, …). */
+    public java.util.List<String> getTeams() { return teams; }
+    public void setTeams(java.util.List<String> teams) { this.teams = teams; }
+
+    public boolean isTieneApodo() { return apodo != null && !apodo.isBlank(); }
+    /** "Enmanuel Vega (Ilo)" o solo el nombre si no tiene apodo. */
+    public String getNombreConApodo() { return isTieneApodo() ? nombre + " (" + apodo + ")" : nombre; }
+    /** Cómo saludarlo: su apodo, o su primer nombre. */
+    public String getComoLlamarlo() { return isTieneApodo() ? apodo : (nombre == null ? "" : nombre.split(" ")[0]); }
+    public String getFechaNacimientoIso() { return fechaNacimiento == null ? "" : fechaNacimiento.toString(); }
+    /** Solo día y mes (sin el año, para no mostrar la edad): "14 de marzo". */
+    public String getCumpleTexto() { return fechaNacimiento == null ? "—" : Formato.diaMes(fechaNacimiento); }
+    public boolean isCumpleHoy() {
+        if (fechaNacimiento == null) return false;
+        LocalDate hoy = LocalDate.now(Formato.ZONA);
+        return fechaNacimiento.getMonth() == hoy.getMonth() && fechaNacimiento.getDayOfMonth() == hoy.getDayOfMonth();
+    }
+    public boolean tieneRol(int idRol) { return rolIds.contains(idRol); }
 }

@@ -27,6 +27,7 @@
     <a class="${menu == 'Confirmar asistencia' ? 'active' : ''}" href="${ctx}/confirmar-asistencia">Confirmar asistencia</a>
     <a class="${menu == 'Autoevaluación' ? 'active' : ''}" href="${ctx}/autoevaluacion?tipo=mensual">Autoevaluación</a>
     <a class="${menu == 'Mi historial' ? 'active' : ''}" href="${ctx}/mi-historial">Mi historial</a>
+    <a class="${menu == 'Mis responsabilidades' ? 'active' : ''}" href="${ctx}/mis-responsabilidades">Mis responsabilidades</a>
     <a class="${menu == 'Mi perfil' ? 'active' : ''}" href="${ctx}/perfil">Mi perfil</a>
     <a class="${menu == 'Biblioteca' ? 'active' : ''}" href="${ctx}/biblioteca">Biblioteca de figuras</a>
   </nav>
@@ -53,7 +54,8 @@
   <div class="grow"></div>
   <div class="flags"><span class="flag pe"></span><span class="flag cu"></span><a class="logout" href="${ctx}/logout">Cerrar sesión</a></div>
   <a class="user-card" href="${ctx}/perfil"><span class="avatar">${u.iniciales}</span>
-    <span><c:out value="${u.nombre}"/><small>${u.admin ? 'Admin' : u.rolBaileTexto}${u.equipoEnsayos ? ' · Equipo de ensayos' : (u.admin ? '' : ' · '.concat(u.frecuenciaTexto))}</small></span></a>
+    <c:set var="rolTop" value="${u.tieneRol(3) ? 'Owner' : (u.tieneRol(5) ? 'Admin de ensayos' : (u.tieneRol(4) ? 'Moderador de ensayos' : (u.tieneRol(2) ? 'Equipo de ensayos' : '')))}"/>
+    <span><c:out value="${u.nombre}"/><small>${u.rolBaileTexto}${empty rolTop ? ' · '.concat(u.frecuenciaTexto) : ' · '.concat(rolTop)}</small></span></a>
 </aside>
 <label for="menu" class="scrim" aria-hidden="true"></label>
 <nav class="tabbar" aria-label="Mi espacio">

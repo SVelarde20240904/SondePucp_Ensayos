@@ -54,7 +54,8 @@ public class Encargo {
 
     public String getPlazoTexto() { return plazo == null ? "—" : Formato.diaCorto(plazo.toLocalDate()) + " " + Formato.ddmmHora(plazo); }
     public String getCumplimientoTexto() { return fechaCumplimiento == null ? "" : Formato.diaCorto(fechaCumplimiento.toLocalDate()) + " " + Formato.ddmmHora(fechaCumplimiento); }
-    public String getEstadoTexto() { return Formato.capital(estado); }
+    public String getEstadoTexto() { return Formato.capital(estado == null ? null : estado.replace('_', ' ')); }
+    public String getSemanaTexto() { return Formato.ddmmyyyy(semana); }
     public String getEstadoTono() {
         switch (estado == null ? "" : estado) {
             case "A_TIEMPO": return "ok";

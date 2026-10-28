@@ -231,7 +231,7 @@ public class EnsayoDao extends BaseDao {
 
     /** Lista para "Tomar asistencia": todos los activos, primero los que confirmaron. */
     public List<Asistencia> asistenciaDe(int idEnsayo) throws SQLException {
-        String sql = "SELECT m.id_miembro, m.nombre, m.rol_baile, n.nivel, f.es_equipo_ensayos, " +
+        String sql = "SELECT m.id_miembro, m.nombre, m.apodo, m.rol_baile, n.nivel, f.es_equipo_ensayos, " +
                      " COALESCE(a.confirmacion,'SIN_RESPUESTA') AS confirmacion, a.motivo, a.estado_real " +
                      "FROM miembro m JOIN v_miembro_flags f ON f.id_miembro=m.id_miembro JOIN v_nivel_miembro n ON n.id_miembro=m.id_miembro " +
                      "LEFT JOIN asistencia a ON a.id_miembro=m.id_miembro AND a.id_ensayo=? " +
@@ -245,7 +245,8 @@ public class EnsayoDao extends BaseDao {
                     Asistencia a = new Asistencia();
                     a.setIdEnsayo(idEnsayo);
                     a.setIdMiembro(rs.getInt("id_miembro"));
-                    a.setMiembro(rs.getString("nombre"));
+                    String apodo = rs.getString("apodo");
+                    a.setMiembro(rs.getString("nombre") + (apodo == null || apodo.isBlank() ? "" : " (" + apodo + ")"));
                     a.setRolBaile(rs.getString("rol_baile"));
                     a.setNivel(rs.getString("nivel"));
                     a.setEquipoEnsayos(rs.getBoolean("es_equipo_ensayos"));
