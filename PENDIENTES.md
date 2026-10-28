@@ -3,7 +3,8 @@
 Lista viva de mejoras. Lo que se termina pasa a **Hecho** con su commit.
 
 ## Feedback del piloto
-- [ ] **Apodos:** campo *apodo* por miembro (ej. Ilo, Mimi, Mafer, Clau, Gaby), que se muestre junto al nombre en listas, cronograma, asistencia y fichas, y que sirva en el buscador (buscar "Ilo" encuentra a Enmanuel Vega). Por definir: si cada uno edita su apodo en *Mi perfil* o solo el admin, y si el apodo reemplaza al nombre en pantallas angostas (celular).
+- [ ] **Apodos:** campo *apodo* por miembro (ej. Ilo, Mimi, Mafer, Clau, Gaby), que se muestre junto al nombre en listas, cronograma, asistencia y fichas, y que sirva en el buscador (buscar "Ilo" encuentra a Enmanuel Vega). **Decidido:** cada uno pone su apodo en *Mi perfil*. Por definir: si en el celular se muestra solo el apodo o siempre el nombre completo.
+- [ ] **Fecha de nacimiento:** campo en *Mi perfil* (y en el formulario del admin) para luego hacer algo con los cumpleaños. Por definir qué: aviso en Inicio de los cumpleaños de la semana, lista de cumpleañeros del mes, saludo en el Inicio del cumpleañero, si se muestra el año o solo día y mes.
 - [ ] **Editar figuras desde la ficha de miembro (equipo de ensayos):** en *Fichas de miembros*, poder cambiar el color de cada figura de la persona ahí mismo (por ejemplo, después de verla en el ensayo), con el cambio registrado en el histórico (quién lo hizo y por qué).
 - [ ] **El túnel se cae al cambiar de red o suspender la laptop** y el link cambia. Para el piloto: dejar la laptop fija con internet estable, usar `--protocol http2`, o pasar a link fijo (Cloudflare con dominio, o Railway).
 
