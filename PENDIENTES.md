@@ -5,7 +5,7 @@ Lista viva de mejoras. Lo que se termina pasa a **Hecho** con su commit.
 ## Feedback del piloto
 - [ ] **Apodos:** campo *apodo* por miembro (ej. Ilo, Mimi, Mafer, Clau, Gaby), que se muestre junto al nombre en listas, cronograma, asistencia y fichas, y que sirva en el buscador (buscar "Ilo" encuentra a Enmanuel Vega). **Decidido:** cada uno pone su apodo en *Mi perfil*. Por definir: si en el celular se muestra solo el apodo o siempre el nombre completo.
 - [ ] **Fecha de nacimiento:** campo en *Mi perfil* (y en el formulario del admin) para luego hacer algo con los cumpleaños. Por definir qué: aviso en Inicio de los cumpleaños de la semana, lista de cumpleañeros del mes, saludo en el Inicio del cumpleañero, si se muestra el año o solo día y mes.
-- [ ] **Teams:** etiqueta del team de cada miembro (Ensayos, Talleres, Logística, Finanzas, RRPP, Comunica), visible en listas y fichas, con filtro por team. Es distinto del rol del sistema (que da permisos): estar en Team Ensayos como etiqueta no da permisos por sí solo. Por definir: si alguien puede estar en más de un team, quién la asigna (admin o cada uno) y si se marca al coordinador(a) de cada team. Ayuda a extender el sistema a otros teams más adelante.
+- [ ] **Teams:** etiqueta del team de cada miembro (Ensayos, Talleres, Logística, Finanzas, RRPP, Comunica), visible en listas y fichas, con filtro por team. Es distinto del rol del sistema (que da permisos): estar en Team Ensayos como etiqueta no da permisos por sí solo. **Decidido:** se puede estar en más de un team ("dobletear"). Por definir: quién la asigna (admin o cada uno). Ayuda a extender el sistema a otros teams más adelante.
 - [ ] **Editar figuras desde la ficha de miembro (equipo de ensayos):** en *Fichas de miembros*, poder cambiar el color de cada figura de la persona ahí mismo (por ejemplo, después de verla en el ensayo), con el cambio registrado en el histórico (quién lo hizo y por qué).
 - [ ] **El túnel se cae al cambiar de red o suspender la laptop** y el link cambia. Para el piloto: dejar la laptop fija con internet estable, usar `--protocol http2`, o pasar a link fijo (Cloudflare con dominio, o Railway).
 
@@ -34,6 +34,14 @@ Lista viva de mejoras. Lo que se termina pasa a **Hecho** con su commit.
 - [x] Claves temporales más seguras (`SDP-XXXX-XXXX`). `070f4b1`
 - [x] Diseño mobile first. `3999bff`
 - [x] Blindaje de seguridad y despliegue con Docker. `f465e8c`
+
+## Visión a futuro (hacia dónde va el proyecto)
+Pasar de "Sistema de Ensayos" a **la página de SDP**:
+- Cada miembro puede estar en uno o varios teams (Ensayos, Talleres, Logística, Finanzas, RRPP, Comunica).
+- Vistas personalizadas según los teams de cada uno (su Inicio muestra lo de sus teams).
+- Roles **por team**: miembro, moderador y administrador del team, cada uno con interfaces propias (no un admin global para todo).
+- Ensayos pasa a ser un módulo más, al lado de los de los otros teams.
+- Implica: tabla `team`, `miembro_team(id_miembro, id_team, rol_en_team)`, permisos evaluados por team, y menú armado según los teams del usuario. Las decisiones de esta tanda (teams, apodos, etc.) se diseñan pensando en esto.
 
 ## Descartado
 - Pantallas de celular en Figma: la app ya es mobile first y se probó en celular, no hacen falta mockups.
