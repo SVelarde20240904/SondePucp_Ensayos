@@ -14,3 +14,6 @@ db/seed.sql
 *.xls
 *.csv
 *.sql.gz
+# Backups de la BD (tienen datos reales)
+backup-*.sql
+antes-de-pruebas*.sql

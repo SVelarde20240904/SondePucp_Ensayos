@@ -7,6 +7,8 @@ Lista viva de mejoras. Lo que se termina pasa a **Hecho** con su commit.
 
 - [ ] **Histórico sin registros redundantes:** al llenar la autoevaluación mensual aparecen cambios "Azul → Azul" (el mismo color). Solo debería registrarse cuando el color cambia, o al menos ocultar esos registros en la pantalla de *Histórico*.
 - [ ] **El túnel se cae al cambiar de red o suspender la laptop** y el link cambia. Para el piloto: dejar la laptop fija con internet estable, usar `--protocol http2`, o pasar a link fijo (Cloudflare con dominio, o Railway).
+- [ ] **Ficha completa de cada miembro para el equipo de ensayos:** entrar al perfil de cualquier persona y ver de un vistazo qué figuras sabe y cuáles no (todas las figuras con su color, por nivel), su nivel, su asistencia y su historial. Hoy eso solo lo ve cada uno en *Mi historial*.
+- [ ] **Eliminar un ensayo de prueba (solo admin):** hoy solo se puede *Cancelar*. Agregar *Eliminar* para ensayos creados por error o de prueba, con confirmación y avisando si ya tiene asistencias o autoevaluaciones (que cambiaron colores). Mientras tanto: backup antes de probar y restaurar al terminar (ver README).
 
 ## Por decidir / confirmar
 - [ ] La **"x"** del Excel: ¿significa *no marcó la encuesta* (así está hoy: SIN_RESPUESTA) o *marcó que no venía*? Si es lo segundo, hay un UPDATE en `db/README.md`.

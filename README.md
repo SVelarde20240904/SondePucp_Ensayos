@@ -134,6 +134,15 @@ SDP_ENTORNO=produccion SDP_ADMIN_CORREO=tu@pucp.edu.pe SDP_ADMIN_CLAVE=una-clave
 ```
 En producción las cuentas `@sdp.test` quedan bloqueadas. El link es público, así que usa una clave fuerte.
 
+**Probar sin ensuciar los datos reales:** saca un backup antes de las pruebas y restáuralo al terminar (PowerShell):
+```powershell
+cmd /c "docker compose -f docker-compose.local.yml exec -T db mysqldump -uroot -pTU_ROOT --default-character-set=utf8mb4 sdp_ensayos > antes-de-pruebas.sql"
+# ... pruebas ...
+cmd /c "docker compose -f docker-compose.local.yml exec -T db mysql -uroot -pTU_ROOT --default-character-set=utf8mb4 sdp_ensayos < antes-de-pruebas.sql"
+docker compose -f docker-compose.local.yml restart app
+```
+Ojo: restaurar también borra lo que otras personas hayan hecho mientras tanto.
+
 **4. Cuando ya te convenza:** pasa a Railway (ver *Publicar*). Te dan crédito de prueba al inicio.
 
 ## Publicar (para el piloto)
