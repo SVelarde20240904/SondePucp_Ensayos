@@ -10,7 +10,7 @@ Lista viva de mejoras. Lo que se termina pasa a **Hecho** con su commit.
   - *Equipo de ensayos* (miembro de Team Ensayos): se queda como está; lo que ve es pertinente (ensayos, cronograma, asistencia, figuras enseñadas, fichas, reportes, responsabilidades).
   - *Admin de Team Ensayos* (nuevo): lo anterior + **Figuras**, **Histórico** y **Responsabilidades**.
   - *Owner* (reemplaza al Admin actual, por ahora solo Sergio): todo, incluido **Miembros** y **Roles y permisos**.
-  - *Moderador de Team Ensayos* (nuevo): puede **eliminar ensayos** y **editar figuras desde la ficha**, igual que el admin del team. Por definir qué más lo diferencia del admin (¿ve Figuras/Histórico/Responsabilidades?).
+  - *Moderador de Team Ensayos* (nuevo): **por ahora tiene los mismos permisos que el admin del team**, pero es un rol distinto (se crea aparte para que más adelante el admin reciba accesos extra que el moderador no).
   - **Responsabilidades:** cada miembro del team ve **sus propias** responsabilidades (hoy no existe esa vista: crear "Mis responsabilidades"); la pantalla que monitorea **todas** es solo del admin del team (se le quita al rol *Equipo de ensayos*).
   - **Eliminar ensayos** y **editar figuras desde la ficha:** solo admin y moderador de Team Ensayos (y Owner).
 - [ ] **Editar figuras desde la ficha de miembro (equipo de ensayos):** en *Fichas de miembros*, poder cambiar el color de cada figura de la persona ahí mismo (por ejemplo, después de verla en el ensayo), con el cambio registrado en el histórico (quién lo hizo y por qué).
