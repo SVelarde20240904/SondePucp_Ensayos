@@ -9,10 +9,10 @@ Lista viva de mejoras. Lo que se termina pasa a **Hecho** con su commit.
 - [ ] **Link fijo** para el túnel de Cloudflare (requiere cuenta de Cloudflare y un dominio), o pasar a Railway. **Además Chrome marca los links `trycloudflare.com` como "sitio peligroso"** (dominio usado para phishing): con dominio propio desaparece el aviso.
 
 ## Hecho
-- [x] **Biblioteca de figuras** (*Mi espacio → Biblioteca de figuras*): todas las figuras por nivel con tu color, buscador y "solo con video"; cada figura con posición en la mano, descripción y video de Drive/YouTube embebido. "▶ ver" en la autoevaluación y en las fichas. Videos en **Drive restringido al Grupo de Google de SDP** (aviso en el formulario), y recordatorio de agregar/sacar del grupo al dar de alta o de baja. `PENDIENTE_COMMIT`
-- [x] **Activar cuentas en lote** (*Miembros → Activar cuentas en lote*): escribes correos, se generan todas las claves, con un mensaje de WhatsApp por persona (con el link) y la lista de correos para el Grupo de Google. `PENDIENTE_COMMIT`
-- [x] Permisos: respaldo de revisión cada 20 s (los cambios hechos desde la web ya llegaban al instante). `PENDIENTE_COMMIT`
-- [x] La BD se actualiza sola al arrancar la app (migraciones automáticas), sin correr scripts. `PENDIENTE_COMMIT`
+- [x] **Biblioteca de figuras** (*Mi espacio → Biblioteca de figuras*): todas las figuras por nivel con tu color, buscador y "solo con video"; cada figura con posición en la mano, descripción y video de Drive/YouTube embebido. "▶ ver" en la autoevaluación y en las fichas. Videos en **Drive restringido al Grupo de Google de SDP** (aviso en el formulario), y recordatorio de agregar/sacar del grupo al dar de alta o de baja. `74169d4`
+- [x] **Activar cuentas en lote** (*Miembros → Activar cuentas en lote*): escribes correos, se generan todas las claves, con un mensaje de WhatsApp por persona (con el link) y la lista de correos para el Grupo de Google. `74169d4`
+- [x] Permisos: respaldo de revisión cada 20 s (los cambios hechos desde la web ya llegaban al instante). `74169d4`
+- [x] La BD se actualiza sola al arrancar la app (migraciones automáticas), sin correr scripts. `74169d4`
 - [x] Confirmado: la **"x"** del Excel = no respondió la encuesta (SIN_RESPUESTA), como ya está en la BD.
 - [x] El código **AN** se queda como está (en la app; no hace falta en la maqueta).
 
