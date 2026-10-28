@@ -52,6 +52,7 @@ public class MiEspacioServlet extends BaseServlet {
                 }
                 case "/perfil" -> {
                     req.setAttribute("yo", miembros.obtener(yo));
+                    req.setAttribute("facultades", AdminServlet.FACULTADES);
                     vista(req, resp, "miembro/mi-perfil");
                 }
             }

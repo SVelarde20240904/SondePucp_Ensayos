@@ -17,7 +17,9 @@
         <div class="field"><label>Nombre en el sistema</label><input class="input" value="<c:out value='${yo.nombre}'/>" readonly title="Lo cambia el admin"></div></div>
       <div class="form-row">
         <div class="field"><label>Código PUCP</label><input class="input" name="codigoPucp" value="<c:out value='${yo.codigoPucp}'/>" pattern="\d{8}" placeholder="8 dígitos"></div>
-        <div class="field"><label>Facultad</label><input class="input" name="facultad" value="<c:out value='${yo.facultad}'/>"></div></div>
+        <div class="field"><label>Facultad</label><select class="input" name="facultad"><option value="">Elige tu facultad</option>
+          <c:forEach var="f" items="${facultades}"><option ${yo.facultad == f ? 'selected' : ''}>${f}</option></c:forEach>
+          <c:if test="${not empty yo.facultad and not facultades.contains(yo.facultad)}"><option selected><c:out value="${yo.facultad}"/></option></c:if></select></div></div>
       <div class="form-row">
         <div class="field"><label>Correo PUCP</label><input class="input" type="email" name="correo" value="<c:out value='${yo.correo}'/>" required></div>
         <div class="field"><label>Celular</label><input class="input" type="tel" name="celular" value="<c:out value='${yo.celular}'/>"></div></div>

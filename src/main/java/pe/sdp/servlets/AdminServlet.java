@@ -34,9 +34,11 @@ public class AdminServlet extends BaseServlet {
     private final EncargoDao encargos = new EncargoDao();
     private final RolDao roles = new RolDao();
 
-    public static final List<String> FACULTADES = List.of("Ciencias e Ingeniería", "Ciencias Sociales", "Derecho", "Gestión y Alta Dirección",
-            "Arte y Diseño", "Arquitectura y Urbanismo", "Letras y Ciencias Humanas", "Educación", "Psicología",
-            "Ciencias y Artes de la Comunicación", "Estudios Generales Ciencias", "Estudios Generales Letras", "Egresado(a)");
+    /** Unidades PUCP para el desplegable de facultad (Mi perfil y formulario del admin). */
+    public static final List<String> FACULTADES = List.of("Estudios Generales Ciencias", "Estudios Generales Letras",
+            "Arquitectura y Urbanismo", "Arte y Diseño", "Artes Escénicas", "Ciencias Contables", "Ciencias e Ingeniería",
+            "Ciencias Sociales", "Ciencias y Artes de la Comunicación", "Derecho", "Educación", "Gestión y Alta Dirección",
+            "Letras y Ciencias Humanas", "Psicología", "Posgrado", "Egresado(a)");
 
     private String ruta(HttpServletRequest req) { return req.getPathInfo() == null ? "/" : req.getPathInfo(); }
 
