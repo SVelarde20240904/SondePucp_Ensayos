@@ -16,12 +16,12 @@ Lista viva de mejoras. Lo que se termina pasa a **Hecho** con su commit.
 - [ ] Subir los logos reales a Figma.
 
 ## Hecho
-- [x] Guardar y generar contraseña temporal: guarda todo el formulario; si hay un error, el formulario vuelve con lo escrito. `PENDIENTE_COMMIT`
-- [x] Histórico y *Mi historial* ya no muestran los "Azul → Azul" (se siguen guardando por dentro para saber quién ya se autoevaluó). `PENDIENTE_COMMIT`
-- [x] *Ensayos → Fichas de miembros*: lista con filtros y ficha de cada persona (figuras por nivel con su color, "solo las que le faltan", últimos ensayos y cambios recientes). Desde *Tomar asistencia* el nombre abre su ficha. `PENDIENTE_COMMIT`
-- [x] Eliminar ensayo (solo admin): borra todo lo del ensayo y regresa los colores que subió su autoevaluación. `PENDIENTE_COMMIT`
-- [x] El aviso de autoevaluación se activa al cerrar el ensayo, y el detalle dice qué falta para habilitarlo. `PENDIENTE_COMMIT`
-- [x] Pestañas del ensayo (Resumen · Cronograma · Asistencia · Figuras) en sus 4 pantallas, con "← Volver al ensayo". `PENDIENTE_COMMIT`
+- [x] Guardar y generar contraseña temporal: guarda todo el formulario; si hay un error, el formulario vuelve con lo escrito. `a38eabd`
+- [x] Histórico y *Mi historial* ya no muestran los "Azul → Azul" (se siguen guardando por dentro para saber quién ya se autoevaluó). `a38eabd`
+- [x] *Ensayos → Fichas de miembros*: lista con filtros y ficha de cada persona (figuras por nivel con su color, "solo las que le faltan", últimos ensayos y cambios recientes). Desde *Tomar asistencia* el nombre abre su ficha. `a38eabd`
+- [x] Eliminar ensayo (solo admin): borra todo lo del ensayo y regresa los colores que subió su autoevaluación. `a38eabd`
+- [x] El aviso de autoevaluación se activa al cerrar el ensayo, y el detalle dice qué falta para habilitarlo. `a38eabd`
+- [x] Pestañas del ensayo (Resumen · Cronograma · Asistencia · Figuras) en sus 4 pantallas, con "← Volver al ensayo". `a38eabd`
 - [x] La clave temporal se muestra en la tarjeta *Acceso al sistema*, con el mensaje para WhatsApp, y no solo en el aviso verde de arriba. `070f4b1`
 - [x] *Generar contraseña temporal* guarda el correo y valida que no esté repetido. `070f4b1`
 - [x] Claves temporales más seguras (`SDP-XXXX-XXXX`). `070f4b1`
