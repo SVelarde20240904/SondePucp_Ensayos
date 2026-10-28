@@ -217,10 +217,31 @@ public class AdminServlet extends BaseServlet {
                 return;
             }
             case "restablecer" -> {
+                // Si escribieron el correo en el formulario, se guarda primero (sin correo no puede entrar)
+                Miembro actual = miembros.obtener(id);
+                String correo = texto(req, "correo");
+                if (correo != null) correo = correo.trim().toLowerCase();
+                if (correo != null && !correo.equalsIgnoreCase(String.valueOf(actual.getCorreo()))) {
+                    if (!correo.matches("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$")) {
+                        Sesion.error(req, "Ese correo no es válido. Corrígelo antes de generar la contraseña.");
+                        ir(req, resp, volver); return;
+                    }
+                    if (miembros.existeCorreo(correo, id)) {
+                        Sesion.error(req, "Ese correo ya lo usa otro miembro.");
+                        ir(req, resp, volver); return;
+                    }
+                    miembros.actualizarCorreo(id, correo);
+                } else if (actual.getCorreo() == null || actual.getCorreo().isBlank()) {
+                    Sesion.error(req, "Primero escribe su correo PUCP: sin correo no puede iniciar sesión.");
+                    ir(req, resp, volver); return;
+                }
                 String temp = Formato.passwordTemporal();
                 miembros.registrarPassword(id, Password.hash(temp), true);
-                Sesion.ok(req, "Nueva contraseña temporal: " + temp + " (dásela a la persona; la cambiará al entrar).");
-                ir(req, resp, volver);
+                var s = req.getSession();
+                s.setAttribute("claveGenerada", temp);
+                s.setAttribute("claveCorreo", correo != null ? correo : actual.getCorreo());
+                s.setAttribute("claveNombre", actual.getNombre());
+                ir(req, resp, volver + "#acceso");
                 return;
             }
             default -> { }

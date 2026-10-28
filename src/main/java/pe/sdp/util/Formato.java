@@ -84,5 +84,11 @@ public final class Formato {
     private static final SecureRandom RND = new SecureRandom();
 
     /** Contraseña temporal fácil de dictar: SDP-1234 */
-    public static String passwordTemporal() { return "SDP-" + (1000 + RND.nextInt(9000)); }
+    /** Clave temporal tipo SDP-K7M4-Q9XR: 8 caracteres al azar sin letras que se confundan (0/O, 1/I/L). */
+    private static final String ALFABETO = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+    public static String passwordTemporal() {
+        StringBuilder sb = new StringBuilder("SDP-");
+        for (int i = 0; i < 8; i++) { if (i == 4) sb.append('-'); sb.append(ALFABETO.charAt(RND.nextInt(ALFABETO.length()))); }
+        return sb.toString();
+    }
 }

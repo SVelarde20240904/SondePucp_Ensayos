@@ -223,6 +223,13 @@ public class MiembroDao extends BaseDao {
         }
     }
 
+    public void actualizarCorreo(int idMiembro, String correo) throws SQLException {
+        try (Connection c = getConnection(); PreparedStatement ps = c.prepareStatement("UPDATE miembro SET correo=? WHERE id_miembro=?")) {
+            ps.setString(1, correo); ps.setInt(2, idMiembro);
+            ps.executeUpdate();
+        }
+    }
+
     public boolean existeNombre(String nombre, int exceptoId) throws SQLException {
         return existe("nombre", nombre, exceptoId);
     }

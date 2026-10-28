@@ -48,9 +48,22 @@
           <p class="muted xs">Anótala o envíasela por WhatsApp: después de guardar no se puede volver a ver (solo restablecer).</p></div>
       </c:when>
       <c:otherwise>
-        <div class="card"><h2>Acceso al sistema</h2>
+        <div class="card" id="acceso"><h2>Acceso al sistema</h2>
+          <c:if test="${not empty sessionScope.claveGenerada}">
+            <div class="note ok" style="display:flex;flex-direction:column;gap:6px">
+              <span>✓ Contraseña temporal generada. Anótala ahora: no se vuelve a mostrar.</span>
+              <span>Correo: <b><c:out value="${sessionScope.claveCorreo}"/></b></span>
+              <span>Clave: <b style="font-size:18px;letter-spacing:.04em;user-select:all"><c:out value="${sessionScope.claveGenerada}"/></b></span>
+              <textarea class="input" rows="4" readonly onclick="this.select()" style="font-size:13px;font-weight:500">Hola <c:out value="${sessionScope.claveNombre}"/>! Ya tienes cuenta en el Sistema de Ensayos de SDP 💃🏻
+Entra con tu correo <c:out value="${sessionScope.claveCorreo}"/> y esta clave temporal: <c:out value="${sessionScope.claveGenerada}"/>
+Al entrar te va a pedir que pongas una tuya.</textarea>
+              <span class="muted xs">Toca el mensaje para seleccionarlo y cópialo al WhatsApp (agrégale el link).</span>
+            </div>
+            <c:remove var="claveGenerada" scope="session"/><c:remove var="claveCorreo" scope="session"/><c:remove var="claveNombre" scope="session"/>
+          </c:if>
           <div class="inline"><sdp:tag texto="${m.cuentaActivada ? (m.debeCambiarPassword ? 'Con contraseña temporal' : 'Cuenta activada') : 'Sin contraseña'}" tono="${m.cuentaActivada and not m.debeCambiarPassword ? 'ok' : 'warn'}"/></div>
-          <div><button class="btn btn-secondary" name="action" value="restablecer" formnovalidate>Generar contraseña temporal</button></div></div>
+          <div><button class="btn btn-secondary" name="action" value="restablecer" formnovalidate>Generar contraseña temporal</button></div>
+          <p class="muted xs">También guarda el correo que escribiste arriba. La clave aparece aquí mismo.</p></div>
         <div class="card" style="border-color:var(--rojo-soft)">
           <c:choose>
             <c:when test="${m.activo}">
