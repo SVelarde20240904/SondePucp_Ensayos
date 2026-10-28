@@ -13,6 +13,7 @@ Lista viva de mejoras. Lo que se termina pasa a **Hecho** con su commit.
 - [ ] **Activar cuentas en lote:** una tabla con los que no tienen cuenta, escribes los correos y se generan todas las claves temporales de una, con un mensaje de WhatsApp por persona.
 - [ ] **Link fijo** para el túnel de Cloudflare (requiere cuenta de Cloudflare y un dominio), o pasar a Railway. **Además Chrome marca los links `trycloudflare.com` como "sitio peligroso"** (dominio usado para phishing): con dominio propio desaparece el aviso.
 - [ ] **Biblioteca de figuras:** una página por figura con su nombre, nivel, posición en la mano, descripción/pasos y un video para verla. Lo más simple: un **enlace a Google Drive o YouTube** por figura (con vista previa embebida si es YouTube o Drive) en vez de subir videos al servidor, que pesan mucho. Accesible para todos los miembros desde su menú, y desde la autoevaluación o la ficha ("¿no te acuerdas cuál es? míralo aquí").
+  - **Privacidad de los videos:** NO usar "cualquiera con el enlace" ni YouTube no listado. Empezar con **Drive restringido**: carpeta compartida solo con un Grupo de Google de SDP (lector, sin descarga); si el link se filtra, Drive pide permiso. La web recuerda al admin agregar o sacar a la persona del grupo al darla de alta o de baja. Más adelante, con hosting: videos guardados dentro de la app y servidos solo con sesión iniciada.
 - [ ] Pantallas de **celular en Figma** (los mockups están solo en versión laptop).
 - [ ] Subir los logos reales a Figma.
 
