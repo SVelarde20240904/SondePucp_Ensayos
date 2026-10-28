@@ -16,7 +16,7 @@ Lista viva de mejoras. Lo que se termina pasa a **Hecho** con su commit.
 - [ ] Subir los logos reales a Figma.
 
 ## Hecho
-- [x] Los cambios de rol/permisos/estado llegan al instante (siguiente clic), sin volver a iniciar sesión. `PENDIENTE_COMMIT`
+- [x] Los cambios de rol/permisos/estado llegan al instante (siguiente clic), sin volver a iniciar sesión. `4ded3b3`
 - [x] **Bug:** las conexiones del pool podían quedar con una transacción abierta después de guardar una autoevaluación, y lo siguiente no se confirmaba en la BD (se perdía al reiniciar). Ahora cada conexión sale del pool en autocommit. `82cda2c`
 - [x] Corregir en el histórico con el mismo color que ya tiene avisa que no hay nada que corregir. `82cda2c`
 - [x] Guardar y generar contraseña temporal: guarda todo el formulario; si hay un error, el formulario vuelve con lo escrito. `a38eabd`
