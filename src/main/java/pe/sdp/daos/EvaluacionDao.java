@@ -102,8 +102,14 @@ public class EvaluacionDao extends BaseDao {
     }
 
     /** Corrección del admin. */
-    public void corregir(int idMiembro, int idFigura, String color, String motivo, int idAdmin) throws SQLException {
+    /** @return false si la persona ya tenía ese color (no hay nada que corregir) */
+    public boolean corregir(int idMiembro, int idFigura, String color, String motivo, int idAdmin) throws SQLException {
+        try (Connection c = getConnection(); PreparedStatement ps = c.prepareStatement("SELECT color FROM evaluacion WHERE id_miembro=? AND id_figura=?")) {
+            ps.setInt(1, idMiembro); ps.setInt(2, idFigura);
+            try (ResultSet rs = ps.executeQuery()) { if (rs.next() && color.equals(rs.getString(1))) return false; }
+        }
         guardar(idMiembro, Map.of(idFigura, color), "CORRECCION", null, null, idAdmin, motivo, false);
+        return true;
     }
 
     private int guardar(int idMiembro, Map<Integer, String> colores, String fuente, Integer idEnsayo, Integer idPeriodo,

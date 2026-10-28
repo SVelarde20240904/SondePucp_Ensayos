@@ -39,6 +39,10 @@ public abstract class BaseDao {
                     p.setRemoveAbandoned(true);         // conexiones olvidadas sin cerrar se recuperan
                     p.setRemoveAbandonedTimeout(120);
                     p.setLogAbandoned(true);
+                    // Cada conexión sale del pool en modo autocommit, sin transacciones a medias
+                    p.setDefaultAutoCommit(true);
+                    p.setRollbackOnReturn(true);
+                    p.setJdbcInterceptors("org.apache.tomcat.jdbc.pool.interceptor.ConnectionState");
                     DataSource ds = new DataSource();
                     ds.setPoolProperties(p);
                     pool = ds;
@@ -54,7 +58,11 @@ public abstract class BaseDao {
     }
 
     protected Connection getConnection() throws SQLException {
-        return pool().getConnection();
+        Connection c = pool().getConnection();
+        // Si un DAO usó una transacción (setAutoCommit(false)), la conexión pudo volver al pool así:
+        // se deja SIEMPRE en autocommit para que lo siguiente se guarde de verdad.
+        if (!c.getAutoCommit()) { c.rollback(); c.setAutoCommit(true); }
+        return c;
     }
 
     // ---------- ayudas para leer columnas que pueden ser NULL ----------

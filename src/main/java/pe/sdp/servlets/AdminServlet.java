@@ -169,7 +169,8 @@ public class AdminServlet extends BaseServlet {
                     Integer m = entero(req, "cMiembro"), f = entero(req, "cFigura");
                     String color = texto(req, "cColor"), motivo = texto(req, "cMotivo");
                     if (m == null || f == null || !Formato.esColor(color) || motivo == null) Sesion.error(req, "Para corregir elige miembro, figura, color y escribe el motivo.");
-                    else { evaluaciones.corregir(m, f, color, motivo, yo); Sesion.ok(req, "Corrección registrada en el histórico."); }
+                    else if (!evaluaciones.corregir(m, f, color, motivo, yo)) Sesion.error(req, "Esa persona ya tiene ese color en esa figura: no hay nada que corregir.");
+                    else Sesion.ok(req, "Corrección registrada en el histórico.");
                     ir(req, resp, "/admin/historico");
                 }
                 case "/roles" -> {
