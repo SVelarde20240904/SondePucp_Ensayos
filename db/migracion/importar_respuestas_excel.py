@@ -19,6 +19,9 @@ import sys, datetime as dt
 import openpyxl
 
 ALIAS = {"Ilo": "Enmanuel Vega", "Mimi": "Miranda Cueva"}   # por si algún Form llega con apodo
+# Figuras que se renombraron en el Excel: nombre viejo -> nombre nuevo (el sistema adopta el nuevo)
+RENOMBRADAS = {"Enredala compl.": "Enredala complicado", "Festival de pelotas": "Festival de pelotas SDP",
+               "H Derecha M izq": "H Derecha M Izquierda"}
 FUENTE = {"mensual": ("MENSUAL", True), "semanal": ("ENSAYO", True), "semanal (ignorada)": ("ENSAYO", False)}
 COLORES = ("ROJO", "AMARILLO", "VERDE", "AZUL")
 
@@ -52,6 +55,9 @@ def main(xlsx):
     for a, m in sorted({(f[0].year, f[0].month) for f in filas if f[4] == "MENSUAL"}):
         fin = (dt.date(a + (m == 12), m % 12 + 1, 1) - dt.timedelta(days=1))
         o(f"INSERT IGNORE INTO periodo_autoevaluacion (anio, mes, fecha_apertura, fecha_cierre) VALUES ({a},{m},'{a}-{m:02d}-01 00:00:00','{fin} 23:59:59');")
+    o("-- figuras renombradas en el Excel (solo si todavía tienen el nombre viejo)")
+    for viejo, nuevo in RENOMBRADAS.items():
+        o(f"UPDATE figura SET nombre = {q(nuevo)} WHERE nombre = {q(viejo)} AND NOT EXISTS (SELECT 1 FROM (SELECT id_figura FROM figura WHERE nombre = {q(nuevo)}) x);")
     o("CREATE TEMPORARY TABLE tmp_resp (fecha DATETIME, nombre VARCHAR(80), figura VARCHAR(80), color VARCHAR(10), fuente VARCHAR(15), valida TINYINT, nuevo TINYINT DEFAULT 0, aplica TINYINT DEFAULT 0, id_miembro INT, id_figura INT, anterior VARCHAR(10));")
     for i in range(0, len(filas), 200):
         o("INSERT INTO tmp_resp (fecha, nombre, figura, color, fuente, valida) VALUES\n  " + ",\n  ".join(
