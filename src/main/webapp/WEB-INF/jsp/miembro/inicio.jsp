@@ -10,6 +10,10 @@
     <a class="btn btn-primary btn-sm" href="${ctx}/autoevaluacion?ensayo=${pendienteEnsayo.idEnsayo}">Autoevaluarme</a></div>
 </c:if>
 
+<c:forEach var="ft" items="${formulariosTaller}">
+  <div class="note warn inline" style="justify-content:space-between">Tienes pendiente el formulario del ${ft.titulo} (${ft.fechaCorta}): pasos ✅/❌ y feedback. Plazo: ${ft.plazoTexto}.
+    <a class="btn btn-primary btn-sm" href="${ctx}/talleres/formulario?id=${ft.idTaller}">Llenarlo</a></div>
+</c:forEach>
 <c:if test="${misPendientes > 0}">
   <div class="note info inline" style="justify-content:space-between">Tienes ${misPendientes} responsabilidad${misPendientes == 1 ? '' : 'es'} pendiente${misPendientes == 1 ? '' : 's'} esta semana.
     <a class="btn btn-secondary btn-sm" href="${ctx}/mis-responsabilidades">Ver</a></div>

@@ -9,13 +9,13 @@ import java.util.*;
 
 /**
  * Roles y permisos (pantalla 19).
- * Roles: 1 Miembro (todos), 2 Equipo de ensayos, 4 Moderador de ensayos, 5 Admin de ensayos, 3 Owner.
+ * Roles: 1 Miembro (todos), 2/4/5 Equipo, Moderador y Admin de ensayos, 6/7/8 Equipo, Moderador y Admin de talleres, 3 Owner.
  * Los permisos de cada rol (menos Miembro) se marcan en la matriz; los roles de una persona se suman.
  */
 public class RolDao extends BaseDao {
 
     public static final int MIEMBRO = 1, EQUIPO = 2, OWNER = 3, MODERADOR_ENSAYOS = 4, ADMIN_ENSAYOS = 5;
-    private static final String ORDEN = "FIELD(r.id_rol,1,2,4,5,3)";
+    private static final String ORDEN = "FIELD(r.id_rol,1,2,4,5,6,7,8,3)";
 
     /** Todos los roles menos Miembro, de menor a mayor. */
     public List<Rol> rolesExtra() throws SQLException {
@@ -29,7 +29,7 @@ public class RolDao extends BaseDao {
 
     public List<Permiso> matriz() throws SQLException {
         String sql = "SELECT p.*, (SELECT GROUP_CONCAT(rp.id_rol) FROM rol_permiso rp WHERE rp.id_permiso=p.id_permiso) AS roles " +
-                     "FROM permiso p ORDER BY FIELD(p.seccion,'MI_ESPACIO','ENSAYOS','ADMINISTRACION'), p.id_permiso";
+                     "FROM permiso p ORDER BY FIELD(p.seccion,'MI_ESPACIO','ENSAYOS','TALLERES','ADMINISTRACION'), p.id_permiso";
         try (Connection c = getConnection(); Statement st = c.createStatement(); ResultSet rs = st.executeQuery(sql)) {
             List<Permiso> l = new ArrayList<>();
             while (rs.next()) {

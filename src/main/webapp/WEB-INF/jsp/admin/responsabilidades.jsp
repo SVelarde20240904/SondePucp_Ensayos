@@ -1,11 +1,17 @@
-<c:set var="titulo" value="Responsabilidades"/><c:set var="menu" value="Responsabilidades"/>
+<c:set var="esTalleres" value="${teamResp == 'TALLERES'}"/>
+<c:set var="titulo" value="Responsabilidades"/><c:set var="menu" value="${esTalleres ? 'Responsabilidades talleres' : 'Responsabilidades'}"/>
+<c:set var="qTeam" value="team=${teamResp}&"/>
 <%@ include file="/WEB-INF/jsp/includes/top.jspf" %>
-<section class="hero"><div class="titles"><span class="kicker">Administración</span><h1>Responsabilidades · semana del ${semanaTexto}</h1>
+<section class="hero"><div class="titles"><span class="kicker">${esTalleres ? 'Team Talleres' : 'Team Ensayos'}</span><h1>Responsabilidades · semana del ${semanaTexto}</h1>
   <p>El estado se calcula solo con la fecha y hora de cumplimiento; las coberturas se detectan cuando lo cumple otra persona</p></div>
-  <div class="actions"><a class="btn btn-secondary" href="${ctx}/admin/responsabilidades?semana=${semanaAnterior}">← Semana anterior</a><a class="btn btn-secondary" href="${ctx}/admin/responsabilidades?semana=${semanaSiguiente}">Siguiente →</a></div>
+  <div class="actions"><a class="btn btn-secondary" href="${ctx}/admin/responsabilidades?${qTeam}semana=${semanaAnterior}">← Semana anterior</a><a class="btn btn-secondary" href="${ctx}/admin/responsabilidades?${qTeam}semana=${semanaSiguiente}">Siguiente →</a></div>
   <span class="star"></span></section>
 
-<div class="note ok">✓ Automatizados por la web (ya no son encargos): Recopilar autoevaluación · Actualizar la BD con la autoevaluación · Creación y envío del formulario · Actualización completa de la BD · Cronograma semanal</div>
+<c:if test="${puedeEnsayos and puedeTalleres}"><div class="inline">
+  <a class="pill-link ${esTalleres ? '' : 'on'}" href="${ctx}/admin/responsabilidades?team=ENSAYOS&semana=${semana}">Ensayos</a>
+  <a class="pill-link ${esTalleres ? 'on' : ''}" href="${ctx}/admin/responsabilidades?team=TALLERES&semana=${semana}">Talleres</a></div></c:if>
+<c:if test="${not esTalleres}"><div class="note ok">✓ Automatizados por la web (ya no son encargos): Recopilar autoevaluación · Actualizar la BD con la autoevaluación · Creación y envío del formulario · Actualización completa de la BD · Cronograma semanal</div></c:if>
+<c:if test="${esTalleres}"><div class="note ok">✓ Automatizados por la web: el formulario post-taller (pasos ✅/❌ y feedback) ya no se pide por WhatsApp.</div></c:if>
 
 <div class="row top">
   <div class="stack grow">
@@ -16,7 +22,7 @@
           <td><c:choose><c:when test="${not empty e.cumplidoPor}"><b><c:out value="${e.cumplidoPor}"/></b><small>${e.cumplimientoTexto}</small></c:when><c:otherwise>—</c:otherwise></c:choose></td>
           <td><sdp:tag texto="${e.estadoTexto}" tono="${e.estadoTono}"/><c:if test="${e.cobertura}"> <span class="tag info">Cobertura</span></c:if><c:if test="${e.justificada}"> <span class="tag neutral" title="${e.motivoJustificacion}">Justificada</span></c:if></td>
           <td><c:if test="${empty e.cumplidoPor}">
-            <form method="post" action="${ctx}/admin/responsabilidades" class="inline" style="flex-wrap:nowrap"><input type="hidden" name="_csrf" value="${sessionScope.csrf}"><input type="hidden" name="semana" value="${semana}"><input type="hidden" name="idEncargo" value="${e.idEncargo}">
+            <form method="post" action="${ctx}/admin/responsabilidades" class="inline" style="flex-wrap:nowrap"><input type="hidden" name="_csrf" value="${sessionScope.csrf}"><input type="hidden" name="semana" value="${semana}"><input type="hidden" name="team" value="${teamResp}"><input type="hidden" name="idEncargo" value="${e.idEncargo}">
               <select class="input" name="cumplidoPor" style="width:150px;padding:6px 10px"><c:forEach var="m" items="${activos}"><option value="${m.idMiembro}" ${m.idMiembro == e.idResponsable ? 'selected' : ''}><c:out value="${m.nombre}"/></option></c:forEach></select>
               <button class="btn btn-ghost btn-sm" name="action" value="cumplir">Cumplido</button>
               <c:if test="${e.estado == 'NO_CUMPLIDA' and not e.justificada}"><input class="input" name="motivo" placeholder="Motivo" style="width:120px;padding:6px 10px"><button class="btn btn-secondary btn-sm" name="action" value="justificar">Justificar</button></c:if>
@@ -26,13 +32,19 @@
       </tbody></table>
     </div>
     <form class="card" method="post" action="${ctx}/admin/responsabilidades"><input type="hidden" name="_csrf" value="${sessionScope.csrf}"><h2>Asignar encargo</h2>
-      <input type="hidden" name="semana" value="${semana}">
+      <input type="hidden" name="semana" value="${semana}"><input type="hidden" name="team" value="${teamResp}">
       <div class="form-row" style="align-items:flex-end">
         <div class="field"><label>Encargo</label><select class="input" name="idTipo"><c:forEach var="t" items="${tipos}"><option value="${t.idTipo}"><c:out value="${t.nombre}"/></option></c:forEach></select></div>
-        <div class="field"><label>Responsable</label><select class="input" name="responsable"><c:forEach var="m" items="${activos}"><c:if test="${m.equipoEnsayos}"><option value="${m.idMiembro}"><c:out value="${m.nombre}"/></option></c:if></c:forEach>
-          <option disabled>──────────</option><c:forEach var="m" items="${activos}"><c:if test="${not m.equipoEnsayos}"><option value="${m.idMiembro}"><c:out value="${m.nombre}"/></option></c:if></c:forEach></select></div>
+        <div class="field"><label>Responsable</label><select class="input" name="responsable"><c:forEach var="m" items="${activos}"><c:if test="${esTalleres ? m.teams.contains('Talleres') : m.equipoEnsayos}"><option value="${m.idMiembro}"><c:out value="${m.nombre}"/></option></c:if></c:forEach>
+          <option disabled>──────────</option><c:forEach var="m" items="${activos}"><c:if test="${not (esTalleres ? m.teams.contains('Talleres') : m.equipoEnsayos)}"><option value="${m.idMiembro}"><c:out value="${m.nombre}"/></option></c:if></c:forEach></select></div>
         <div class="field"><label>Plazo</label><input class="input" type="datetime-local" name="plazo"></div>
         <div class="field" style="flex:none"><button class="btn btn-primary" name="action" value="asignar">+ Asignar</button></div></div>
+    </form>
+    <form class="card" method="post" action="${ctx}/admin/responsabilidades"><input type="hidden" name="_csrf" value="${sessionScope.csrf}"><h2>¿Falta un tipo de encargo?</h2>
+      <input type="hidden" name="semana" value="${semana}"><input type="hidden" name="team" value="${teamResp}">
+      <div class="form-row" style="align-items:flex-end">
+        <div class="field"><label>Nombre del encargo</label><input class="input" name="nombreTipo" maxlength="60" placeholder="${esTalleres ? 'Ej: Llevar el parlante cargado' : 'Ej: Llevar el parlante'}"></div>
+        <div class="field" style="flex:none"><button class="btn btn-secondary" name="action" value="nuevoTipo">+ Agregar a la lista</button></div></div>
     </form>
   </div>
   <div class="stack w-340">

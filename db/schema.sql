@@ -13,6 +13,8 @@ USE sdp_ensayos;
 -- Nota: la app agrega sola al arrancar (ArranqueDao.migrar) lo que vino después de este script:
 --   figura.video_url · miembro.apodo · miembro.fecha_nacimiento · tablas team y miembro_team
 --   roles 4 Moderador de ensayos y 5 Admin de ensayos (el 3 se llama Owner) y sus permisos.
+--   módulo Talleres: roles 6-8, permisos de TALLERES, tipo_encargo.id_team y tablas taller, taller_bloque,
+--   paso_taller, taller_paso, taller_checklist, taller_persona, taller_respuesta, taller_feedback, taller_resumen.
 CREATE TABLE miembro (
   id_miembro      INT AUTO_INCREMENT PRIMARY KEY,
   nombre          VARCHAR(60)  NOT NULL,              -- "Nombre_Matriz": nombre corto que se ve en el sistema

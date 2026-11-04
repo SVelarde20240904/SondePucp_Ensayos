@@ -215,7 +215,7 @@ public class MiembroDao extends BaseDao {
     }
 
     /** Roles que se pueden poner o quitar (el 1, Miembro, lo tienen todos). El trigger impide quedarse sin Owner. */
-    public static final List<Integer> ROLES_EXTRA = List.of(2, 4, 5, 3);
+    public static final List<Integer> ROLES_EXTRA = List.of(2, 4, 5, 6, 7, 8, 3);
 
     private void guardarRoles(Connection c, int id, Set<Integer> roles, int idAdmin) throws SQLException {
         if (roles == null) return;

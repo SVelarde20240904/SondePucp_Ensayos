@@ -106,8 +106,99 @@ public class ArranqueDao extends BaseDao {
                 finally { c.setAutoCommit(true); }
                 hecho.add("roles Owner, Admin de ensayos y Moderador de ensayos");
             }
+            if (!existeTabla(c, "taller_resumen")) {
+                migrarTalleres(c);
+                hecho.add("módulo Talleres (roles, permisos, talleres, pasos, dictado y feedback)");
+            }
         }
         return hecho;
+    }
+
+    /** Módulo Talleres: roles 6-8, permisos, responsabilidades por team y tablas propias. */
+    private static void migrarTalleres(Connection c) throws SQLException {
+        String NIV = "ENUM('PRINCIPIANTE','BASICO','INTRO_RUEDA','RUEDA_BASICA')";
+        try (Statement st = c.createStatement()) {
+            // --- roles y permisos ---
+            st.executeUpdate("INSERT IGNORE INTO rol_sistema (id_rol, codigo, nombre) VALUES (6,'EQUIPO_TALLERES','Equipo de talleres')," +
+                             "(7,'MODERADOR_TALLERES','Moderador de talleres'),(8,'ADMIN_TALLERES','Admin de talleres')");
+            st.executeUpdate("ALTER TABLE permiso MODIFY seccion ENUM('MI_ESPACIO','ENSAYOS','TALLERES','ADMINISTRACION') NOT NULL");
+            st.executeUpdate("INSERT IGNORE INTO permiso (id_permiso, codigo, descripcion, seccion) SELECT COALESCE(MAX(id_permiso),0)+1, " +
+                             "'GESTIONAR_TALLERES', 'Armar talleres, registrar el dictado y ver el feedback', 'TALLERES' FROM permiso");
+            st.executeUpdate("INSERT IGNORE INTO permiso (id_permiso, codigo, descripcion, seccion) SELECT COALESCE(MAX(id_permiso),0)+1, " +
+                             "'ASIGNAR_RESPONSABILIDADES_TALLERES', 'Asignar responsabilidades de talleres', 'TALLERES' FROM permiso");
+            // todos los roles de talleres tienen lo de Mi espacio
+            st.executeUpdate("INSERT IGNORE INTO rol_permiso (id_rol, id_permiso) SELECT r.id_rol, rp.id_permiso FROM rol_permiso rp " +
+                             "JOIN (SELECT 6 AS id_rol UNION SELECT 7 UNION SELECT 8) r WHERE rp.id_rol=1");
+            st.executeUpdate("INSERT IGNORE INTO rol_permiso (id_rol, id_permiso) SELECT r.id_rol, p.id_permiso FROM permiso p " +
+                             "JOIN (SELECT 3 AS id_rol UNION SELECT 6 UNION SELECT 7 UNION SELECT 8) r WHERE p.codigo='GESTIONAR_TALLERES'");
+            st.executeUpdate("INSERT IGNORE INTO rol_permiso (id_rol, id_permiso) SELECT r.id_rol, p.id_permiso FROM permiso p " +
+                             "JOIN (SELECT 3 AS id_rol UNION SELECT 7 UNION SELECT 8) r WHERE p.codigo='ASIGNAR_RESPONSABILIDADES_TALLERES'");
+            // quien está en el team Talleres queda con el rol Equipo de talleres
+            st.executeUpdate("INSERT IGNORE INTO miembro_rol (id_miembro, id_rol) SELECT mt.id_miembro, 6 FROM miembro_team mt " +
+                             "JOIN team t ON t.id_team=mt.id_team WHERE t.codigo='TALLERES'");
+
+            // --- responsabilidades por team (NULL = Ensayos, como hasta ahora) ---
+            if (!existeColumna(c, "tipo_encargo", "id_team")) {
+                st.executeUpdate("ALTER TABLE tipo_encargo ADD COLUMN id_team SMALLINT NULL, ADD CONSTRAINT fk_te_team FOREIGN KEY (id_team) REFERENCES team(id_team)");
+                st.executeUpdate("ALTER TABLE tipo_encargo DROP INDEX nombre, ADD CONSTRAINT uq_tipo_team UNIQUE (nombre, id_team)");
+            }
+            st.executeUpdate("INSERT IGNORE INTO tipo_encargo (nombre, activo, id_team) SELECT x.n, 1, t.id_team FROM team t JOIN (" +
+                             "SELECT 'Armar el cronograma del taller' n UNION SELECT 'Hacer el flyer' UNION SELECT 'Registrar el dictado final' " +
+                             "UNION SELECT 'Resumir y enviar el feedback' UNION SELECT 'Música social') x WHERE t.codigo='TALLERES'");
+
+            // --- talleres ---
+            st.executeUpdate("CREATE TABLE IF NOT EXISTS taller (id_taller INT AUTO_INCREMENT PRIMARY KEY, ciclo VARCHAR(7) NOT NULL, numero SMALLINT NULL, " +
+                             "fecha DATE NOT NULL, hora_inicio TIME NOT NULL, hora_fin TIME NOT NULL, lugar VARCHAR(120) NULL, " +
+                             "estado ENUM('BORRADOR','PROGRAMADO','REALIZADO','CANCELADO') NOT NULL DEFAULT 'PROGRAMADO', " +
+                             "musica_texto VARCHAR(120) NULL, notas VARCHAR(1000) NULL, final_por INT NULL, final_fecha DATETIME NULL, " +
+                             "creado_por INT NULL, fecha_creacion DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, " +
+                             "CONSTRAINT uq_taller_fecha UNIQUE (fecha), " +
+                             "CONSTRAINT fk_ta_final FOREIGN KEY (final_por) REFERENCES miembro(id_miembro), " +
+                             "CONSTRAINT fk_ta_creado FOREIGN KEY (creado_por) REFERENCES miembro(id_miembro)) ENGINE=InnoDB");
+            // bloques del cronograma (lo que sale en el flyer), por nivel
+            st.executeUpdate("CREATE TABLE IF NOT EXISTS taller_bloque (id_bloque INT AUTO_INCREMENT PRIMARY KEY, id_taller INT NOT NULL, nivel " + NIV + " NOT NULL, " +
+                             "orden SMALLINT NOT NULL, hora VARCHAR(20) NULL, actividad VARCHAR(300) NOT NULL, duracion VARCHAR(10) NULL, " +
+                             "CONSTRAINT fk_tb_taller FOREIGN KEY (id_taller) REFERENCES taller(id_taller) ON DELETE CASCADE) ENGINE=InnoDB");
+            // catálogo de pasos por nivel (se arma con los cronogramas pasados y se le agregan nuevos)
+            st.executeUpdate("CREATE TABLE IF NOT EXISTS paso_taller (id_paso INT AUTO_INCREMENT PRIMARY KEY, nombre VARCHAR(80) NOT NULL, nivel " + NIV + " NOT NULL, " +
+                             "activo TINYINT(1) NOT NULL DEFAULT 1, CONSTRAINT uq_paso UNIQUE (nombre, nivel)) ENGINE=InnoDB");
+            // pasos de cada taller: planificados (del cronograma) y agregados; ensenado = checklist ✅/❌ del formulario
+            st.executeUpdate("CREATE TABLE IF NOT EXISTS taller_paso (id_taller INT NOT NULL, nivel " + NIV + " NOT NULL, id_paso INT NOT NULL, " +
+                             "orden SMALLINT NOT NULL DEFAULT 0, seccion TINYINT NOT NULL DEFAULT 1, planificado TINYINT(1) NOT NULL DEFAULT 1, " +
+                             "ensenado TINYINT(1) NULL, PRIMARY KEY (id_taller, nivel, id_paso), " +
+                             "CONSTRAINT fk_tp_taller FOREIGN KEY (id_taller) REFERENCES taller(id_taller) ON DELETE CASCADE, " +
+                             "CONSTRAINT fk_tp_paso FOREIGN KEY (id_paso) REFERENCES paso_taller(id_paso)) ENGINE=InnoDB");
+            // quién respondió el checklist de cada nivel (basta con uno de los dos talleristas)
+            st.executeUpdate("CREATE TABLE IF NOT EXISTS taller_checklist (id_taller INT NOT NULL, nivel " + NIV + " NOT NULL, respondido_por INT NOT NULL, " +
+                             "fecha DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY (id_taller, nivel), " +
+                             "CONSTRAINT fk_tc_taller FOREIGN KEY (id_taller) REFERENCES taller(id_taller) ON DELETE CASCADE, " +
+                             "CONSTRAINT fk_tc_miembro FOREIGN KEY (respondido_por) REFERENCES miembro(id_miembro)) ENGINE=InnoDB");
+            // dictado: planeado (cronograma) y final (asistencia real, reemplazos)
+            st.executeUpdate("CREATE TABLE IF NOT EXISTS taller_persona (id INT AUTO_INCREMENT PRIMARY KEY, id_taller INT NOT NULL, id_miembro INT NOT NULL, " +
+                             "funcion ENUM('TALLERISTA','APOYO','MAESTRO','MUSICA') NOT NULL, nivel " + NIV + " NULL, " +
+                             "planeado TINYINT(1) NOT NULL DEFAULT 1, asistencia ENUM('A_TIEMPO','TARDE','NO_SE_PRESENTO') NULL, reemplaza_a INT NULL, " +
+                             "CONSTRAINT fk_tpe_taller FOREIGN KEY (id_taller) REFERENCES taller(id_taller) ON DELETE CASCADE, " +
+                             "CONSTRAINT fk_tpe_miembro FOREIGN KEY (id_miembro) REFERENCES miembro(id_miembro), " +
+                             "CONSTRAINT fk_tpe_reemp FOREIGN KEY (reemplaza_a) REFERENCES miembro(id_miembro)) ENGINE=InnoDB");
+            // quién ya mandó su formulario
+            st.executeUpdate("CREATE TABLE IF NOT EXISTS taller_respuesta (id_taller INT NOT NULL, id_miembro INT NOT NULL, fecha DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, " +
+                             "PRIMARY KEY (id_taller, id_miembro), CONSTRAINT fk_tr_taller FOREIGN KEY (id_taller) REFERENCES taller(id_taller) ON DELETE CASCADE, " +
+                             "CONSTRAINT fk_tr_miembro FOREIGN KEY (id_miembro) REFERENCES miembro(id_miembro)) ENGINE=InnoDB");
+            // feedback crudo (con nombre, lo ve el team) · TALLER = sugerencia para el taller (para_miembro NULL)
+            st.executeUpdate("CREATE TABLE IF NOT EXISTS taller_feedback (id INT AUTO_INCREMENT PRIMARY KEY, id_taller INT NOT NULL, de_miembro INT NOT NULL, " +
+                             "para_miembro INT NULL, tipo ENUM('COMPANERO','APOYO','TALLER') NOT NULL, texto VARCHAR(2000) NOT NULL, " +
+                             "fecha DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, " +
+                             "CONSTRAINT fk_tf_taller FOREIGN KEY (id_taller) REFERENCES taller(id_taller) ON DELETE CASCADE, " +
+                             "CONSTRAINT fk_tf_de FOREIGN KEY (de_miembro) REFERENCES miembro(id_miembro), " +
+                             "CONSTRAINT fk_tf_para FOREIGN KEY (para_miembro) REFERENCES miembro(id_miembro)) ENGINE=InnoDB");
+            // resumen anónimo que le llega a cada tallerista
+            st.executeUpdate("CREATE TABLE IF NOT EXISTS taller_resumen (id_taller INT NOT NULL, para_miembro INT NOT NULL, texto VARCHAR(2000) NOT NULL, " +
+                             "escrito_por INT NOT NULL, fecha_actualizacion DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, enviado TINYINT(1) NOT NULL DEFAULT 0, " +
+                             "fecha_envio DATETIME NULL, PRIMARY KEY (id_taller, para_miembro), " +
+                             "CONSTRAINT fk_trs_taller FOREIGN KEY (id_taller) REFERENCES taller(id_taller) ON DELETE CASCADE, " +
+                             "CONSTRAINT fk_trs_para FOREIGN KEY (para_miembro) REFERENCES miembro(id_miembro), " +
+                             "CONSTRAINT fk_trs_esc FOREIGN KEY (escrito_por) REFERENCES miembro(id_miembro)) ENGINE=InnoDB");
+        }
     }
 
     private static boolean existeTabla(Connection c, String tabla) throws SQLException {

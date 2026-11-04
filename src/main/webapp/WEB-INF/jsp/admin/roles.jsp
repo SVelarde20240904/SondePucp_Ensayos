@@ -10,7 +10,7 @@
       <c:set var="sec" value=""/>
       <c:forEach var="p" items="${permisos}">
         <c:if test="${p.seccion != sec}"><c:set var="sec" value="${p.seccion}"/>
-          <tr class="section"><td colspan="${fn:length(roles) + 2}">${sec == 'MI_ESPACIO' ? 'MI ESPACIO' : (sec == 'ENSAYOS' ? 'ENSAYOS' : 'ADMINISTRACIÓN')}</td></tr></c:if>
+          <tr class="section"><td colspan="${fn:length(roles) + 2}">${sec == 'MI_ESPACIO' ? 'MI ESPACIO' : (sec == 'ENSAYOS' ? 'ENSAYOS' : (sec == 'TALLERES' ? 'TALLERES' : 'ADMINISTRACIÓN'))}</td></tr></c:if>
         <tr><td><c:out value="${p.descripcion}"/></td>
           <td><input type="checkbox" ${p.tiene(1) ? 'checked' : ''} disabled aria-label="Miembro"></td>
           <c:forEach var="r" items="${roles}">
@@ -42,6 +42,8 @@
     <div class="card"><h2>Cómo funcionan</h2>
       <p class="muted small">• <b>Equipo de ensayos</b>: ensayos, cronograma, asistencia, figuras enseñadas, fichas y reportes.</p>
       <p class="muted small">• <b>Moderador</b> y <b>Admin de ensayos</b>: lo anterior + figuras, histórico, todas las responsabilidades, eliminar ensayos y editar figuras desde la ficha. Hoy tienen lo mismo; son roles distintos para darle más cosas al admin después.</p>
+      <p class="muted small">• <b>Equipo de talleres</b>: arma los talleres (cronograma, pasos, dictado planeado y final) y ve todo el feedback.</p>
+      <p class="muted small">• <b>Moderador</b> y <b>Admin de talleres</b>: lo anterior + asignar las responsabilidades de talleres. El admin tendrá cosas extra más adelante.</p>
       <p class="muted small">• <b>Owner</b>: todo, incluidos Miembros y Roles. La BD no deja quitar al último Owner.</p>
       <p class="muted small">• Los cambios le llegan a cada persona al toque, en su siguiente clic (sin volver a iniciar sesión).</p></div>
   </div>

@@ -18,7 +18,7 @@ public class Rol {
     public void setNombre(String nombre) { this.nombre = nombre; }
 
     /** Color de la etiqueta: Owner dorado, roles de ensayos en azul. */
-    public String getTono() { return "ADMIN".equals(codigo) ? "warn" : "info"; }
+    public String getTono() { return "ADMIN".equals(codigo) ? "warn" : (codigo != null && codigo.endsWith("TALLERES") ? "ok" : "info"); }
     /** Texto corto para las etiquetas. */
     public String getCorto() {
         return switch (codigo == null ? "" : codigo) {
@@ -26,6 +26,9 @@ public class Rol {
             case "ADMIN_ENSAYOS" -> "Admin ensayos";
             case "MODERADOR_ENSAYOS" -> "Mod. ensayos";
             case "EQUIPO_ENSAYOS" -> "Ensayos";
+            case "ADMIN_TALLERES" -> "Admin talleres";
+            case "MODERADOR_TALLERES" -> "Mod. talleres";
+            case "EQUIPO_TALLERES" -> "Talleres";
             default -> nombre;
         };
     }

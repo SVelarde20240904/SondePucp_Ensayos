@@ -98,17 +98,22 @@ public class AdminServlet extends BaseServlet {
                     vista(req, resp, "admin/figura-form");
                 }
                 case "/responsabilidades" -> {
-                    if (!Sesion.requiere(req, resp, "ASIGNAR_RESPONSABILIDADES")) return;
+                    String teamCod = teamResp(req);
+                    if (teamCod == null) { Sesion.requiere(req, resp, "ASIGNAR_RESPONSABILIDADES"); return; }
+                    Integer idTeam = encargos.idTeam(teamCod);
+                    req.setAttribute("teamResp", teamCod);
+                    req.setAttribute("puedeEnsayos", Sesion.tiene(req, "ASIGNAR_RESPONSABILIDADES"));
+                    req.setAttribute("puedeTalleres", Sesion.tiene(req, "ASIGNAR_RESPONSABILIDADES_TALLERES"));
                     LocalDate semana = fecha(req, "semana");
                     semana = Formato.sabadoDe(semana == null ? LocalDate.now() : semana);
                     req.setAttribute("semana", semana);
                     req.setAttribute("semanaTexto", Formato.ddmmyyyy(semana));
                     req.setAttribute("semanaAnterior", semana.minusWeeks(1));
                     req.setAttribute("semanaSiguiente", semana.plusWeeks(1));
-                    req.setAttribute("lista", encargos.deSemana(semana));
-                    req.setAttribute("tipos", encargos.tiposActivos());
+                    req.setAttribute("lista", encargos.deSemana(semana, idTeam));
+                    req.setAttribute("tipos", encargos.tiposActivos(idTeam));
                     req.setAttribute("activos", miembros.listarActivos());
-                    req.setAttribute("resumenMes", encargos.resumenMes(semana));
+                    req.setAttribute("resumenMes", encargos.resumenMes(semana, idTeam));
                     req.setAttribute("mes", Formato.capital(semana.getMonth().getDisplayName(java.time.format.TextStyle.FULL, Formato.ES)));
                     vista(req, resp, "admin/responsabilidades");
                 }
@@ -160,9 +165,23 @@ public class AdminServlet extends BaseServlet {
                     ir(req, resp, "/admin/figuras");
                 }
                 case "/responsabilidades" -> {
-                    if (!Sesion.requiere(req, resp, "ASIGNAR_RESPONSABILIDADES")) return;
+                    String teamCod = teamResp(req);
+                    if (teamCod == null) { Sesion.requiere(req, resp, "ASIGNAR_RESPONSABILIDADES"); return; }
+                    Integer idTeam = encargos.idTeam(teamCod);
+                    String volverResp = "/admin/responsabilidades?team=" + teamCod + "&semana=";
                     LocalDate semana = fecha(req, "semana");
+                    // el encargo o el tipo que se toca tiene que ser del team de esta pantalla
+                    Integer idEnc = entero(req, "idEncargo"), idTipoReq = entero(req, "idTipo");
+                    if ((idEnc != null && !Objects.equals(encargos.teamDeEncargo(idEnc), idTeam))
+                            || (idTipoReq != null && !Objects.equals(encargos.teamDeTipo(idTipoReq), idTeam))) {
+                        Sesion.error(req, "Ese encargo no es de este team."); ir(req, resp, volverResp + semana); return;
+                    }
                     switch (accion(req, "")) {
+                        case "nuevoTipo" -> {
+                            String nom = texto(req, "nombreTipo");
+                            if (nom == null || nom.length() > 60) Sesion.error(req, "Escribe el nombre del encargo (hasta 60 letras).");
+                            else { encargos.nuevoTipo(nom, idTeam); Sesion.ok(req, "Encargo “" + nom + "” agregado a la lista."); }
+                        }
                         case "asignar" -> {
                             Integer tipo = entero(req, "idTipo"), resp_ = entero(req, "responsable");
                             if (tipo == null || resp_ == null) Sesion.error(req, "Elige el encargo y el responsable.");
@@ -177,7 +196,7 @@ public class AdminServlet extends BaseServlet {
                         case "eliminar" -> { encargos.eliminar(entero(req, "idEncargo")); Sesion.ok(req, "Encargo eliminado."); }
                         default -> { }
                     }
-                    ir(req, resp, "/admin/responsabilidades?semana=" + semana);
+                    ir(req, resp, volverResp + semana);
                 }
                 case "/historico" -> {
                     if (!Sesion.requiere(req, resp, "GESTIONAR_HISTORICO")) return;
@@ -372,6 +391,18 @@ public class AdminServlet extends BaseServlet {
         String temp = texto(req, "passwordTemporal");
         req.setAttribute("passwordTemporal", temp != null ? temp : Formato.passwordTemporal());
         vista(req, resp, "admin/miembro-form");
+    }
+
+    /**
+     * Team de la pantalla de responsabilidades según ?team= y los permisos: ENSAYOS o TALLERES, o null si no puede ninguno.
+     * Sin ?team= se abre el primero que pueda ver.
+     */
+    private static String teamResp(HttpServletRequest req) {
+        boolean ens = Sesion.tiene(req, "ASIGNAR_RESPONSABILIDADES"), tal = Sesion.tiene(req, "ASIGNAR_RESPONSABILIDADES_TALLERES");
+        String t = req.getParameter("team");
+        if ("TALLERES".equals(t)) return tal ? "TALLERES" : null;
+        if ("ENSAYOS".equals(t)) return ens ? "ENSAYOS" : null;
+        return ens ? "ENSAYOS" : (tal ? "TALLERES" : null);
     }
 
     /** Listas que necesita el formulario de miembro. */

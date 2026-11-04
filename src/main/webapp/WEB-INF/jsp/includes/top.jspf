@@ -20,7 +20,7 @@
 </header>
 <aside class="sidebar">
   <label for="menu" class="menu-close" aria-label="Cerrar menú">✕</label>
-  <div class="brand"><img src="${ctx}/img/logo-sdp-dorado.png" alt="Son de PUCP"><span>TEAM ENSAYOS</span></div>
+  <div class="brand"><img src="${ctx}/img/logo-sdp-dorado.png" alt="Son de PUCP"><span>SON DE PUCP</span></div>
   <div class="nav-title">Mi espacio</div>
   <nav class="nav">
     <a class="${menu == 'Inicio' ? 'active' : ''}" href="${ctx}/inicio">Inicio</a>
@@ -28,6 +28,7 @@
     <a class="${menu == 'Autoevaluación' ? 'active' : ''}" href="${ctx}/autoevaluacion?tipo=mensual">Autoevaluación</a>
     <a class="${menu == 'Mi historial' ? 'active' : ''}" href="${ctx}/mi-historial">Mi historial</a>
     <a class="${menu == 'Mis responsabilidades' ? 'active' : ''}" href="${ctx}/mis-responsabilidades">Mis responsabilidades</a>
+    <a class="${menu == 'Mi feedback' ? 'active' : ''}" href="${ctx}/mi-feedback">Mi feedback de talleres</a>
     <a class="${menu == 'Mi perfil' ? 'active' : ''}" href="${ctx}/perfil">Mi perfil</a>
     <a class="${menu == 'Biblioteca' ? 'active' : ''}" href="${ctx}/biblioteca">Biblioteca de figuras</a>
   </nav>
@@ -41,12 +42,21 @@
       <c:if test="${perm.contains('VER_CRONOGRAMA')}"><a class="${menu == 'Fichas de miembros' ? 'active' : ''}" href="${ctx}/ensayos/miembros">Fichas de miembros</a></c:if>
     </nav>
   </c:if>
+  <c:if test="${perm.contains('GESTIONAR_TALLERES') or perm.contains('ASIGNAR_RESPONSABILIDADES_TALLERES')}">
+    <div class="nav-title">Talleres</div>
+    <nav class="nav">
+      <c:if test="${perm.contains('GESTIONAR_TALLERES')}"><a class="${menu == 'Talleres' ? 'active' : ''}" href="${ctx}/talleres">Talleres</a>
+        <a class="${menu == 'Dictado de talleres' ? 'active' : ''}" href="${ctx}/talleres/dictado">Historial de dictado</a>
+        <a class="${menu == 'Pasos de talleres' ? 'active' : ''}" href="${ctx}/talleres/pasos">Pasos por nivel</a></c:if>
+      <c:if test="${perm.contains('ASIGNAR_RESPONSABILIDADES_TALLERES')}"><a class="${menu == 'Responsabilidades talleres' ? 'active' : ''}" href="${ctx}/admin/responsabilidades?team=TALLERES">Responsabilidades</a></c:if>
+    </nav>
+  </c:if>
   <c:if test="${perm.contains('GESTIONAR_MIEMBROS') or perm.contains('GESTIONAR_FIGURAS') or perm.contains('ASIGNAR_RESPONSABILIDADES') or perm.contains('GESTIONAR_HISTORICO') or perm.contains('ASIGNAR_ROLES')}">
     <div class="nav-title">Administración</div>
     <nav class="nav">
       <c:if test="${perm.contains('GESTIONAR_MIEMBROS')}"><a class="${menu == 'Miembros' ? 'active' : ''}" href="${ctx}/admin/miembros">Miembros</a></c:if>
       <c:if test="${perm.contains('GESTIONAR_FIGURAS')}"><a class="${menu == 'Figuras' ? 'active' : ''}" href="${ctx}/admin/figuras">Figuras</a></c:if>
-      <c:if test="${perm.contains('ASIGNAR_RESPONSABILIDADES')}"><a class="${menu == 'Responsabilidades' ? 'active' : ''}" href="${ctx}/admin/responsabilidades">Responsabilidades</a></c:if>
+      <c:if test="${perm.contains('ASIGNAR_RESPONSABILIDADES')}"><a class="${menu == 'Responsabilidades' ? 'active' : ''}" href="${ctx}/admin/responsabilidades?team=ENSAYOS">Responsabilidades</a></c:if>
       <c:if test="${perm.contains('GESTIONAR_HISTORICO')}"><a class="${menu == 'Histórico' ? 'active' : ''}" href="${ctx}/admin/historico">Histórico</a></c:if>
       <c:if test="${perm.contains('ASIGNAR_ROLES')}"><a class="${menu == 'Roles y permisos' ? 'active' : ''}" href="${ctx}/admin/roles">Roles y permisos</a></c:if>
     </nav>
@@ -54,7 +64,7 @@
   <div class="grow"></div>
   <div class="flags"><span class="flag pe"></span><span class="flag cu"></span><a class="logout" href="${ctx}/logout">Cerrar sesión</a></div>
   <a class="user-card" href="${ctx}/perfil"><span class="avatar">${u.iniciales}</span>
-    <c:set var="rolTop" value="${u.tieneRol(3) ? 'Owner' : (u.tieneRol(5) ? 'Admin de ensayos' : (u.tieneRol(4) ? 'Moderador de ensayos' : (u.tieneRol(2) ? 'Equipo de ensayos' : '')))}"/>
+    <c:set var="rolTop" value="${u.tieneRol(3) ? 'Owner' : (u.tieneRol(5) ? 'Admin de ensayos' : (u.tieneRol(4) ? 'Moderador de ensayos' : (u.tieneRol(8) ? 'Admin de talleres' : (u.tieneRol(7) ? 'Moderador de talleres' : (u.tieneRol(2) ? 'Equipo de ensayos' : (u.tieneRol(6) ? 'Equipo de talleres' : ''))))))}"/>
     <span><c:out value="${u.nombre}"/><small>${u.rolBaileTexto}${empty rolTop ? ' · '.concat(u.frecuenciaTexto) : ' · '.concat(rolTop)}</small></span></a>
 </aside>
 <label for="menu" class="scrim" aria-hidden="true"></label>

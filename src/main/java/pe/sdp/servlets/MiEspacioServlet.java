@@ -85,6 +85,7 @@ public class MiEspacioServlet extends BaseServlet {
         req.setAttribute("nFiguras", evaluaciones.deMiembro(yo).size());
         req.setAttribute("pendienteEnsayo", ensayos.autoevaluacionPendiente(yo));
         req.setAttribute("misPendientes", encargos.pendientesDe(yo));
+        req.setAttribute("formulariosTaller", new pe.sdp.daos.TallerDao().formulariosPendientes(yo));
         req.setAttribute("cumples", miembros.cumpleanosProximos(7));
         vista(req, resp, "miembro/inicio");
     }

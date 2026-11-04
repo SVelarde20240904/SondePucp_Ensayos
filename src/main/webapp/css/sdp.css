@@ -542,3 +542,35 @@ a.pill-link.on { background: var(--ink); color: #fff; border-color: var(--ink); 
 .chips-teams { display: inline-flex; gap: 4px; flex-wrap: wrap; }
 /* botones largos dentro de tarjetas: que bajen de línea en el celular en vez de salirse */
 .card .btn { max-width: 100%; white-space: normal; text-align: center; }
+
+/* ---------- Talleres ---------- */
+.bloques { display: flex; flex-direction: column; gap: 6px; }
+.bloque { display: grid; grid-template-columns: minmax(0, 110px) minmax(0, 1fr) minmax(0, 60px) auto; gap: 6px; align-items: center; }
+.bloque .input { padding: 8px 10px; font-size: 13px; }
+.chips-pasos { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.chip-paso { border: 1px solid var(--border); background: var(--bg); color: var(--text); border-radius: 99px; padding: 4px 10px; font: 500 12px var(--font); cursor: pointer; }
+.chip-paso:hover { border-color: var(--primary); color: var(--primary); }
+.chip-paso.musica { background: var(--accent-soft); border-color: var(--accent); font-weight: 600; }
+.persona-taller { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--border); }
+.persona-taller small { display: block; color: var(--text-2); font-size: 12px; }
+.pasos-lista { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 3px; font-size: 14px; }
+.pasos-lista .musica { color: var(--amarillo); font-size: 12px; font-weight: 600; margin: 4px 0; }
+.sugerencia, .fb-crudo { padding: 10px 12px; border-radius: var(--radius-sm); background: var(--bg); margin-bottom: 8px; }
+.sugerencia p, .fb-crudo p { margin: 4px 0 0; white-space: pre-line; font-size: 14px; }
+.check-paso { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--border); }
+.check-paso .pills { flex-wrap: nowrap; }
+.tabla-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.table.dictado th, .table.dictado td { text-align: center; white-space: nowrap; font-size: 13px; padding: 6px 8px; }
+.table.dictado td:first-child, .table.dictado th:first-child { text-align: left; position: sticky; left: 0; background: var(--surface); }
+.table.dictado td.cod { font-weight: 700; color: var(--primary); }
+.table.dictado td.vacio { color: var(--border); font-weight: 400; }
+.table.dictado td.tarde { color: var(--amarillo); }
+.table.dictado td.falto { color: var(--rojo); }
+.paso-fila { display: flex; align-items: center; gap: 6px; padding: 4px 0; }
+.paso-fila .input { padding: 6px 10px; font-size: 13px; }
+.paso-fila.inactivo .input { opacity: .5; text-decoration: line-through; }
+textarea.wa { font-size: 13px; font-weight: 500; }
+@media (max-width: 599px) {
+  .bloque { grid-template-columns: minmax(0, 1fr) minmax(0, 70px) auto; }
+  .bloque .input:nth-child(2) { grid-column: 1 / -1; grid-row: 2; }
+}
