@@ -3,6 +3,7 @@
 Lista viva de mejoras. Lo que se termina pasa a **Hecho** con su commit.
 
 ## Feedback del piloto
+- [ ] **Etiquetas NIU / OLD (en standby, faltan fechas):** calculadas con la fecha de ingreso. **NIU** = entró en la convocatoria más reciente; *(nada)* = 2 años o menos; **OLD** = más de 2 años. El Owner guarda la "fecha de la última convocatoria" (la actual: **21/10/2026**, 17 nius). Falta: año/semestre de ingreso del resto de miembros para saber quiénes son OLD.
 - [ ] **El túnel se cae al cambiar de red o suspender la laptop** y el link cambia. Para el piloto: dejar la laptop fija con internet estable, usar `--protocol http2`, o pasar a link fijo (Cloudflare con dominio, o Railway).
 
 ## Ideas
