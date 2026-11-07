@@ -19,6 +19,9 @@ import sys, datetime as dt
 import openpyxl
 
 ALIAS = {"Ilo": "Enmanuel Vega", "Mimi": "Miranda Cueva"}   # por si algún Form llega con apodo
+# Si en la BD le cambiaron el nombre corto a alguien, se le busca por un patrón (LIKE, sin importar tildes)
+# en su nombre completo, nombre o apodo. Solo se usa si hay UNA sola coincidencia.
+RESPALDO = {"Carlos Garcia": "Joaquin%Garcia"}
 # Figuras que se renombraron en el Excel: nombre viejo -> nombre nuevo (el sistema adopta el nuevo)
 RENOMBRADAS = {"Enredala compl.": "Enredala complicado", "Festival de pelotas": "Festival de pelotas SDP",
                "H Derecha M izq": "H Derecha M Izquierda"}
@@ -64,7 +67,12 @@ def main(xlsx):
             f"('{f[0]}',{q(f[1])},{q(f[2])},'{f[3]}','{f[4]}',{int(f[5])})" for f in filas[i:i + 200]) + ";")
     o("""
 UPDATE tmp_resp t JOIN miembro m ON m.nombre = t.nombre SET t.id_miembro = m.id_miembro;
-UPDATE tmp_resp t JOIN figura f ON f.nombre = t.figura SET t.id_figura = f.id_figura;
+UPDATE tmp_resp t JOIN figura f ON f.nombre = t.figura SET t.id_figura = f.id_figura;""")
+    for nombre, patron in RESPALDO.items():
+        cond = f"(nombre_completo LIKE {q('%' + patron + '%')} OR nombre LIKE {q('%' + patron + '%')} OR apodo LIKE {q('%' + patron + '%')})"
+        o(f"UPDATE tmp_resp t SET t.id_miembro = (SELECT id_miembro FROM miembro WHERE {cond}) "
+          f"WHERE t.id_miembro IS NULL AND t.nombre = {q(nombre)} AND (SELECT COUNT(*) FROM miembro WHERE {cond}) = 1;")
+    o("""
 -- nombres o figuras que no existen en la BD (se avisan y no se cargan)
 SELECT CONCAT('NO ENCONTRADO: ', nombre, ' / ', figura) AS aviso FROM tmp_resp WHERE id_miembro IS NULL OR id_figura IS NULL;
 
