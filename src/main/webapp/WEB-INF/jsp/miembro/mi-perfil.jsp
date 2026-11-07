@@ -21,6 +21,7 @@
       <div class="form-row">
         <div class="field"><label>Apodo</label><input class="input" name="apodo" value="<c:out value='${yo.apodo}'/>" maxlength="30" placeholder="Cómo te dicen en el grupo (opcional)"></div>
         <div class="field"><label>Fecha de nacimiento</label><input class="input" type="date" name="fechaNacimiento" value="${yo.fechaNacimientoIso}" max="${maxNacimiento}">
+          <c:if test="${yo.sinAnio}"><span class="xs" style="color:var(--warn,#b45309)">Tenemos tu cumple, pero falta el año en que naciste (sale 1904): corrígelo aquí.</span></c:if>
           <span class="muted xs">Para saludarte en tu cumple 🎂. Los demás solo ven el día y el mes, nunca el año.</span></div></div>
       <div class="form-row">
         <div class="field"><label>Código PUCP</label><input class="input" name="codigoPucp" value="<c:out value='${yo.codigoPucp}'/>" pattern="\d{8}" placeholder="8 dígitos"></div>

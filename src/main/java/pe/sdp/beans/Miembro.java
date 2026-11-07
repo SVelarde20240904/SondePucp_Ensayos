@@ -125,6 +125,10 @@ public class Miembro {
     public String getNombreConApodo() { return isTieneApodo() ? nombre + " (" + apodo + ")" : nombre; }
     /** Cómo saludarlo: su apodo, o su primer nombre. */
     public String getComoLlamarlo() { return isTieneApodo() ? apodo : (nombre == null ? "" : nombre.split(" ")[0]); }
+    /** Año "comodín" cuando solo se sabe el día y el mes del cumple (1904 es bisiesto: sirve para el 29/02). */
+    public static final int ANIO_DESCONOCIDO = 1904;
+    /** Se conoce su cumple pero no el año en que nació (falta que lo complete). */
+    public boolean isSinAnio() { return fechaNacimiento != null && fechaNacimiento.getYear() == ANIO_DESCONOCIDO; }
     public String getFechaNacimientoIso() { return fechaNacimiento == null ? "" : fechaNacimiento.toString(); }
     /** Solo día y mes (sin el año, para no mostrar la edad): "14 de marzo". */
     public String getCumpleTexto() { return fechaNacimiento == null ? "—" : Formato.diaMes(fechaNacimiento); }

@@ -412,9 +412,9 @@ public class AdminServlet extends BaseServlet {
         req.setAttribute("teams", miembros.teams());
     }
 
-    /** Fecha de nacimiento razonable (o vacía): entre 1940 y hace 14 años. */
+    /** Fecha de nacimiento razonable (o vacía): entre 1940 y hace 14 años, o solo día/mes con el año comodín (1904). */
     public static boolean fechaNacimientoValida(LocalDate d) {
-        return d == null || (d.getYear() >= 1940 && d.isBefore(LocalDate.now().minusYears(14)));
+        return d == null || d.getYear() == pe.sdp.beans.Miembro.ANIO_DESCONOCIDO || (d.getYear() >= 1940 && d.isBefore(LocalDate.now().minusYears(14)));
     }
 
     private void postFigura(HttpServletRequest req, HttpServletResponse resp, int yo) throws SQLException, IOException {

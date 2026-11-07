@@ -17,7 +17,8 @@
         <div class="field"><label>Nombre completo *</label><input class="input" name="nombreCompleto" value="<c:out value='${m.nombreCompleto}'/>" required></div></div>
       <div class="form-row">
         <div class="field"><label>Apodo</label><input class="input" name="apodo" value="<c:out value='${m.apodo}'/>" maxlength="30" placeholder="Ej: Ilo, Mimi (opcional)"></div>
-        <div class="field"><label>Fecha de nacimiento</label><input class="input" type="date" name="fechaNacimiento" value="${m.fechaNacimientoIso}"></div></div>
+        <div class="field"><label>Fecha de nacimiento</label><input class="input" type="date" name="fechaNacimiento" value="${m.fechaNacimientoIso}">
+          <c:if test="${m.sinAnio}"><span class="muted xs">Año 1904 = solo se sabe el día y el mes.</span></c:if></div></div>
       <div class="form-row">
         <div class="field"><label>Código PUCP</label><input class="input" name="codigoPucp" value="<c:out value='${m.codigoPucp}'/>" pattern="\d{8}" placeholder="8 dígitos"></div>
         <div class="field"><label>Facultad</label><select class="input" name="facultad"><option value="">—</option>
