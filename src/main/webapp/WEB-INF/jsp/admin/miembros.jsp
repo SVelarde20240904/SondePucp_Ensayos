@@ -3,6 +3,7 @@
 <section class="hero"><div class="titles"><span class="kicker">Administración</span><h1>Miembros</h1>
   <p>${activos} activos · nunca se borra a nadie: se marca Inactivo para no perder su historial</p></div>
   <div class="actions"><a class="btn btn-secondary" href="${ctx}/admin/miembros/activar">🔑 Activar cuentas en lote</a><a class="btn btn-primary" href="${ctx}/admin/miembros/nuevo">+ Nuevo miembro</a></div><span class="star"></span></section>
+<c:set var="grupo" value="miembros"/><c:set var="sub" value="miembros"/><%@ include file="/WEB-INF/jsp/includes/subtabs.jspf" %>
 
 <div class="card">
   <form class="inline" method="get" action="${ctx}/admin/miembros">

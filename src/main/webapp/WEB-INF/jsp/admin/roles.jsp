@@ -2,6 +2,7 @@
 <%@ include file="/WEB-INF/jsp/includes/top.jspf" %>
 <section class="hero"><div class="titles"><span class="kicker">Administración</span><h1>Roles y permisos</h1>
   <p>Quién puede hacer qué en el sistema. Todos son Miembro; algunos además tienen otros roles (se suman).</p></div><span class="star"></span></section>
+<c:set var="grupo" value="miembros"/><c:set var="sub" value="roles"/><%@ include file="/WEB-INF/jsp/includes/subtabs.jspf" %>
 
 <div class="row top">
   <form class="card grow" method="post" action="${ctx}/admin/roles"><input type="hidden" name="_csrf" value="${sessionScope.csrf}"><h2>Permisos por rol</h2><p>Los de Miembro son fijos. El Owner siempre conserva “Asignar roles”.</p>

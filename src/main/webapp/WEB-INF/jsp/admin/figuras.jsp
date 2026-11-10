@@ -3,6 +3,7 @@
 <section class="hero"><div class="titles"><span class="kicker">Administración</span><h1>Mano de figuras</h1>
   <p>${total} figuras activas. El nivel de cada figura es la mediana de las autoevaluaciones y se recalcula solo.</p></div>
   <div class="actions"><a class="btn btn-primary" href="${ctx}/admin/figuras/nueva">+ Nueva figura</a></div><span class="star"></span></section>
+<c:set var="grupo" value="figuras"/><c:set var="sub" value="figuras"/><%@ include file="/WEB-INF/jsp/includes/subtabs.jspf" %>
 
 <div class="grid-4">
   <c:forEach var="lv" items="${['AZUL','VERDE','AMARILLO','ROJO']}">

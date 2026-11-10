@@ -2,6 +2,7 @@
 <%@ include file="/WEB-INF/jsp/includes/top.jspf" %>
 <section class="hero"><div class="titles"><span class="kicker">Team Talleres</span><h1>Pasos por nivel</h1>
   <p>El catálogo para armar los cronogramas. Salió de los cronogramas pasados y crece solo cuando alguien escribe un paso nuevo.</p></div><span class="star"></span></section>
+<c:set var="grupo" value="talleres"/><c:set var="sub" value="pasos"/><%@ include file="/WEB-INF/jsp/includes/subtabs.jspf" %>
 <div class="grid-2">
 <c:forEach var="e" items="${porNivel}">
   <div class="card" id="${e.key}"><h2>${e.key == 'PRINCIPIANTE' ? 'Principiante' : (e.key == 'BASICO' ? 'Básico' : (e.key == 'INTRO_RUEDA' ? 'Intro a la rueda' : 'Rueda básica'))}</h2>

@@ -1,7 +1,7 @@
-<c:set var="titulo" value="Mi feedback de talleres"/><c:set var="menu" value="Mi feedback"/>
+<c:set var="titulo" value="Mi historial"/><c:set var="menu" value="Mi historial"/>
 <%@ include file="/WEB-INF/jsp/includes/top.jspf" %>
-<section class="hero"><div class="titles"><span class="kicker">Mi espacio</span><h1>Mi feedback de talleres</h1>
-  <p>Lo que te dijeron tus compañeros de dictado y apoyos, resumido por el team Talleres (sin nombres)</p></div><span class="star"></span></section>
+<section class="hero"><div class="titles"><span class="kicker">Mi espacio</span><h1>Mi historial de talleres</h1>
+  <p>El feedback de cada taller que dictaste o apoyaste: lo que te dijeron tus compañeros de dictado y apoyos, resumido por el team Talleres (sin nombres)</p></div><span class="star"></span></section>
 
 <c:forEach var="p" items="${pendientes}">
   <div class="note warn inline" style="justify-content:space-between">Tienes pendiente el formulario del ${p.titulo} (${p.fechaCorta}).

@@ -3,6 +3,7 @@
 <section class="hero"><div class="titles"><span class="kicker">Team Talleres</span><h1>Talleres</h1>
   <p>Cronograma de cada taller, quién dictó, qué pasos se enseñaron y el feedback de talleristas y apoyos</p></div>
   <div class="actions"><a class="btn btn-primary" href="${ctx}/talleres/nuevo">+ Nuevo taller</a></div><span class="star"></span></section>
+<c:set var="grupo" value="talleres"/><c:set var="sub" value="talleres"/><%@ include file="/WEB-INF/jsp/includes/subtabs.jspf" %>
 
 <c:if test="${total == 0}"><div class="card"><p class="empty">Todavía no hay talleres. Crea el primero con “+ Nuevo taller”.</p></div></c:if>
 <c:forEach var="e" items="${porCiclo}">

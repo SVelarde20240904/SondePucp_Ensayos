@@ -2,6 +2,7 @@
 <%@ include file="/WEB-INF/jsp/includes/top.jspf" %>
 <section class="hero"><div class="titles"><span class="kicker">Team Talleres</span><h1>Historial de dictado</h1>
   <p>Quién hizo qué en cada taller (el dictado final; si no se registró, el planeado)</p></div><span class="star"></span></section>
+<c:set var="grupo" value="talleres"/><c:set var="sub" value="dictado"/><%@ include file="/WEB-INF/jsp/includes/subtabs.jspf" %>
 <div class="card">
   <div class="inline"><span class="muted small">Ciclo:</span>
     <c:forEach var="c" items="${ciclos}"><a class="pill-link ${c == ciclo ? 'on' : ''}" href="${ctx}/talleres/dictado?ciclo=${c}">${c}</a></c:forEach></div>

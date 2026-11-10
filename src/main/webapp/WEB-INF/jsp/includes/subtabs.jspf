@@ -1,0 +1,24 @@
+<%-- Sub-pestañas de una sección que en el menú es un solo botón (Talleres, Miembros, Figuras).
+     Antes de incluirlo: <c:set var="grupo" value="talleres|miembros|figuras"/> <c:set var="sub" value="(la pestaña actual)"/>
+     Cada pestaña sale solo si tienes su permiso, y la fila solo aparece si hay más de una. --%>
+<c:choose>
+  <c:when test="${grupo == 'talleres'}">
+    <nav class="inline subtabs" aria-label="Secciones de Talleres">
+      <a class="pill-link${sub == 'talleres' ? ' on' : ''}" href="${ctx}/talleres">Talleres</a>
+      <a class="pill-link${sub == 'dictado' ? ' on' : ''}" href="${ctx}/talleres/dictado">Historial de dictado</a>
+      <a class="pill-link${sub == 'pasos' ? ' on' : ''}" href="${ctx}/talleres/pasos">Pasos por nivel</a>
+    </nav>
+  </c:when>
+  <c:when test="${grupo == 'miembros' and perm.contains('GESTIONAR_MIEMBROS') and perm.contains('ASIGNAR_ROLES')}">
+    <nav class="inline subtabs" aria-label="Secciones de Miembros">
+      <a class="pill-link${sub == 'miembros' ? ' on' : ''}" href="${ctx}/admin/miembros">Miembros</a>
+      <a class="pill-link${sub == 'roles' ? ' on' : ''}" href="${ctx}/admin/roles">Roles y permisos</a>
+    </nav>
+  </c:when>
+  <c:when test="${grupo == 'figuras' and perm.contains('GESTIONAR_FIGURAS') and perm.contains('GESTIONAR_HISTORICO')}">
+    <nav class="inline subtabs" aria-label="Secciones de Figuras">
+      <a class="pill-link${sub == 'figuras' ? ' on' : ''}" href="${ctx}/admin/figuras">Mano de figuras</a>
+      <a class="pill-link${sub == 'historico' ? ' on' : ''}" href="${ctx}/admin/historico">Histórico</a>
+    </nav>
+  </c:when>
+</c:choose>

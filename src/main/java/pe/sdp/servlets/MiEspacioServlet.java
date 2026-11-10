@@ -43,15 +43,8 @@ public class MiEspacioServlet extends BaseServlet {
                     vista(req, resp, "miembro/confirmar-asistencia");
                 }
                 case "/autoevaluacion" -> autoevaluacion(req, resp, yo);
-                case "/mi-historial" -> {
-                    String fuente = texto(req, "fuente");
-                    req.setAttribute("fuente", fuente);
-                    req.setAttribute("historial", evaluaciones.historialDe(yo, fuente));
-                    req.setAttribute("resumen", evaluaciones.resumenMiembro(yo));
-                    req.setAttribute("porcentaje", ensayos.porcentajeAsistencia(yo));
-                    req.setAttribute("yo", miembros.obtener(yo));
-                    vista(req, resp, "miembro/mi-historial");
-                }
+                // "Mi historial" ahora es el historial de feedback de talleres (el de colores de figuras no se usaba)
+                case "/mi-historial" -> resp.sendRedirect(req.getContextPath() + "/mi-feedback");
                 case "/mis-responsabilidades" -> {
                     req.setAttribute("lista", encargos.deMiembro(yo, 60));
                     vista(req, resp, "miembro/mis-responsabilidades");

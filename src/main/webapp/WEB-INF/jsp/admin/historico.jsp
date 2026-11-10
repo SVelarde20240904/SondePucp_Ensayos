@@ -3,6 +3,7 @@
 <section class="hero"><div class="titles"><span class="kicker">Administración</span><h1>Histórico</h1>
   <p>Cada cambio de color queda registrado. Aquí también se hacen las correcciones (antes se editaba la Matriz a mano).</p></div>
   <div class="actions"><a class="btn btn-primary" href="#correccion">+ Registrar corrección</a></div><span class="star"></span></section>
+<c:set var="grupo" value="figuras"/><c:set var="sub" value="historico"/><%@ include file="/WEB-INF/jsp/includes/subtabs.jspf" %>
 
 <form class="form-row" method="get" action="${ctx}/admin/historico" style="align-items:flex-end">
   <div class="field"><label>Miembro</label><select class="input" name="fMiembro"><option value="">Todos</option>
