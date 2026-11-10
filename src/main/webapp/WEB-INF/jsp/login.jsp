@@ -10,11 +10,7 @@
 <section class="login-brand">
   <img src="${ctx}/img/logo-sdp-dorado.png" alt="Son de PUCP">
   <h1>La web<br>de SDP</h1>
-  <p>Casinerossss, entra para confirmar tu asistencia, autoevaluarte, ver tus responsabilidades y el feedback de tus talleres.</p>
-  <ul class="icon-list">
-    <li><sdp:icono n="pin"/>Explanada del polideportivo</li>
-    <li><sdp:icono n="clock"/>Ensayos generales · sábados 2:00 – 4:00 PM</li>
-  </ul>
+  <p>Casinerossss, aquí está todo lo de Son de PUCP: los ensayos y talleres, tus responsabilidades, tu feedback y cómo vas con las figuras.</p>
 </section>
 <section class="login-side">
   <form class="login-form" method="post" action="${ctx}/login"><input type="hidden" name="_csrf" value="${sessionScope.csrf}">
