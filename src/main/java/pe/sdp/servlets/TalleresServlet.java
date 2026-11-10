@@ -192,9 +192,20 @@ public class TalleresServlet extends BaseServlet {
         Taller t = id == null ? null : dao.obtener(id);
         List<TallerPersona> mias = t == null ? List.of() : dao.misFunciones(id, yo);
         if (t == null || mias.isEmpty()) { Sesion.error(req, "Ese formulario es para los talleristas y apoyos que estuvieron en el taller."); ir(req, resp, "/inicio"); return; }
+        // una tarjeta por función y nivel (si alguien quedó dos veces en el dictado, no se repite)
+        Map<String, TallerPersona> unicas = new LinkedHashMap<>();
+        for (TallerPersona m : mias) unicas.putIfAbsent(m.getFuncion() + "|" + m.getNivel(), m);
+        List<String[]> dest = destinos(t, yo);
+        Set<String> conCompanero = new HashSet<>();     // niveles (texto) donde tuve compañero(a) de dictado
+        for (String[] d : dest) if ("COMPANERO".equals(d[0])) conCompanero.add(d[3]);
+        boolean soyTallerista = false, soyApoyo = false;
+        for (TallerPersona m : unicas.values()) { soyTallerista |= "TALLERISTA".equals(m.getFuncion()); soyApoyo |= "APOYO".equals(m.getFuncion()); }
         req.setAttribute("t", t);
-        req.setAttribute("mias", mias);
-        req.setAttribute("destinos", destinos(t, yo));
+        req.setAttribute("mias", new ArrayList<>(unicas.values()));
+        req.setAttribute("destinos", dest);
+        req.setAttribute("conCompanero", conCompanero);
+        req.setAttribute("soyTallerista", soyTallerista);
+        req.setAttribute("soyApoyo", soyApoyo);
         Map<String, String> previo = new HashMap<>();   // "tipo_para" -> texto
         for (TallerFeedback f : dao.feedbackEscritoPor(id, yo)) previo.put(f.getTipo() + "_" + (f.getParaMiembro() == null ? "" : f.getParaMiembro()), f.getTexto());
         req.setAttribute("previo", previo);
