@@ -1,5 +1,5 @@
 # =====================================================================
-#  Son de PUCP · Sistema de Ensayos — imagen para publicar en internet
+#  Son de PUCP · Web SDP — imagen para publicar en internet
 #  Sirve para Railway, Render, Fly.io o cualquier VPS con Docker.
 #  La app queda en la raíz del dominio (https://tu-dominio/), no en /sdp-ensayos
 # =====================================================================

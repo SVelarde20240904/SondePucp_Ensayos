@@ -7,7 +7,7 @@
   <artifactId>sdp-ensayos</artifactId>
   <version>1.0</version>
   <packaging>war</packaging>
-  <name>Son de PUCP - Sistema de Ensayos</name>
+  <name>Son de PUCP - Web SDP</name>
 
   <properties>
     <maven.compiler.release>17</maven.compiler.release>

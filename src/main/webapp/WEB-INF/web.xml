@@ -3,7 +3,7 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee https://jakarta.ee/xml/ns/jakartaee/web-app_6_0.xsd"
          version="6.0">
-  <display-name>Son de PUCP - Sistema de Ensayos</display-name>
+  <display-name>Son de PUCP - Web SDP</display-name>
 
   <!-- Todas las JSP en UTF-8 y con las taglibs (c, fn, sdp) ya declaradas -->
   <jsp-config>

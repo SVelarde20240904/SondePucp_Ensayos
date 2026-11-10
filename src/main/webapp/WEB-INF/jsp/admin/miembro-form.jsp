@@ -65,7 +65,7 @@
               <span>✓ Contraseña temporal generada. Anótala ahora: no se vuelve a mostrar.</span>
               <span>Correo: <b><c:out value="${sessionScope.claveCorreo}"/></b></span>
               <span>Clave: <b style="font-size:18px;letter-spacing:.04em;user-select:all"><c:out value="${sessionScope.claveGenerada}"/></b></span>
-              <textarea class="input" rows="4" readonly onclick="this.select()" style="font-size:13px;font-weight:500">Hola <c:out value="${sessionScope.claveNombre}"/>! Ya tienes cuenta en el Sistema de Ensayos de SDP 💃🏻
+              <textarea class="input" rows="4" readonly onclick="this.select()" style="font-size:13px;font-weight:500">Hola <c:out value="${sessionScope.claveNombre}"/>! Ya tienes cuenta en la web de SDP 💃🏻
 Entra con tu correo <c:out value="${sessionScope.claveCorreo}"/> y esta clave temporal: <c:out value="${sessionScope.claveGenerada}"/>
 Al entrar te va a pedir que pongas una tuya.</textarea>
               <span class="muted xs">Toca el mensaje para seleccionarlo y cópialo al WhatsApp (agrégale el link).</span>

@@ -9,8 +9,8 @@
 <body class="login">
 <section class="login-brand">
   <img src="${ctx}/img/logo-sdp-dorado.png" alt="Son de PUCP">
-  <h1>Sistema de<br>ensayos</h1>
-  <p>Casinerossss, entra para confirmar tu asistencia, autoevaluarte y ver qué figuras se ruedean en el próximo ensayo.</p>
+  <h1>La web<br>de SDP</h1>
+  <p>Casinerossss, entra para confirmar tu asistencia, autoevaluarte, ver tus responsabilidades y el feedback de tus talleres.</p>
   <ul class="icon-list">
     <li><sdp:icono n="pin"/>Explanada del polideportivo</li>
     <li><sdp:icono n="clock"/>Ensayos generales · sábados 2:00 – 4:00 PM</li>
@@ -27,6 +27,6 @@
     <p class="muted xs">¿Olvidaste tu contraseña? Pídele al admin que te genere una temporal.</p>
   </form>
 </section>
-<footer class="team-bar"><strong>TEAM ENSAYOS - SDP</strong><span class="emojis">⚾😑💃🏻🦉🐥🌈🌕🐧👀🍄🍗</span></footer>
+<footer class="team-bar"><strong>SON DE PUCP</strong><span class="emojis">⚾😑💃🏻🦉🐥🌈🌕🐧👀🍄🍗</span></footer>
 </body>
 </html>

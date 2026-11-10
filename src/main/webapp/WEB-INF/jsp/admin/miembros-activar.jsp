@@ -14,7 +14,7 @@
     <c:forEach var="r" items="${sessionScope.loteListos}" varStatus="st">
       <div class="lote-msg">
         <div class="inline" style="justify-content:space-between"><b><c:out value="${r[0]}"/></b><span class="muted small"><c:out value="${r[1]}"/> · <b style="user-select:all"><c:out value="${r[2]}"/></b></span></div>
-        <textarea class="input" id="msg${st.index}" rows="3" readonly>Hola <c:out value="${r[0]}"/>! Ya tienes cuenta en el Sistema de Ensayos de SDP 💃🏻
+        <textarea class="input" id="msg${st.index}" rows="3" readonly>Hola <c:out value="${r[0]}"/>! Ya tienes cuenta en la web de SDP 💃🏻
 Entra a <c:out value="${enlace}"/> con tu correo <c:out value="${r[1]}"/> y esta clave temporal: <c:out value="${r[2]}"/>
 Al entrar te va a pedir que pongas una tuya.</textarea>
         <button type="button" class="btn btn-ghost btn-sm" data-copiar="msg${st.index}">📋 Copiar mensaje</button>

@@ -31,7 +31,7 @@
         <c:if test="${empty avances}"><tr><td colspan="4">Aún no hay avances registrados.</td></tr></c:if>
       </tbody></table></div>
   </main>
-  <footer><strong>TEAM ENSAYOS - SDP</strong><span>Generado el ${hoy} · sistema de ensayos SDP</span></footer>
+  <footer><strong>TEAM ENSAYOS - SDP</strong><span>Generado el ${hoy} · web de SDP</span></footer>
 </section>
 
 <section class="page">
@@ -55,6 +55,6 @@
       <c:if test="${not empty alertas}"><p class="note bad" style="margin-top:8px">Alertas: <c:out value="${alertas}"/>.</p></c:if></div>
     <div class="rsec"><h2>OBSERVACIONES</h2><p class="small"><c:out value="${empty ensayo.notas ? 'Sin observaciones.' : ensayo.notas}"/></p></div>
   </main>
-  <footer><strong>TEAM ENSAYOS - SDP</strong><span>Generado el ${hoy} · sistema de ensayos SDP</span></footer>
+  <footer><strong>TEAM ENSAYOS - SDP</strong><span>Generado el ${hoy} · web de SDP</span></footer>
 </section>
 </body></html>

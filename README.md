@@ -1,4 +1,4 @@
-# Son de PUCP · Sistema de Ensayos
+# Son de PUCP · Web SDP
 
 Aplicación web Java (Servlets + JSP + JDBC + MySQL) que reemplaza al Excel **Matriz de Figuras SDP**.
 

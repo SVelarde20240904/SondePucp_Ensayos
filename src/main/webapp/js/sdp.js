@@ -1,4 +1,4 @@
-/* Son de PUCP · Sistema de Ensayos
+/* Son de PUCP · Web SDP
    En celular las tablas se muestran como tarjetas: este script copia el título de
    cada columna (<th>) a sus celdas como data-label, y el CSS lo muestra como etiqueta.
    Las tablas con clase "no-cards" o las del reporte A4 se quedan como tabla. */
