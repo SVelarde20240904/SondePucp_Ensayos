@@ -239,19 +239,25 @@ public class TalleresServlet extends BaseServlet {
                                 if (List.of("A_TIEMPO", "TARDE", "NO_SE_PRESENTO").contains(v)) asis.put(p.getId(), v);
                             }
                             List<TallerPersona> extras = new ArrayList<>();
-                            Integer quien = entero(req, "extraMiembro");
-                            if (quien != null) {
-                                String f = req.getParameter("extraFuncion"), n = req.getParameter("extraNivel");
+                            // pueden venir varias filas (una por persona que se sumó o reemplazó)
+                            String[] quienes = req.getParameterValues("extraMiembro"), fs = req.getParameterValues("extraFuncion"),
+                                     ns = req.getParameterValues("extraNivel"), rs = req.getParameterValues("extraReemplaza"), as = req.getParameterValues("extraAsistencia");
+                            Set<String> vistos = new HashSet<>();
+                            for (int i = 0; quienes != null && i < quienes.length; i++) {
+                                Integer quien;
+                                try { quien = quienes[i] == null || quienes[i].isBlank() ? null : Integer.valueOf(quienes[i].trim()); } catch (NumberFormatException ex) { quien = null; }
+                                if (quien == null) continue;
+                                String f = val(fs, i), n = val(ns, i);
                                 if (!List.of("TALLERISTA", "APOYO", "MAESTRO", "MUSICA").contains(f)) f = "APOYO";
                                 if (!Taller.NIVELES.contains(n) || "MAESTRO".equals(f) || "MUSICA".equals(f)) n = null;
+                                if (!vistos.add(quien + "|" + f + "|" + n)) continue;   // la misma fila dos veces
                                 TallerPersona x = new TallerPersona(quien, f, n);
-                                x.setReemplazaA(entero(req, "extraReemplaza"));
-                                String a = req.getParameter("extraAsistencia");
-                                x.setAsistencia("TARDE".equals(a) ? "TARDE" : "A_TIEMPO");
+                                try { String re = val(rs, i); x.setReemplazaA(re == null || re.isBlank() ? null : Integer.valueOf(re.trim())); } catch (NumberFormatException ex) { x.setReemplazaA(null); }
+                                x.setAsistencia("TARDE".equals(val(as, i)) ? "TARDE" : "A_TIEMPO");
                                 extras.add(x);
                             }
                             dao.registrarFinal(id, asis, extras, yo);
-                            Sesion.ok(req, extras.isEmpty() ? "Dictado final guardado." : "Dictado final guardado y se agregó a la persona que se sumó.");
+                            Sesion.ok(req, extras.isEmpty() ? "Dictado final guardado." : "Dictado final guardado. Se agregó a " + extras.size() + (extras.size() == 1 ? " persona." : " personas."));
                         }
                         case "quitarExtra" -> { dao.quitarExtra(id, entero(req, "idPersona")); Sesion.ok(req, "Se quitó del dictado final."); }
                         case "cancelar" -> { dao.cambiarEstado(id, "CANCELADO"); Sesion.ok(req, "Taller cancelado."); }
@@ -413,4 +419,6 @@ public class TalleresServlet extends BaseServlet {
         Sesion.ok(req, "¡Gracias! Tu formulario del " + t.getTitulo() + " quedó guardado." + (t.isPlazoVencido() ? " (Llegó fuera de plazo.)" : ""));
         ir(req, resp, "/inicio");
     }
+
+    private static String val(String[] a, int i) { return a != null && i < a.length ? a[i] : null; }
 }

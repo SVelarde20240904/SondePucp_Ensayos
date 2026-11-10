@@ -58,16 +58,38 @@
       <c:if test="${empty t.personas}"><tr><td colspan="3" class="empty">Primero arma el cronograma con quién dicta cada nivel.</td></tr></c:if>
     </tbody></table>
     <input type="hidden" name="idPersona" value="">
-    <span class="label">¿Alguien se sumó o reemplazó a otra persona?</span>
+    <span class="label">¿Alguien se sumó o reemplazó a otra persona? Agrega a todos los que quieras y guarda una sola vez.</span>
+    <div class="extra-filas">
+      <div class="extra-fila">
     <div class="form-row">
       <div class="field"><label>Quién</label><select class="input" name="extraMiembro"><option value="">—</option><c:forEach var="m" items="${activos}"><option value="${m.idMiembro}"><c:out value="${m.nombreConApodo}"/></option></c:forEach></select></div>
       <div class="field"><label>Como</label><select class="input" name="extraFuncion"><option value="TALLERISTA">Tallerista</option><option value="APOYO">Apoyo</option><option value="MAESTRO">Maestro(a) de taller</option><option value="MUSICA">Música social</option></select></div>
       <div class="field"><label>Nivel</label><select class="input" name="extraNivel"><c:forEach var="n" items="${t.niveles}"><option value="${n}">${n == 'PRINCIPIANTE' ? 'Principiante' : (n == 'BASICO' ? 'Básico' : (n == 'INTRO_RUEDA' ? 'Intro a la rueda' : 'Rueda básica'))}</option></c:forEach></select></div></div>
     <div class="form-row">
-      <div class="field"><label>Reemplazó a (opcional)</label><select class="input" name="extraReemplaza"><option value="">— nadie, se sumó —</option><c:forEach var="p" items="${t.planeadas}"><option value="${p.idMiembro}"><c:out value="${p.nombre}"/> (${p.codigo})</option></c:forEach></select></div>
+      <div class="field"><label>Reemplazó a</label><select class="input" name="extraReemplaza"><option value="">— nadie —</option><c:forEach var="p" items="${t.planeadas}"><option value="${p.idMiembro}"><c:out value="${p.nombre}"/> (${p.codigo})</option></c:forEach></select></div>
       <div class="field"><label>Llegó</label><select class="input" name="extraAsistencia"><option value="A_TIEMPO">A tiempo</option><option value="TARDE">Tarde</option></select></div></div>
+        <div class="quitar-cel"><button type="button" class="btn btn-ghost btn-sm quitar-extra" title="Quitar esta fila" aria-label="Quitar esta fila">✕</button></div>
+      </div>
+    </div>
+    <div class="inline"><button type="button" class="btn btn-secondary btn-sm" id="mas-extra">+ Otra persona</button></div>
     <div class="inline" style="justify-content:flex-end"><button class="btn btn-primary" name="action" value="final">Guardar dictado final</button></div>
   </form>
+  <script>
+    (function () {
+      var cont = document.querySelector('.extra-filas'), mas = document.getElementById('mas-extra');
+      if (!cont || !mas) return;
+      function limpiar(f) { f.querySelectorAll('select').forEach(function (s) { s.selectedIndex = 0; }); }
+      mas.addEventListener('click', function () {
+        var f = cont.firstElementChild.cloneNode(true); limpiar(f); cont.appendChild(f);
+        f.querySelector('select').focus();
+      });
+      cont.addEventListener('click', function (e) {
+        if (!e.target.classList.contains('quitar-extra')) return;
+        var f = e.target.closest('.extra-fila');
+        if (cont.children.length > 1) f.remove(); else limpiar(f);
+      });
+    })();
+  </script>
 
   <div class="stack w-340">
     <div class="card"><h2>Formularios</h2><p>Hasta el ${t.plazoTexto}${t.plazoVencido ? ' (ya venció)' : ''}</p>
