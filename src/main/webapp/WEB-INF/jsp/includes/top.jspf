@@ -27,6 +27,7 @@
     <a class="${menu == 'Confirmar asistencia' ? 'active' : ''}" href="${ctx}/confirmar-asistencia">Confirmar asistencia</a>
     <a class="${menu == 'Autoevaluación' ? 'active' : ''}" href="${ctx}/autoevaluacion?tipo=mensual">Autoevaluación</a>
     <a class="${menu == 'Mis responsabilidades' ? 'active' : ''}" href="${ctx}/mis-responsabilidades">Mis responsabilidades</a>
+    <a class="${menu == 'Mi cuota' ? 'active' : ''}" href="${ctx}/mi-cuota">Mi cuota</a>
     <a class="${menu == 'Mi historial' ? 'active' : ''}" href="${ctx}/mi-feedback">Mi historial</a>
     <a class="${menu == 'Mi perfil' ? 'active' : ''}" href="${ctx}/perfil">Mi perfil</a>
     <a class="${menu == 'Biblioteca' ? 'active' : ''}" href="${ctx}/biblioteca">Biblioteca de figuras</a>
@@ -47,6 +48,12 @@
       <a class="${menu == 'Talleres' or menu == 'Dictado de talleres' or menu == 'Pasos de talleres' ? 'active' : ''}" href="${ctx}/talleres">Talleres</a>
     </nav>
   </c:if>
+  <c:if test="${perm.contains('GESTIONAR_CUOTAS')}">
+    <div class="nav-title">Finanzas</div>
+    <nav class="nav">
+      <a class="${menu == 'Cuotas' ? 'active' : ''}" href="${ctx}/finanzas">Cuotas</a>
+    </nav>
+  </c:if>
   <c:set var="puedeResp" value="${perm.contains('ASIGNAR_RESPONSABILIDADES') or perm.contains('ASIGNAR_RESPONSABILIDADES_TALLERES')}"/>
   <c:if test="${puedeResp or perm.contains('GESTIONAR_MIEMBROS') or perm.contains('ASIGNAR_ROLES') or perm.contains('GESTIONAR_FIGURAS') or perm.contains('GESTIONAR_HISTORICO')}">
     <div class="nav-title">Administración</div>
@@ -60,7 +67,19 @@
   <div class="grow"></div>
   <div class="flags"><span class="flag pe"></span><span class="flag cu"></span><a class="logout" href="${ctx}/logout">Cerrar sesión</a></div>
   <a class="user-card" href="${ctx}/perfil"><span class="avatar">${u.iniciales}</span>
-    <c:set var="rolTop" value="${u.tieneRol(3) ? 'Owner' : (u.tieneRol(5) ? 'Admin de ensayos' : (u.tieneRol(4) ? 'Moderador de ensayos' : (u.tieneRol(8) ? 'Admin de talleres' : (u.tieneRol(7) ? 'Moderador de talleres' : (u.tieneRol(2) ? 'Equipo de ensayos' : (u.tieneRol(6) ? 'Equipo de talleres' : ''))))))}"/>
+    <c:choose>
+      <c:when test="${u.tieneRol(3)}"><c:set var="rolTop" value="Owner"/></c:when>
+      <c:when test="${u.tieneRol(5)}"><c:set var="rolTop" value="Admin de ensayos"/></c:when>
+      <c:when test="${u.tieneRol(4)}"><c:set var="rolTop" value="Moderador de ensayos"/></c:when>
+      <c:when test="${u.tieneRol(8)}"><c:set var="rolTop" value="Admin de talleres"/></c:when>
+      <c:when test="${u.tieneRol(7)}"><c:set var="rolTop" value="Moderador de talleres"/></c:when>
+      <c:when test="${u.tieneRol(11)}"><c:set var="rolTop" value="Admin de finanzas"/></c:when>
+      <c:when test="${u.tieneRol(10)}"><c:set var="rolTop" value="Moderador de finanzas"/></c:when>
+      <c:when test="${u.tieneRol(2)}"><c:set var="rolTop" value="Equipo de ensayos"/></c:when>
+      <c:when test="${u.tieneRol(6)}"><c:set var="rolTop" value="Equipo de talleres"/></c:when>
+      <c:when test="${u.tieneRol(9)}"><c:set var="rolTop" value="Equipo de finanzas"/></c:when>
+      <c:otherwise><c:set var="rolTop" value=""/></c:otherwise>
+    </c:choose>
     <span><c:out value="${u.nombre}"/><small>${u.rolBaileTexto}${empty rolTop ? ' · '.concat(u.frecuenciaTexto) : ' · '.concat(rolTop)}</small></span></a>
 </aside>
 <label for="menu" class="scrim" aria-hidden="true"></label>

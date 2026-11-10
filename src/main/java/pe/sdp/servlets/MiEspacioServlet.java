@@ -80,6 +80,7 @@ public class MiEspacioServlet extends BaseServlet {
         req.setAttribute("misPendientes", encargos.pendientesDe(yo));
         req.setAttribute("formulariosTaller", new pe.sdp.daos.TallerDao().formulariosPendientes(yo));
         req.setAttribute("cumples", miembros.cumpleanosProximos(7));
+        FinanzasServlet.resumenCuota(req, yo);
         vista(req, resp, "miembro/inicio");
     }
 

@@ -11,7 +11,7 @@
       <c:set var="sec" value=""/>
       <c:forEach var="p" items="${permisos}">
         <c:if test="${p.seccion != sec}"><c:set var="sec" value="${p.seccion}"/>
-          <tr class="section"><td colspan="${fn:length(roles) + 2}">${sec == 'MI_ESPACIO' ? 'MI ESPACIO' : (sec == 'ENSAYOS' ? 'ENSAYOS' : (sec == 'TALLERES' ? 'TALLERES' : 'ADMINISTRACIÓN'))}</td></tr></c:if>
+          <tr class="section"><td colspan="${fn:length(roles) + 2}">${sec == 'MI_ESPACIO' ? 'MI ESPACIO' : (sec == 'ENSAYOS' ? 'ENSAYOS' : (sec == 'TALLERES' ? 'TALLERES' : (sec == 'FINANZAS' ? 'FINANZAS' : 'ADMINISTRACIÓN')))}</td></tr></c:if>
         <tr><td><c:out value="${p.descripcion}"/></td>
           <td><input type="checkbox" ${p.tiene(1) ? 'checked' : ''} disabled aria-label="Miembro"></td>
           <c:forEach var="r" items="${roles}">

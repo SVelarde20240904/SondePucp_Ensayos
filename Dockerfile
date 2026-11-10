@@ -17,7 +17,7 @@ FROM tomcat:10.1-jre17-temurin
 
 ENV TZ=America/Lima \
     SDP_ENTORNO=produccion \
-    JAVA_OPTS="-XX:MaxRAMPercentage=75 -Djava.security.egd=file:/dev/urandom -Dfile.encoding=UTF-8"
+    JAVA_OPTS="-XX:MaxRAMPercentage=75 -Djava.security.egd=file:/dev/urandom -Dfile.encoding=UTF-8 -Djava.awt.headless=true"
 
 WORKDIR /usr/local/tomcat
 

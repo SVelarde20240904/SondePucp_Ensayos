@@ -14,6 +14,18 @@
   <div class="note warn inline" style="justify-content:space-between">Tienes pendiente el formulario del ${ft.titulo} (${ft.fechaCorta}): pasos ✅/❌ y feedback. Plazo: ${ft.plazoTexto}.
     <a class="btn btn-primary btn-sm" href="${ctx}/talleres/formulario?id=${ft.idTaller}">Llenarlo</a></div>
 </c:forEach>
+<%-- Cuota: deuda > cuota del mes por pagar > en revisión --%>
+<c:choose>
+  <c:when test="${cuotaDeuda > 0}">
+    <div class="note bad inline" style="justify-content:space-between">Debes S/ ${cuotaDeuda} de cuota (${cuotaMesesDeuda} mes${cuotaMesesDeuda == 1 ? '' : 'es'}). Mientras más esperes, más sube: el tope es S/ 15 por mes.
+      <a class="btn btn-primary btn-sm" href="${ctx}/mi-cuota">Pagar</a></div>
+  </c:when>
+  <c:when test="${not empty cuotaActual and cuotaActual.pendiente and not cuotaActual.enRevision}">
+    <div class="note info inline" style="justify-content:space-between">Tu cuota de ${cuotaActual.mesTexto} es S/ ${cuotaActual.montoHoy} hasta el ${cuotaActual.venceTexto}.
+      <a class="btn btn-secondary btn-sm" href="${ctx}/mi-cuota">Pagar</a></div>
+  </c:when>
+</c:choose>
+<c:if test="${cuotaEnRevision > 0}"><div class="note ok">✓ Tu captura del Yape está en revisión. Cuando Finanzas la confirme, tu cuota sale como pagada.</div></c:if>
 <c:if test="${misPendientes > 0}">
   <div class="note info inline" style="justify-content:space-between">Tienes ${misPendientes} responsabilidad${misPendientes == 1 ? '' : 'es'} pendiente${misPendientes == 1 ? '' : 's'} esta semana.
     <a class="btn btn-secondary btn-sm" href="${ctx}/mis-responsabilidades">Ver</a></div>

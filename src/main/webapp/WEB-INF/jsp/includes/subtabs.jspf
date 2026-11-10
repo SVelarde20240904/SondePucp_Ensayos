@@ -1,5 +1,5 @@
-<%-- Sub-pestañas de una sección que en el menú es un solo botón (Talleres, Miembros, Figuras).
-     Antes de incluirlo: <c:set var="grupo" value="talleres|miembros|figuras"/> <c:set var="sub" value="(la pestaña actual)"/>
+<%-- Sub-pestañas de una sección que en el menú es un solo botón (Talleres, Miembros, Figuras, Cuotas).
+     Antes de incluirlo: <c:set var="grupo" value="talleres|miembros|figuras|finanzas"/> <c:set var="sub" value="(la pestaña actual)"/>
      Cada pestaña sale solo si tienes su permiso, y la fila solo aparece si hay más de una. --%>
 <c:choose>
   <c:when test="${grupo == 'talleres'}">
@@ -19,6 +19,13 @@
     <nav class="inline subtabs" aria-label="Secciones de Figuras">
       <a class="pill-link${sub == 'figuras' ? ' on' : ''}" href="${ctx}/admin/figuras">Mano de figuras</a>
       <a class="pill-link${sub == 'historico' ? ' on' : ''}" href="${ctx}/admin/historico">Histórico</a>
+    </nav>
+  </c:when>
+  <c:when test="${grupo == 'finanzas'}">
+    <nav class="inline subtabs" aria-label="Secciones de Cuotas">
+      <a class="pill-link${sub == 'resumen' ? ' on' : ''}" href="${ctx}/finanzas">Resumen</a>
+      <a class="pill-link${sub == 'matriz' ? ' on' : ''}" href="${ctx}/finanzas/matriz">Matriz</a>
+      <a class="pill-link${sub == 'mes' ? ' on' : ''}" href="${ctx}/finanzas/mes">Por mes</a>
     </nav>
   </c:when>
 </c:choose>

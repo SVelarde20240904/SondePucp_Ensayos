@@ -110,6 +110,10 @@ public class ArranqueDao extends BaseDao {
                 migrarTalleres(c);
                 hecho.add("módulo Talleres (roles, permisos, talleres, pasos, dictado y feedback)");
             }
+            if (!existeTabla(c, "cuota")) {
+                migrarFinanzas(c);
+                hecho.add("módulo Finanzas · cuotas (roles, permisos, cuotas y pagos)");
+            }
         }
         return hecho;
     }
@@ -198,6 +202,47 @@ public class ArranqueDao extends BaseDao {
                              "CONSTRAINT fk_trs_taller FOREIGN KEY (id_taller) REFERENCES taller(id_taller) ON DELETE CASCADE, " +
                              "CONSTRAINT fk_trs_para FOREIGN KEY (para_miembro) REFERENCES miembro(id_miembro), " +
                              "CONSTRAINT fk_trs_esc FOREIGN KEY (escrito_por) REFERENCES miembro(id_miembro)) ENGINE=InnoDB");
+        }
+    }
+
+    /** Módulo Finanzas (cuotas): roles 9-11, permisos, cuotas mensuales y pagos con captura de Yape. */
+    private static void migrarFinanzas(Connection c) throws SQLException {
+        try (Statement st = c.createStatement()) {
+            st.executeUpdate("INSERT IGNORE INTO rol_sistema (id_rol, codigo, nombre) VALUES (9,'EQUIPO_FINANZAS','Equipo de finanzas')," +
+                             "(10,'MODERADOR_FINANZAS','Moderador de finanzas'),(11,'ADMIN_FINANZAS','Admin de finanzas')");
+            st.executeUpdate("ALTER TABLE permiso MODIFY seccion ENUM('MI_ESPACIO','ENSAYOS','TALLERES','FINANZAS','ADMINISTRACION') NOT NULL");
+            st.executeUpdate("INSERT IGNORE INTO permiso (id_permiso, codigo, descripcion, seccion) SELECT COALESCE(MAX(id_permiso),0)+1, " +
+                             "'GESTIONAR_CUOTAS', 'Ver las cuotas de todos, confirmar pagos y mandar recordatorios', 'FINANZAS' FROM permiso");
+            st.executeUpdate("INSERT IGNORE INTO permiso (id_permiso, codigo, descripcion, seccion) SELECT COALESCE(MAX(id_permiso),0)+1, " +
+                             "'EXONERAR_CUOTAS', 'Exonerar cuotas y anular pagos', 'FINANZAS' FROM permiso");
+            st.executeUpdate("INSERT IGNORE INTO rol_permiso (id_rol, id_permiso) SELECT r.id_rol, rp.id_permiso FROM rol_permiso rp " +
+                             "JOIN (SELECT 9 AS id_rol UNION SELECT 10 UNION SELECT 11) r WHERE rp.id_rol=1");
+            st.executeUpdate("INSERT IGNORE INTO rol_permiso (id_rol, id_permiso) SELECT r.id_rol, p.id_permiso FROM permiso p " +
+                             "JOIN (SELECT 3 AS id_rol UNION SELECT 9 UNION SELECT 10 UNION SELECT 11) r WHERE p.codigo='GESTIONAR_CUOTAS'");
+            st.executeUpdate("INSERT IGNORE INTO rol_permiso (id_rol, id_permiso) SELECT r.id_rol, p.id_permiso FROM permiso p " +
+                             "JOIN (SELECT 3 AS id_rol UNION SELECT 10 UNION SELECT 11) r WHERE p.codigo='EXONERAR_CUOTAS'");
+            // quien está en el team Finanzas queda con el rol Equipo de finanzas
+            st.executeUpdate("INSERT IGNORE INTO miembro_rol (id_miembro, id_rol) SELECT mt.id_miembro, 9 FROM miembro_team mt " +
+                             "JOIN team t ON t.id_team=mt.id_team WHERE t.codigo='FINANZAS'");
+            // desde qué mes paga cuota (NULL = la regla: 2 meses después de su ingreso)
+            if (!existeColumna(c, "miembro", "cuota_desde"))
+                st.executeUpdate("ALTER TABLE miembro ADD COLUMN cuota_desde DATE NULL AFTER fecha_ingreso");
+            // un pago = una captura de Yape (o un registro manual de Finanzas) que cubre uno o más meses
+            st.executeUpdate("CREATE TABLE IF NOT EXISTS pago_cuota (id_pago INT AUTO_INCREMENT PRIMARY KEY, id_miembro INT NOT NULL, " +
+                             "fecha DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, operacion VARCHAR(40) NULL, medio ENUM('YAPE','EFECTIVO','OTRO') NOT NULL DEFAULT 'YAPE', " +
+                             "voucher MEDIUMBLOB NULL, estado ENUM('POR_CONFIRMAR','CONFIRMADO','RECHAZADO') NOT NULL DEFAULT 'POR_CONFIRMAR', " +
+                             "registrado_por INT NOT NULL, revisado_por INT NULL, fecha_revision DATETIME NULL, motivo_rechazo VARCHAR(200) NULL, " +
+                             "CONSTRAINT fk_pc_miembro FOREIGN KEY (id_miembro) REFERENCES miembro(id_miembro), " +
+                             "CONSTRAINT fk_pc_reg FOREIGN KEY (registrado_por) REFERENCES miembro(id_miembro), " +
+                             "CONSTRAINT fk_pc_rev FOREIGN KEY (revisado_por) REFERENCES miembro(id_miembro)) ENGINE=InnoDB");
+            // una fila por miembro y mes; el monto se calcula con la fecha del pago (6 / 9 / 15)
+            st.executeUpdate("CREATE TABLE IF NOT EXISTS cuota (id_cuota INT AUTO_INCREMENT PRIMARY KEY, id_miembro INT NOT NULL, anio SMALLINT NOT NULL, mes TINYINT NOT NULL, " +
+                             "estado ENUM('PENDIENTE','PAGADA','EXONERADA') NOT NULL DEFAULT 'PENDIENTE', monto_pagado DECIMAL(6,2) NULL, id_pago INT NULL, " +
+                             "nota VARCHAR(200) NULL, actualizado_por INT NULL, fecha_actualizacion DATETIME NULL, " +
+                             "CONSTRAINT uq_cuota UNIQUE (id_miembro, anio, mes), " +
+                             "CONSTRAINT fk_cu_miembro FOREIGN KEY (id_miembro) REFERENCES miembro(id_miembro), " +
+                             "CONSTRAINT fk_cu_pago FOREIGN KEY (id_pago) REFERENCES pago_cuota(id_pago) ON DELETE SET NULL, " +
+                             "CONSTRAINT fk_cu_act FOREIGN KEY (actualizado_por) REFERENCES miembro(id_miembro)) ENGINE=InnoDB");
         }
     }
 
