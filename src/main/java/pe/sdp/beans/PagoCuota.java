@@ -20,13 +20,20 @@ public class PagoCuota {
     private String revisadoPor;
     private final List<Cuota> cuotas = new ArrayList<>();
 
-    /** Total según la fecha del pago (cada mes con su recargo). */
-    public int getTotal() {
-        int t = 0;
-        for (Cuota c : cuotas) t += Cuota.montoAl(c.getYm(), fecha.toLocalDate());
+    private boolean anual;
+
+    /** Total según la fecha del pago (cada mes con su recargo; el anual es S/ 66). */
+    public java.math.BigDecimal getTotal() {
+        if (anual) return Cuota.ANUAL;
+        java.math.BigDecimal t = java.math.BigDecimal.ZERO;
+        for (Cuota c : cuotas) t = t.add(c.falta(fecha.toLocalDate()));
         return t;
     }
+    public String getTotalTexto() { return Formato.soles(getTotal()); }
+    public boolean isAnual() { return anual; }
+    public void setAnual(boolean anual) { this.anual = anual; }
     public String getMeses() {
+        if (anual && !cuotas.isEmpty()) return "Pago anual " + cuotas.get(0).getAnio();
         StringBuilder sb = new StringBuilder();
         for (Cuota c : cuotas) sb.append(sb.length() == 0 ? "" : ", ").append(c.getMesTexto());
         return sb.toString();

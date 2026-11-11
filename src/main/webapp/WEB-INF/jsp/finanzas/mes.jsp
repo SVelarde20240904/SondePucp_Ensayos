@@ -3,6 +3,7 @@
 <section class="hero"><div class="titles"><span class="kicker">Team Finanzas</span><h1>${mesTexto}</h1>
   <p>Marca a todos los que ya pagaron y guarda una sola vez (por ejemplo, los que yapearon antes de que existiera la web)</p></div><span class="star"></span></section>
 <c:set var="grupo" value="finanzas"/><c:set var="sub" value="mes"/><%@ include file="/WEB-INF/jsp/includes/subtabs.jspf" %>
+<div class="inline"><a class="pill-link ${mios ? '' : 'on'}" href="${ctx}/finanzas/mes?m=${ym}">Todos</a><a class="pill-link ${mios ? 'on' : ''}" href="${ctx}/finanzas/mes?m=${ym}&mios=1">Mis cobrados</a></div>
 <div class="inline"><span class="muted small">Mes:</span>
   <c:forEach var="k" items="${meses}" varStatus="st"><a class="pill-link ${k == ym ? 'on' : ''}" href="${ctx}/finanzas/mes?m=${k}">${mesesTexto[st.index]}</a></c:forEach></div>
 <form class="card" method="post" action="${ctx}/finanzas/mes?m=${ym}"><input type="hidden" name="_csrf" value="${sessionScope.csrf}">
@@ -11,7 +12,7 @@
   <table class="table"><thead><tr><th></th><th>Miembro</th><th>Monto hoy</th><th>Estado</th></tr></thead><tbody>
     <c:forEach var="c" items="${cuotas}">
       <tr><td>${c.pendiente ? '<input type="checkbox" class="pend" name="cuota" value="'.concat(c.idCuota).concat('">') : ''}</td>
-        <td><a href="${ctx}/finanzas/miembro?id=${c.idMiembro}"><c:out value="${c.nombre}"/></a></td><td>S/ ${c.montoHoy}</td>
+        <td><a href="${ctx}/finanzas/miembro?id=${c.idMiembro}"><c:out value="${c.nombre}"/></a></td><td>S/ ${c.montoTexto}</td>
         <td><sdp:tag texto="${c.situacionTexto}" tono="${c.tono}"/><c:if test="${c.pagada}"> <small class="muted">${c.pagoFechaTexto}</small></c:if></td></tr>
     </c:forEach>
   </tbody></table>
@@ -19,7 +20,7 @@
     <div class="field"><label>Fecha en que pagaron</label><input class="input" type="date" name="fecha" value="${hoy}" max="${hoy}"></div>
     <div class="field"><label>Medio</label><select class="input" name="medio"><option value="YAPE">Yape</option><option value="EFECTIVO">Efectivo</option><option value="OTRO">Otro</option></select></div>
     <div class="field"><button class="btn btn-primary">Marcar como pagados</button></div></div>
-  <p class="muted xs">El monto se calcula con esa fecha: hasta fin de mes S/ 6, después S/ 9 y desde el 15 del mes siguiente S/ 15.</p>
+  <p class="muted xs">El monto se calcula con esa fecha: hasta fin de mes S/ 6, desde el 1 del mes siguiente S/ 7.50 y desde el 8 S/ 9.</p>
 </form>
 <script>
   document.getElementById('todos').addEventListener('change', function (e) { document.querySelectorAll('.pend').forEach(function (i) { i.checked = e.target.checked; }); });

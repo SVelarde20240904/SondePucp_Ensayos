@@ -61,6 +61,13 @@ public final class Formato {
         return d.plusDays(diff >= 0 ? diff : diff + 7);
     }
 
+    /** "6", "7.50", "105" (soles, sin decimales si es entero). */
+    public static String soles(java.math.BigDecimal v) {
+        if (v == null) return "0";
+        java.math.BigDecimal x = v.setScale(2, java.math.RoundingMode.HALF_UP);
+        return x.stripTrailingZeros().scale() <= 0 ? x.setScale(0).toPlainString() : x.toPlainString();
+    }
+
     public static String capital(String s) {
         if (s == null || s.isEmpty()) return "";
         String t = s.toLowerCase(ES).replace('_', ' ');

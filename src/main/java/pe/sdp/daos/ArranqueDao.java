@@ -114,6 +114,18 @@ public class ArranqueDao extends BaseDao {
                 migrarFinanzas(c);
                 hecho.add("módulo Finanzas · cuotas (roles, permisos, cuotas y pagos)");
             }
+            if (!existeColumna(c, "cuota", "abonado")) {
+                try (Statement st = c.createStatement()) {
+                    // pagos parciales y montos fijos (deudas que vienen del Excel), pago anual y encargado de cobro
+                    st.executeUpdate("ALTER TABLE cuota ADD COLUMN monto_fijo DECIMAL(7,2) NULL AFTER estado, ADD COLUMN abonado DECIMAL(7,2) NOT NULL DEFAULT 0 AFTER monto_fijo, " +
+                                     "MODIFY monto_pagado DECIMAL(7,2) NULL");
+                    st.executeUpdate("ALTER TABLE pago_cuota ADD COLUMN monto DECIMAL(7,2) NULL AFTER medio, ADD COLUMN anual TINYINT(1) NOT NULL DEFAULT 0 AFTER monto");
+                    if (!existeColumna(c, "miembro", "id_cobrador"))
+                        st.executeUpdate("ALTER TABLE miembro ADD COLUMN id_cobrador INT NULL AFTER cuota_desde, " +
+                                         "ADD CONSTRAINT fk_miembro_cobrador FOREIGN KEY (id_cobrador) REFERENCES miembro(id_miembro) ON DELETE SET NULL");
+                }
+                hecho.add("cuotas: pagos parciales, pago anual y encargado de cobro");
+            }
         }
         return hecho;
     }
