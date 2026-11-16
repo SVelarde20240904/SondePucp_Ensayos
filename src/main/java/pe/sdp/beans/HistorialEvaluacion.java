@@ -56,6 +56,7 @@ public class HistorialEvaluacion {
             case "ENSAYO": return "Del ensayo";
             case "CORRECCION": return "Corrección";
             case "CARGA_INICIAL": return "Carga inicial";
+            case "MATRIZ_EXCEL": return "Matriz del Excel";
             default: return "Mensual";
         }
     }

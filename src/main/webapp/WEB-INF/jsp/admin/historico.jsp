@@ -12,7 +12,7 @@
   <div class="field"><label>Figura</label><select class="input" name="fFigura"><option value="">Todas</option>
     <c:forEach var="f" items="${figurasLista}"><option value="${f.idFigura}" ${param.fFigura == f.idFigura ? 'selected' : ''}><c:out value="${f.nombre}"/></option></c:forEach></select></div>
   <div class="field"><label>Fuente</label><select class="input" name="fFuente"><option value="">Todas</option>
-    <c:forEach var="s" items="${['MENSUAL','ENSAYO','CORRECCION','CARGA_INICIAL']}"><option value="${s}" ${param.fFuente == s ? 'selected' : ''}>${s == 'ENSAYO' ? 'Del ensayo' : (s == 'CORRECCION' ? 'Corrección' : (s == 'CARGA_INICIAL' ? 'Carga inicial' : 'Mensual'))}</option></c:forEach></select></div>
+    <c:forEach var="s" items="${['MENSUAL','ENSAYO','CORRECCION','CARGA_INICIAL','MATRIZ_EXCEL']}"><option value="${s}" ${param.fFuente == s ? 'selected' : ''}>${s == 'ENSAYO' ? 'Del ensayo' : (s == 'CORRECCION' ? 'Corrección' : (s == 'CARGA_INICIAL' ? 'Carga inicial' : (s == 'MATRIZ_EXCEL' ? 'Matriz del Excel' : 'Mensual')))}</option></c:forEach></select></div>
   <div class="field"><label>Desde</label><input class="input" type="date" name="fDesde" value="${param.fDesde}"></div>
   <div class="field"><label>Hasta</label><input class="input" type="date" name="fHasta" value="${param.fHasta}"></div>
   <div class="field" style="flex:none"><button class="btn btn-secondary">Filtrar</button></div>

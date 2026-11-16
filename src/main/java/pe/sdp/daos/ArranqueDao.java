@@ -220,6 +220,14 @@ public class ArranqueDao extends BaseDao {
                 }
                 hecho.add("caja de Finanzas (saldo, ingresos y gastos)");
             }
+            if (!existeFila(c, "SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'historial_evaluacion' " +
+                               "AND COLUMN_NAME = 'fuente' AND COLUMN_TYPE LIKE '%MATRIZ_EXCEL%'")) {
+                try (Statement st = c.createStatement()) {
+                    // historia de la mano de antes de la web (las matrices del Excel, ensayo por ensayo): solo para ver la evolución
+                    st.executeUpdate("ALTER TABLE historial_evaluacion MODIFY fuente ENUM('CARGA_INICIAL','MENSUAL','ENSAYO','CORRECCION','MATRIZ_EXCEL') NOT NULL");
+                }
+                hecho.add("histórico: matrices del Excel (evolución de antes de la web)");
+            }
             // Nadie puede figurar dos veces con la misma función en un taller (pasaba al sumarse como "adicional" siendo del plan).
             // Se queda la fila del plan (o la más antigua) y hereda la asistencia/nivel de la repetida si le faltaba.
             try (Statement st = c.createStatement()) {
