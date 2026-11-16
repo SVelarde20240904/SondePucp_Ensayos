@@ -174,9 +174,104 @@ public class FinanzasServlet extends BaseServlet {
                     req.setAttribute("hoy", hoy().toString());
                     vista(req, resp, "finanzas/miembro");
                 }
+                case "/caja" -> caja(req, resp);
                 default -> resp.sendError(404);
             }
         } catch (SQLException e) { fallo(req, resp, e); }
+    }
+
+    /** Caja: saldo, evolución mes a mes, gastos por categoría y proyecto, cuotas al día y deuda por encargado. */
+    private void caja(HttpServletRequest req, HttpServletResponse resp) throws SQLException, ServletException, IOException {
+        pe.sdp.daos.CajaDao caja = new pe.sdp.daos.CajaDao();
+        pe.sdp.daos.ConfigDao cfg = new pe.sdp.daos.ConfigDao();
+        BigDecimal inicial = new BigDecimal(cfg.valor("caja.saldo_inicial", "0"));
+        LocalDate desde = LocalDate.parse(cfg.valor("caja.desde", "2026-01-01"));
+        List<Map<String, Object>> movs = caja.movimientos(null);
+        Map<YearMonth, BigDecimal> cuotasWeb = caja.cuotasWebPorMes();
+        // por mes: ingresos, gastos y saldo al cierre
+        YearMonth primero = YearMonth.from(desde), ultimo = YearMonth.from(hoy());
+        Map<YearMonth, BigDecimal[]> mes = new TreeMap<>();
+        for (YearMonth ym = primero; !ym.isAfter(ultimo); ym = ym.plusMonths(1)) mes.put(ym, new BigDecimal[]{BigDecimal.ZERO, BigDecimal.ZERO});
+        Map<String, BigDecimal> porCategoria = new TreeMap<>(), proyIn = new TreeMap<>(), proyOut = new TreeMap<>();
+        BigDecimal ingresos = BigDecimal.ZERO, gastos = BigDecimal.ZERO;
+        for (Map<String, Object> m : movs) {
+            LocalDate f = (LocalDate) m.get("fecha");
+            BigDecimal monto = (BigDecimal) m.get("monto");
+            boolean in = "INGRESO".equals(m.get("tipo"));
+            if (f.isBefore(desde)) continue;
+            BigDecimal[] x = mes.computeIfAbsent(YearMonth.from(f), k -> new BigDecimal[]{BigDecimal.ZERO, BigDecimal.ZERO});
+            if (in) { x[0] = x[0].add(monto); ingresos = ingresos.add(monto); }
+            else { x[1] = x[1].add(monto); gastos = gastos.add(monto); porCategoria.merge((String) m.get("categoria"), monto, BigDecimal::add); }
+            String p = (String) m.get("proyecto");
+            if (p != null) (in ? proyIn : proyOut).merge(p, monto, BigDecimal::add);
+        }
+        for (Map.Entry<YearMonth, BigDecimal> e : cuotasWeb.entrySet()) {
+            mes.computeIfAbsent(e.getKey(), k -> new BigDecimal[]{BigDecimal.ZERO, BigDecimal.ZERO})[0] =
+                    mes.get(e.getKey())[0].add(e.getValue());
+            ingresos = ingresos.add(e.getValue());
+        }
+        BigDecimal saldo = inicial;
+        StringBuilder js = new StringBuilder("{\"meses\":[");
+        boolean primeraFila = true;
+        List<Map<String, String>> tablaMeses = new ArrayList<>();
+        for (Map.Entry<YearMonth, BigDecimal[]> e : mes.entrySet()) {
+            saldo = saldo.add(e.getValue()[0]).subtract(e.getValue()[1]);
+            js.append(primeraFila ? "" : ",").append("{\"mes\":\"").append(Cuota.mesCorto(e.getKey())).append("\",\"in\":").append(e.getValue()[0])
+              .append(",\"out\":").append(e.getValue()[1]).append(",\"saldo\":").append(saldo).append("}");
+            primeraFila = false;
+            tablaMeses.add(Map.of("mes", Cuota.mesTexto(e.getKey()), "in", Formato.soles(e.getValue()[0]), "out", Formato.soles(e.getValue()[1]), "saldo", Formato.soles(saldo)));
+        }
+        js.append("],\"categorias\":[");
+        List<Map.Entry<String, BigDecimal>> cats = new ArrayList<>(porCategoria.entrySet());
+        cats.sort((a, b) -> b.getValue().compareTo(a.getValue()));
+        for (int i = 0; i < cats.size(); i++) js.append(i == 0 ? "" : ",").append("{\"k\":\"").append(jsTexto(cats.get(i).getKey())).append("\",\"v\":").append(cats.get(i).getValue()).append("}");
+        js.append("],\"alDia\":[");
+        List<Object[]> ad = caja.alDiaPorMes();
+        for (int i = 0; i < ad.size(); i++) {
+            Object[] a = ad.get(i);
+            js.append(i == 0 ? "" : ",").append("{\"mes\":\"").append(Cuota.mesCorto((YearMonth) a[0])).append("\",\"ok\":").append(a[1]).append(",\"total\":").append(a[2]).append("}");
+        }
+        // deuda por encargado de cobro
+        Map<String, BigDecimal> porCobrador = new TreeMap<>();
+        for (Cuota c : dao.todas()) if (c.isVencida() && !c.isEnRevision() && c.isMiembroActivo())
+            porCobrador.merge(c.getCobrador() == null ? "Sin encargado" : c.getCobrador().split(" ")[0], c.getMontoHoy(), BigDecimal::add);
+        List<Map.Entry<String, BigDecimal>> cobs = new ArrayList<>(porCobrador.entrySet());
+        cobs.removeIf(e -> e.getValue().signum() <= 0);
+        cobs.sort((a, b) -> b.getValue().compareTo(a.getValue()));
+        js.append("],\"cobradores\":[");
+        for (int i = 0; i < cobs.size(); i++) js.append(i == 0 ? "" : ",").append("{\"k\":\"").append(jsTexto(cobs.get(i).getKey())).append("\",\"v\":").append(cobs.get(i).getValue()).append("}");
+        js.append("]}");
+        // proyectos: neto (ingresos - gastos)
+        Set<String> nombresProy = new TreeSet<>(proyIn.keySet()); nombresProy.addAll(proyOut.keySet());
+        List<Map<String, String>> proyectos = new ArrayList<>();
+        for (String p : nombresProy) {
+            BigDecimal a = proyIn.getOrDefault(p, BigDecimal.ZERO), b = proyOut.getOrDefault(p, BigDecimal.ZERO);
+            proyectos.add(Map.of("nombre", p, "in", Formato.soles(a), "out", Formato.soles(b), "neto", Formato.soles(a.subtract(b)), "negativo", String.valueOf(a.subtract(b).signum() < 0)));
+        }
+        YearMonth ym = YearMonth.from(hoy());
+        BigDecimal[] actual = mes.getOrDefault(ym, new BigDecimal[]{BigDecimal.ZERO, BigDecimal.ZERO});
+        req.setAttribute("saldo", Formato.soles(saldo));
+        req.setAttribute("saldoInicial", Formato.soles(inicial));
+        req.setAttribute("desdeTexto", Formato.fechaLarga(desde));
+        req.setAttribute("ingresos", Formato.soles(ingresos));
+        req.setAttribute("gastos", Formato.soles(gastos));
+        req.setAttribute("netoMes", Formato.soles(actual[0].subtract(actual[1]).abs()));
+        req.setAttribute("netoMesNegativo", actual[0].subtract(actual[1]).signum() < 0);
+        req.setAttribute("mesTexto", Cuota.mesTexto(ym));
+        req.setAttribute("movimientos", movs);
+        req.setAttribute("tablaMeses", tablaMeses);
+        req.setAttribute("proyectos", proyectos);
+        req.setAttribute("proyectosUsados", caja.proyectos());
+        req.setAttribute("catGasto", pe.sdp.daos.CajaDao.CATEGORIAS_GASTO);
+        req.setAttribute("catIngreso", pe.sdp.daos.CajaDao.CATEGORIAS_INGRESO);
+        req.setAttribute("cuotasWebDesde", Cuota.mesTexto(Cuota.INICIO).toLowerCase());
+        req.setAttribute("datosGraficas", js.toString());
+        req.setAttribute("hoy", hoy().toString());
+        vista(req, resp, "finanzas/caja");
+    }
+
+    private static String jsTexto(String s) {
+        return s.replace("\\", "\\\\").replace("\"", "\\\"").replace("<", "\\u003c").replace(">", "\\u003e").replace("&", "\\u0026");
     }
 
     private YearMonth mesPedido(HttpServletRequest req) {
@@ -196,6 +291,47 @@ public class FinanzasServlet extends BaseServlet {
         req.setAttribute("desdeTexto", Cuota.mesTexto(dao.desdeDe(yo)));
         req.setAttribute("anualAbierto", Cuota.anualAbierto(hoy()) && dao.anualPosible(yo, hoy().getYear()));
         req.setAttribute("anio", hoy().getYear());
+        // cuánto debo hoy y cuánto subirá si espero (cada cuota sube el 1 y el 8 del mes siguiente)
+        LocalDate h = hoy();
+        BigDecimal deuda = BigDecimal.ZERO;
+        TreeSet<LocalDate> cambios = new TreeSet<>();
+        for (Cuota c : porPagar) {
+            deuda = deuda.add(c.falta(h));
+            if (c.getMontoFijo() == null)
+                for (LocalDate d : List.of(c.getYm().plusMonths(1).atDay(1), c.getYm().plusMonths(1).atDay(8))) if (d.isAfter(h)) cambios.add(d);
+        }
+        List<String[]> sube = new ArrayList<>();
+        for (LocalDate d : cambios) {
+            if (sube.size() == 2) break;
+            BigDecimal t = BigDecimal.ZERO;
+            for (Cuota c : porPagar) t = t.add(c.falta(d));
+            if (t.compareTo(deuda) > 0) sube.add(new String[]{Formato.diaMes(d), Formato.soles(t)});
+        }
+        req.setAttribute("deudaTexto", Formato.soles(deuda));
+        req.setAttribute("debeAlgo", deuda.signum() > 0);
+        req.setAttribute("deudaDesde", porPagar.isEmpty() ? "" : porPagar.get(0).getMesTexto().toLowerCase());
+        req.setAttribute("sube", sube);
+        // lo que pagué este año
+        BigDecimal pagadoAnio = BigDecimal.ZERO; int mesesAnio = 0, aTiempo = 0, conFecha = 0;
+        for (Cuota c : cuotas) if (c.getAnio() == h.getYear() && c.isPagada()) {
+            mesesAnio++;
+            if (c.getMontoPagado() != null) pagadoAnio = pagadoAnio.add(c.getMontoPagado());
+            if (c.getPagoFecha() != null) { conFecha++; if (!c.getPagoFecha().toLocalDate().isAfter(c.getVence())) aTiempo++; }
+        }
+        req.setAttribute("pagadoAnio", Formato.soles(pagadoAnio));
+        req.setAttribute("mesesAnio", mesesAnio);
+        req.setAttribute("aTiempo", conFecha == 0 ? null : aTiempo);   // lo que vino del Excel no tiene fecha de pago
+        req.setAttribute("pagos", dao.pagosDe(yo));
+        // mi encargado de cobro, con su WhatsApp
+        Integer idCob = dao.cobradorDe(yo);
+        Miembro cob = idCob == null ? null : miembros.obtener(idCob);
+        if (cob != null) {
+            req.setAttribute("cobrador", cob.getNombre());
+            String cel = cob.getCelular() == null ? "" : cob.getCelular().replaceAll("\\D", "");
+            if (cel.length() == 9) cel = "51" + cel;
+            String msg = "Hola " + cob.getNombre().split(" ")[0] + "! Te escribo por mi cuota de SDP 🙌";
+            if (cel.length() >= 11) req.setAttribute("cobradorWa", "https://wa.me/" + cel + "?text=" + URLEncoder.encode(msg, StandardCharsets.UTF_8).replace("+", "%20"));
+        }
         vista(req, resp, "finanzas/mi-cuota");
     }
 
@@ -256,6 +392,29 @@ public class FinanzasServlet extends BaseServlet {
             if ("/mi-cuota".equals(r)) { postMiCuota(req, resp, yo); return; }
             if (!Sesion.requiere(req, resp, PERM)) return;
             switch (r) {
+                case "/caja" -> {
+                    if (!Sesion.requiere(req, resp, "GESTIONAR_CAJA")) return;
+                    pe.sdp.daos.CajaDao caja = new pe.sdp.daos.CajaDao();
+                    if ("eliminar".equals(accion(req, ""))) {
+                        Integer id = entero(req, "idMov");
+                        if (id != null) { caja.eliminar(id); Sesion.ok(req, "Movimiento eliminado."); }
+                    } else {
+                        String tipo = "INGRESO".equals(req.getParameter("tipo")) ? "INGRESO" : "GASTO";
+                        LocalDate f = fecha(req, "fecha");
+                        String cat = texto(req, "categoria"), concepto = texto(req, "concepto"), proyecto = texto(req, "proyecto");
+                        BigDecimal monto = null;
+                        try { String m = texto(req, "monto"); if (m != null) monto = new BigDecimal(m.replace(",", ".").replace("S/", "").trim()); } catch (NumberFormatException ignored) { }
+                        if (f == null || concepto == null || monto == null || monto.signum() <= 0 || monto.compareTo(new BigDecimal("100000")) >= 0)
+                            Sesion.error(req, "Revisa la fecha, el concepto y el monto.");
+                        else {
+                            if (cat == null) cat = "Otros";
+                            caja.agregar(f, tipo, cat.length() > 40 ? cat.substring(0, 40) : cat, concepto.length() > 200 ? concepto.substring(0, 200) : concepto,
+                                    monto.setScale(2, java.math.RoundingMode.HALF_UP), proyecto == null ? null : (proyecto.length() > 80 ? proyecto.substring(0, 80) : proyecto), yo);
+                            Sesion.ok(req, ("INGRESO".equals(tipo) ? "Ingreso" : "Gasto") + " de S/ " + Formato.soles(monto) + " registrado.");
+                        }
+                    }
+                    ir(req, resp, "/finanzas/caja");
+                }
                 case "/" -> {
                     Integer idPago = entero(req, "idPago");
                     if (idPago != null && "confirmar".equals(accion(req, ""))) { dao.confirmar(idPago, yo); Sesion.ok(req, "Pago confirmado."); }
@@ -358,9 +517,7 @@ public class FinanzasServlet extends BaseServlet {
         byte[] img;
         try (InputStream in = foto.getInputStream()) { img = comprimir(in.readAllBytes()); }
         if (img == null) { Sesion.error(req, "No pude leer la imagen. Sube una captura en JPG o PNG."); ir(req, resp, "/mi-cuota"); return; }
-        String op = texto(req, "operacion");
-        if (op != null && op.length() > 40) op = op.substring(0, 40);
-        int n = dao.reportar(yo, ids, img, op, anual ? hoy().getYear() : null);
+        int n = dao.reportar(yo, ids, img, null, anual ? hoy().getYear() : null);
         if (n == 0) Sesion.error(req, anual ? "Ya tienes meses de este año pagados: paga los que faltan mes a mes." : "Esas cuotas ya estaban pagadas o en revisión.");
         else Sesion.ok(req, "¡Listo! Tu captura quedó en revisión. Cuando Finanzas la confirme, tu cuota sale como pagada.");
         ir(req, resp, "/mi-cuota");

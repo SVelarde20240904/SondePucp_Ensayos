@@ -337,7 +337,7 @@ public class CuotaDao extends BaseDao {
 
     // ===================== LECTURAS DE PAGOS =====================
 
-    private static final String SELECT_PAGO = "SELECT p.id_pago, p.id_miembro, p.fecha, p.operacion, p.medio, p.estado, p.motivo_rechazo, p.anual, " +
+    private static final String SELECT_PAGO = "SELECT p.id_pago, p.id_miembro, p.fecha, p.operacion, p.medio, p.estado, p.motivo_rechazo, p.anual, p.monto, " +
             "p.voucher IS NOT NULL AS tiene_voucher, m.nombre, r.nombre AS revisor FROM pago_cuota p JOIN miembro m ON m.id_miembro = p.id_miembro " +
             "LEFT JOIN miembro r ON r.id_miembro = p.revisado_por ";
 
@@ -353,7 +353,7 @@ public class CuotaDao extends BaseDao {
                         p.setIdPago(rs.getInt("id_pago")); p.setIdMiembro(rs.getInt("id_miembro")); p.setFecha(fechaHora(rs, "fecha"));
                         p.setOperacion(rs.getString("operacion")); p.setMedio(rs.getString("medio")); p.setEstado(rs.getString("estado"));
                         p.setMotivoRechazo(rs.getString("motivo_rechazo")); p.setVoucher(rs.getBoolean("tiene_voucher"));
-                        p.setNombre(rs.getString("nombre")); p.setRevisadoPor(rs.getString("revisor")); p.setAnual(rs.getBoolean("anual"));
+                        p.setNombre(rs.getString("nombre")); p.setRevisadoPor(rs.getString("revisor")); p.setAnual(rs.getBoolean("anual")); p.setMonto(rs.getBigDecimal("monto"));
                         l.add(p); porId.put(p.getIdPago(), p);
                     }
                 }
@@ -364,6 +364,11 @@ public class CuotaDao extends BaseDao {
         for (Cuota q : lista("WHERE c.id_pago IN (" + String.join(",", Collections.nCopies(porId.size(), "?")) + ") ORDER BY c.anio, c.mes", porId.keySet().toArray()))
             porId.get(q.getIdPago()).getCuotas().add(q);
         return l;
+    }
+
+    /** Todos los pagos de un miembro, del más reciente al más antiguo. */
+    public List<PagoCuota> pagosDe(int idMiembro) throws SQLException {
+        return pagos("WHERE p.id_miembro = ? ORDER BY p.fecha DESC", idMiembro);
     }
 
     public List<PagoCuota> porConfirmar() throws SQLException {

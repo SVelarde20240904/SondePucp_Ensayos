@@ -1,0 +1,18 @@
+<%-- Tabla de un cronograma por secciones. Antes: <c:set var="secs" value="(lista de TallerSeccion)"/> --%>
+<c:choose>
+  <c:when test="${empty secs}"><p class="muted small">Sin cronograma.</p></c:when>
+  <c:otherwise>
+    <table class="crono-tabla"><tbody>
+      <c:forEach var="s" items="${secs}">
+        <c:set var="nIt" value="${empty s.items ? 1 : fn:length(s.items)}"/>
+        <c:choose>
+          <c:when test="${empty s.items}"><tr class="${fn:toLowerCase(s.estilo)}"><td class="h"><c:out value="${s.hora}"/></td><td class="muted">—</td><td class="d"></td></tr></c:when>
+          <c:otherwise><c:forEach var="it" items="${s.items}" varStatus="st">
+            <tr class="${fn:toLowerCase(s.estilo)}"><c:if test="${st.first}"><td class="h" rowspan="${nIt}"><c:out value="${s.hora}"/></td></c:if>
+              <td><c:out value="${it[0]}"/></td><td class="d"><c:out value="${it[1]}"/></td></tr>
+          </c:forEach></c:otherwise>
+        </c:choose>
+      </c:forEach>
+    </tbody></table>
+  </c:otherwise>
+</c:choose>

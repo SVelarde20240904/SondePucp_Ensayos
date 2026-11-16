@@ -1,11 +1,12 @@
 <c:set var="titulo" value="Histórico"/><c:set var="menu" value="Histórico"/>
 <%@ include file="/WEB-INF/jsp/includes/top.jspf" %>
-<section class="hero"><div class="titles"><span class="kicker">Administración</span><h1>Histórico</h1>
+<section class="hero"><div class="titles"><span class="kicker">Administración</span><h1>Histórico · cambio por cambio</h1>
   <p>Cada cambio de color queda registrado. Aquí también se hacen las correcciones (antes se editaba la Matriz a mano).</p></div>
   <div class="actions"><a class="btn btn-primary" href="#correccion">+ Registrar corrección</a></div><span class="star"></span></section>
 <c:set var="grupo" value="figuras"/><c:set var="sub" value="historico"/><%@ include file="/WEB-INF/jsp/includes/subtabs.jspf" %>
+<div class="inline"><a class="pill-link" href="${ctx}/admin/historico">La mano en el tiempo</a><a class="pill-link on" href="${ctx}/admin/historico?vista=cambios">Cambio por cambio</a></div>
 
-<form class="form-row" method="get" action="${ctx}/admin/historico" style="align-items:flex-end">
+<form class="form-row" method="get" action="${ctx}/admin/historico" style="align-items:flex-end"><input type="hidden" name="vista" value="cambios">
   <div class="field"><label>Miembro</label><select class="input" name="fMiembro"><option value="">Todos</option>
     <c:forEach var="m" items="${miembrosLista}"><option value="${m.idMiembro}" ${param.fMiembro == m.idMiembro ? 'selected' : ''}><c:out value="${m.nombre}"/></option></c:forEach></select></div>
   <div class="field"><label>Figura</label><select class="input" name="fFigura"><option value="">Todas</option>
@@ -28,10 +29,10 @@
   <table class="table"><thead><tr><th>Fecha</th><th>Miembro</th><th>Figura</th><th>Cambio</th><th>Fuente</th><th>Registrado por</th></tr></thead><tbody>
   <c:forEach var="h" items="${lista}"><tr><td>${h.fechaTexto}</td><td><c:out value="${h.miembro}"/></td><td><c:out value="${h.figura}"/></td>
     <td><sdp:cambio antes="${h.colorAnterior}" despues="${h.colorNuevo}"/></td><td><sdp:tag texto="${h.fuenteTexto}" tono="${h.fuenteTono}"/></td>
-    <td><c:choose><c:when test="${not h.aplicado}"><span class="tag neutral">Ignorado · solo sube</span></c:when><c:otherwise><c:out value="${h.registradoPor}"/><c:if test="${not empty h.motivo}"><small><c:out value="${h.motivo}"/></small></c:if></c:otherwise></c:choose></td></tr></c:forEach>
+    <td><c:choose><c:when test="${not h.aplicado}"><span class="tag neutral">No aplicado</span></c:when><c:otherwise><c:out value="${h.registradoPor}"/><c:if test="${not empty h.motivo}"><small><c:out value="${h.motivo}"/></small></c:if></c:otherwise></c:choose></td></tr></c:forEach>
   <c:if test="${empty lista}"><tr><td colspan="6" class="empty">No hay registros con esos filtros.</td></tr></c:if>
   </tbody></table>
-  <c:url var="base" value="/admin/historico"><c:param name="fMiembro" value="${param.fMiembro}"/><c:param name="fFigura" value="${param.fFigura}"/><c:param name="fFuente" value="${param.fFuente}"/><c:param name="fDesde" value="${param.fDesde}"/><c:param name="fHasta" value="${param.fHasta}"/></c:url>
+  <c:url var="base" value="/admin/historico"><c:param name="vista" value="cambios"/><c:param name="fMiembro" value="${param.fMiembro}"/><c:param name="fFigura" value="${param.fFigura}"/><c:param name="fFuente" value="${param.fFuente}"/><c:param name="fDesde" value="${param.fDesde}"/><c:param name="fHasta" value="${param.fHasta}"/></c:url>
   <div class="inline"><span class="muted small">Mostrando ${desdeFila}–${hastaFila} de ${cuentas[0]}</span><span class="spacer"></span>
     <c:if test="${pagina > 1}"><a class="pill-link" href="${base}&p=${pagina - 1}">← Anterior</a></c:if>
     <span class="pill-link on">${pagina} / ${paginas}</span>

@@ -119,6 +119,7 @@ public class AdminServlet extends BaseServlet {
                 }
                 case "/historico" -> {
                     if (!Sesion.requiere(req, resp, "GESTIONAR_HISTORICO")) return;
+                    if (!"cambios".equals(req.getParameter("vista"))) { manoEnElTiempo(req, resp); return; }
                     Integer m = entero(req, "fMiembro"), f = entero(req, "fFigura");
                     String fuente = texto(req, "fFuente");
                     LocalDate desde = fecha(req, "fDesde"), hasta = fecha(req, "fHasta");
@@ -141,6 +142,7 @@ public class AdminServlet extends BaseServlet {
                     req.setAttribute("roles", roles.rolesExtra());
                     req.setAttribute("personas", roles.personasConRol());
                     req.setAttribute("activos", miembros.listarActivos());
+                    req.setAttribute("emojisPie", new pe.sdp.daos.ConfigDao().emojis());
                     vista(req, resp, "admin/roles");
                 }
                 default -> resp.sendError(404);
@@ -205,11 +207,20 @@ public class AdminServlet extends BaseServlet {
                     if (m == null || f == null || !Formato.esColor(color) || motivo == null) Sesion.error(req, "Para corregir elige miembro, figura, color y escribe el motivo.");
                     else if (!evaluaciones.corregir(m, f, color, motivo, yo)) Sesion.error(req, "Esa persona ya tiene ese color en esa figura: no hay nada que corregir.");
                     else Sesion.ok(req, "Corrección registrada en el histórico.");
-                    ir(req, resp, "/admin/historico");
+                    ir(req, resp, "/admin/historico?vista=cambios");
                 }
                 case "/roles" -> {
                     if (!Sesion.requiere(req, resp, "ASIGNAR_ROLES")) return;
                     switch (accion(req, "permisos")) {
+                        case "emojis" -> {
+                            pe.sdp.daos.ConfigDao cfg = new pe.sdp.daos.ConfigDao();
+                            for (String sec : pe.sdp.daos.ConfigDao.SECCIONES_PIE) {
+                                String v = req.getParameter("emojis_" + sec);
+                                if (v != null) cfg.guardar("emojis." + sec, v.strip().length() > 120 ? v.strip().substring(0, 120) : v.strip());
+                            }
+                            getServletContext().setAttribute("emojis", cfg.emojis());
+                            Sesion.ok(req, "Emojis del pie guardados.");
+                        }
                         case "asignar" -> {
                             Integer m = entero(req, "idMiembro"), rol = entero(req, "idRol");
                             if (m != null && roles.esRolExtra(rol)) { roles.asignar(m, rol, yo); Sesion.permisosCambiaron(); Sesion.ok(req, "Rol asignado."); }
@@ -403,6 +414,69 @@ public class AdminServlet extends BaseServlet {
         if ("TALLERES".equals(t)) return tal ? "TALLERES" : null;
         if ("ENSAYOS".equals(t)) return ens ? "ENSAYOS" : null;
         return ens ? "ENSAYOS" : (tal ? "TALLERES" : null);
+    }
+
+    /** Histórico de la mano completa: la mano en dos fechas (comparadas), su evolución y la de cada miembro. */
+    private void manoEnElTiempo(HttpServletRequest req, HttpServletResponse resp) throws SQLException, ServletException, IOException {
+        List<Object[]> cambios = evaluaciones.cambiosAplicados(null);
+        List<ManoHistorica.Corte> cortes = ManoHistorica.cortes(cambios);
+        Map<String, Map<Long, String>> manos = ManoHistorica.manos(cambios, cortes, evaluaciones.manoActual());
+        String a = req.getParameter("a"), b = req.getParameter("b");
+        if (a == null || !manos.containsKey(a)) a = cortes.size() > 1 ? cortes.get(cortes.size() - 2).clave() : cortes.get(0).clave();
+        if (b == null || !manos.containsKey(b)) b = "hoy";
+        Map<Long, String> A = manos.get(a), B = manos.get(b);
+        List<Miembro> gente = miembros.listarActivos();
+        List<Figura> figs = figuras.listarActivas();
+        List<Integer> idsFig = figs.stream().map(Figura::getIdFigura).toList();
+        // celdas de la matriz (B) marcando lo que cambió desde A
+        Map<Long, String[]> celdas = new HashMap<>();
+        int domA = 0, domB = 0, total = gente.size() * figs.size(), cambiaron = 0;
+        List<Map<String, Object>> ranking = new ArrayList<>();
+        for (Miembro m : gente) {
+            int da = ManoHistorica.dominadas(A, m.getIdMiembro(), idsFig), db = ManoHistorica.dominadas(B, m.getIdMiembro(), idsFig);
+            domA += da; domB += db;
+            for (Integer f : idsFig) {
+                long k = EvaluacionDao.clave(m.getIdMiembro(), f);
+                String ca = A.get(k), cb = B.get(k);
+                boolean cambio = !Objects.equals(ca, cb);
+                if (cambio) cambiaron++;
+                celdas.put(k, new String[]{cb == null ? "" : cb.toLowerCase(), cambio ? "1" : "", ca == null ? "—" : ca, cb == null ? "—" : cb});
+            }
+            ranking.add(Map.of("id", m.getIdMiembro(), "nombre", m.getNombre(), "a", da, "b", db, "delta", db - da));
+        }
+        ranking.sort((x, y) -> Integer.compare((Integer) y.get("delta"), (Integer) x.get("delta")) != 0
+                ? Integer.compare((Integer) y.get("delta"), (Integer) x.get("delta")) : Integer.compare((Integer) y.get("b"), (Integer) x.get("b")));
+        // evolución del grupo (% de la mano dominada) y de un miembro (figuras que domina)
+        Integer quien = entero(req, "m");
+        StringBuilder js = new StringBuilder("{\"cortes\":[");
+        StringBuilder grupo = new StringBuilder("],\"grupo\":["), uno = new StringBuilder("],\"miembro\":[");
+        for (int i = 0; i < cortes.size(); i++) {
+            ManoHistorica.Corte c = cortes.get(i);
+            Map<Long, String> mano = manos.get(c.clave());
+            int dom = 0;
+            for (Miembro m : gente) dom += ManoHistorica.dominadas(mano, m.getIdMiembro(), idsFig);
+            js.append(i == 0 ? "" : ",").append("\"").append(c.corta()).append("\"");
+            grupo.append(i == 0 ? "" : ",").append(total == 0 ? 0 : Math.round(1000.0 * dom / total) / 10.0);
+            uno.append(i == 0 ? "" : ",").append(quien == null ? 0 : ManoHistorica.dominadas(mano, quien, idsFig));
+        }
+        js.append(grupo).append(uno).append("]}");
+        req.setAttribute("cortes", cortes);
+        req.setAttribute("a", a); req.setAttribute("b", b);
+        req.setAttribute("etiquetaA", cortes.stream().filter(c -> c.clave().equals(req.getAttribute("a"))).findFirst().map(ManoHistorica.Corte::etiqueta).orElse(""));
+        req.setAttribute("etiquetaB", cortes.stream().filter(c -> c.clave().equals(req.getAttribute("b"))).findFirst().map(ManoHistorica.Corte::etiqueta).orElse(""));
+        req.setAttribute("gente", gente);
+        req.setAttribute("figs", figs);
+        req.setAttribute("celdas", celdas);
+        req.setAttribute("pctA", total == 0 ? 0 : Math.round(100.0 * domA / total));
+        req.setAttribute("pctB", total == 0 ? 0 : Math.round(100.0 * domB / total));
+        req.setAttribute("cambiaron", cambiaron);
+        req.setAttribute("subieron", ranking.stream().filter(r -> (Integer) r.get("delta") > 0).count());
+        req.setAttribute("ranking", ranking);
+        req.setAttribute("quien", quien);
+        req.setAttribute("quienNombre", quien == null ? null : gente.stream().filter(m -> m.getIdMiembro() == quien).map(Miembro::getNombre).findFirst().orElse(null));
+        req.setAttribute("nFiguras", figs.size());
+        req.setAttribute("datosMano", js.toString());
+        vista(req, resp, "admin/historico-mano");
     }
 
     /** Listas que necesita el formulario de miembro. */

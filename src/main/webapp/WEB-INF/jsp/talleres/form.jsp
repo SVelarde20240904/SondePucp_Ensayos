@@ -4,8 +4,8 @@
 <form method="post" action="${ctx}/talleres/${nuevo ? 'nuevo' : 'editar'}" class="stack" style="gap:24px" id="form-taller"><input type="hidden" name="_csrf" value="${sessionScope.csrf}">
 <input type="hidden" name="idTaller" value="${nuevo ? '' : t.idTaller}"><input type="hidden" name="estado" value="${t.estado}">
 <section class="hero"><div class="titles"><span class="kicker">Team Talleres</span><h1>${titulo}</h1>
-  <p><c:choose><c:when test="${nuevo and not empty plantilla}">Los bloques vienen del ${plantilla.titulo} (${plantilla.fechaCorta}) como plantilla: cámbialos lo que haga falta.</c:when>
-    <c:otherwise>Bloques del flyer, pasos planificados y quién dicta cada nivel</c:otherwise></c:choose></p></div>
+  <p><c:choose><c:when test="${nuevo and not empty plantilla}">El cronograma viene del ${plantilla.titulo} (${plantilla.fechaCorta}) como plantilla: cámbialo lo que haga falta.</c:when>
+    <c:otherwise>Quién dicta cada nivel y su cronograma: cada sección es un rango de horas con los pasos que van ahí</c:otherwise></c:choose></p></div>
   <div class="actions"><a class="btn btn-secondary" href="${ctx}/talleres${nuevo ? '' : '/detalle?id='.concat(t.idTaller)}">Cancelar</a>
     <button class="btn btn-secondary" name="publicar" value="borrador">Guardar borrador</button><button class="btn btn-primary" name="publicar" value="si">Guardar cronograma</button></div>
   <span class="star"></span></section>
@@ -44,49 +44,13 @@
           <c:forEach var="m" items="${activos}"><option value="${m.idMiembro}" ${i < fn:length(apos) and apos[i].idMiembro == m.idMiembro ? 'selected' : ''}><c:out value="${m.nombreConApodo}"/></option></c:forEach></select></div>
       </c:forEach></div>
 
-    <span class="label">Cronograma del flyer</span>
-    <div class="bloques" data-nivel="${n}">
-      <c:forEach var="b" items="${t.bloques[n]}">
-        <div class="bloque"><input class="input" name="bh_${n}" value="<c:out value='${b[0]}'/>" placeholder="7:30 - 7:45"><input class="input" name="ba_${n}" value="<c:out value='${b[1]}'/>" placeholder="Actividad"><input class="input" name="bd_${n}" value="<c:out value='${b[2]}'/>" placeholder="15'"><button type="button" class="btn btn-ghost btn-sm quitar" title="Quitar fila">✕</button></div>
-      </c:forEach>
-      <div class="bloque"><input class="input" name="bh_${n}" placeholder="7:30 - 7:45"><input class="input" name="ba_${n}" placeholder="Actividad (ej: Secuencia, 🎶💃 MÚSICA 🎶💃)"><input class="input" name="bd_${n}" placeholder="15'"><button type="button" class="btn btn-ghost btn-sm quitar" title="Quitar fila">✕</button></div>
-    </div>
-    <div><button type="button" class="btn btn-ghost btn-sm mas-bloque" data-nivel="${n}">+ Fila</button></div>
-
-    <div class="field"><label>Pasos planificados</label>
-      <textarea class="input" name="pasos_${n}" rows="7" placeholder="Un paso por línea. Escribe MÚSICA para separar bloques.&#10;Ej:&#10;Dile que no&#10;Guapeo&#10;MÚSICA&#10;Enchufla"><c:out value="${pasosTexto[n]}"/></textarea>
-      <span class="muted xs">Toca un paso de la lista para agregarlo. Si no está, escríbelo: se suma solo al catálogo.</span>
-      <div class="chips-pasos" data-destino="pasos_${n}">
-        <button type="button" class="chip-paso musica">🎶 MÚSICA</button>
-        <c:forEach var="p" items="${catalogo[n]}" end="40"><button type="button" class="chip-paso"><c:out value="${p.nombre}"/></button></c:forEach>
-      </div></div>
+    <span class="label">Cronograma</span>
+    <%@ include file="/WEB-INF/jsp/includes/crono-editor.jspf" %>
   </div>
 </c:forEach>
 
 <div class="card"><h2>Notas</h2><textarea class="input" name="notas" rows="3" maxlength="1000" placeholder="Opcional"><c:out value="${t.notas}"/></textarea></div>
 <div class="inline" style="justify-content:flex-end"><button class="btn btn-secondary" name="publicar" value="borrador">Guardar borrador</button><button class="btn btn-primary" name="publicar" value="si">Guardar cronograma</button></div>
 </form>
-<script>
-  document.querySelectorAll('.mas-bloque').forEach(function (b) {
-    b.addEventListener('click', function () {
-      var cont = document.querySelector('.bloques[data-nivel="' + b.dataset.nivel + '"]');
-      var fila = cont.lastElementChild.cloneNode(true);
-      fila.querySelectorAll('input').forEach(function (i) { i.value = ''; });
-      cont.appendChild(fila);
-    });
-  });
-  document.addEventListener('click', function (e) {
-    if (e.target.classList.contains('quitar')) {
-      var cont = e.target.closest('.bloques');
-      if (cont.children.length > 1) e.target.closest('.bloque').remove();
-      else e.target.closest('.bloque').querySelectorAll('input').forEach(function (i) { i.value = ''; });
-    }
-    if (e.target.classList.contains('chip-paso')) {
-      var ta = document.querySelector('textarea[name="' + e.target.parentElement.dataset.destino + '"]');
-      var txt = e.target.classList.contains('musica') ? 'MÚSICA' : e.target.textContent.trim();
-      ta.value = ta.value.replace(/\s*$/, '') + (ta.value.trim() ? '\n' : '') + txt + '\n';
-      ta.focus();
-    }
-  });
-</script>
+<script src="${ctx}/js/cronograma.js"></script>
 <%@ include file="/WEB-INF/jsp/includes/bottom.jspf" %>

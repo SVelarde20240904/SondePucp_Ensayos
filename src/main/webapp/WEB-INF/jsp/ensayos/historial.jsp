@@ -47,7 +47,8 @@
       <td>${e.dia} ${e.fechaCorta}</td><td>${e.tipoTexto}</td>
       <td><c:choose><c:when test="${e.pasado}"><span class="inline" style="flex-wrap:nowrap"><span class="bar" style="width:70px"><i style="width:${e.porcentajeAsistencia}%"></i></span><b class="small">${e.asistieron}/${e.esperados}</b></span></c:when>
         <c:otherwise>${e.confirmados} confirm.</c:otherwise></c:choose></td>
-      <td><span class="inline" style="gap:4px"><c:forEach var="n" items="${fn:split(e.nivelesEnsenados, ',')}"><span class="dot ${fn:toLowerCase(n)}"></span></c:forEach>${empty e.nivelesEnsenados ? '—' : ''}</span></td>
+      <td><c:choose><c:when test="${not e.porNiveles}"><span class="tag neutral" title="Se trabajó todos juntos">Sin niveles</span></c:when>
+        <c:otherwise><span class="inline" style="gap:4px"><c:forEach var="n" items="${fn:split(e.nivelesEnsenados, ',')}"><span class="dot ${fn:toLowerCase(n)}"></span></c:forEach>${empty e.nivelesEnsenados ? '—' : ''}</span></c:otherwise></c:choose></td>
       <td>${e.figurasEnsenadas == 0 ? '—' : e.figurasEnsenadas}</td><td>${e.avances == 0 ? '—' : '+'.concat(e.avances)}</td>
       <td>${e.autoevaluaron == 0 ? '—' : e.autoevaluaron}</td>
       <td><sdp:tag texto="${e.estadoTexto}" tono="${e.estadoTono}"/></td>

@@ -5,8 +5,8 @@
 <c:set var="grupo" value="miembros"/><c:set var="sub" value="roles"/><%@ include file="/WEB-INF/jsp/includes/subtabs.jspf" %>
 
 <div class="row top">
-  <form class="card grow" method="post" action="${ctx}/admin/roles"><input type="hidden" name="_csrf" value="${sessionScope.csrf}"><h2>Permisos por rol</h2><p>Los de Miembro son fijos. El Owner siempre conserva “Asignar roles”.</p>
-    <table class="table perm"><thead><tr><th>Permiso</th><th><span class="tag neutral role">Miembro</span></th>
+  <form class="card grow" style="min-width:0" method="post" action="${ctx}/admin/roles"><input type="hidden" name="_csrf" value="${sessionScope.csrf}"><h2>Permisos por rol</h2><p>Los de Miembro son fijos. El Owner siempre conserva “Asignar roles”.</p>
+    <div class="scroll-x"><table class="table perm"><thead><tr><th>Permiso</th><th><span class="tag neutral role">Miembro</span></th>
       <c:forEach var="r" items="${roles}"><th><span class="tag ${r.tono} role"><c:out value="${r.nombre}"/></span></th></c:forEach></tr></thead><tbody>
       <c:set var="sec" value=""/>
       <c:forEach var="p" items="${permisos}">
@@ -19,7 +19,7 @@
                        ${p.seccion == 'MI_ESPACIO' or (r.codigo == 'ADMIN' and p.codigo == 'ASIGNAR_ROLES') ? 'checked disabled' : ''}></td>
           </c:forEach></tr>
       </c:forEach>
-    </tbody></table>
+    </tbody></table></div>
     <div class="inline" style="justify-content:flex-end"><button class="btn btn-primary" name="action" value="permisos">Guardar permisos</button></div>
   </form>
 
@@ -39,6 +39,14 @@
       <select class="input" name="idMiembro" required><option value="">Elige un miembro…</option><c:forEach var="m" items="${activos}"><option value="${m.idMiembro}"><c:out value="${m.nombreConApodo}"/></option></c:forEach></select>
       <div class="pills"><c:forEach var="r" items="${roles}" varStatus="st"><label class="pill"><input type="radio" name="idRol" value="${r.idRol}" ${st.first ? 'checked' : ''}><span><c:out value="${r.nombre}"/></span></label></c:forEach></div>
       <div><button class="btn btn-primary" name="action" value="asignar">+ Asignar rol</button></div>
+    </form>
+    <form class="card" method="post" action="${ctx}/admin/roles"><input type="hidden" name="_csrf" value="${sessionScope.csrf}"><h2>Emojis del pie</h2>
+      <p class="muted small">La barra de abajo muestra los emojis del team de cada sección. En Inicio y Mi perfil salen los de los admins.</p>
+      <c:forEach var="e" items="${emojisPie}">
+        <div class="field"><label for="em_${e.key}">${e.key == 'INICIO' ? 'Inicio (admins)' : (e.key == 'ENSAYOS' ? 'Ensayos' : (e.key == 'TALLERES' ? 'Talleres' : 'Finanzas'))}</label>
+          <input class="input" id="em_${e.key}" name="emojis_${e.key}" value="<c:out value='${e.value}'/>" maxlength="120" placeholder="Ej. 🦉🐥🌈"></div>
+      </c:forEach>
+      <div><button class="btn btn-secondary" name="action" value="emojis">Guardar emojis</button></div>
     </form>
     <div class="card"><h2>Cómo funcionan</h2>
       <p class="muted small">• <b>Equipo de ensayos</b>: ensayos, cronograma, asistencia, figuras enseñadas, fichas y reportes.</p>

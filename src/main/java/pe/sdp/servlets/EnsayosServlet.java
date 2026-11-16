@@ -101,6 +101,7 @@ public class EnsayosServlet extends BaseServlet {
                     if (e == null) { Sesion.error(req, "Primero crea un ensayo."); ir(req, resp, "/ensayos/nuevo"); return; }
                     req.setAttribute("ensayo", e);
                     req.setAttribute("filas", dao.asistenciaDe(e.getIdEnsayo()));
+                    req.setAttribute("extra", dao.nivelesExtra(e.getIdEnsayo()));
                     vista(req, resp, "ensayos/asistencia");
                 }
                 case "/figuras" -> {
@@ -113,6 +114,10 @@ public class EnsayosServlet extends BaseServlet {
                     req.setAttribute("marcadas", marcadas);
                     req.setAttribute("porNivel", figuras.activasPorNivel());
                     req.setAttribute("equipo", miembros.equipoEnsayos());
+                    Map<String, Set<Integer>> dicto = dao.dicto(e.getIdEnsayo());
+                    // ensayo nuevo: quien registra queda como profe de los niveles abiertos
+                    if (dicto.isEmpty()) for (String n : (Set<String>) req.getAttribute("abiertos")) dicto.put(n, new HashSet<>(Set.of(Sesion.idUsuario(req))));
+                    req.setAttribute("dicto", dicto);
                     vista(req, resp, "ensayos/figuras-ensenadas");
                 }
                 case "/miembros" -> {
@@ -251,6 +256,16 @@ public class EnsayosServlet extends BaseServlet {
                         if (m != null && List.of("AP", "AN", "TJ", "TI", "FJ", "FI", "").contains(c)) codigos.put(m, c);
                     }
                     dao.registrarAsistencia(id, codigos, yo);
+                    // quien estuvo también en otro nivel ese día (solo cuenta si asistió)
+                    Map<Integer, Set<String>> extra = new HashMap<>();
+                    for (String p : Collections.list(req.getParameterNames())) {
+                        if (!p.startsWith("extra_")) continue;
+                        Integer m = Formato.entero(p.substring(6));
+                        String c = codigos.get(m);
+                        if (m == null || c == null || !List.of("AP", "AN", "TJ", "TI").contains(c)) continue;
+                        for (String n : req.getParameterValues(p)) if (Formato.esColor(n)) extra.computeIfAbsent(m, k -> new HashSet<>()).add(n);
+                    }
+                    dao.guardarNivelesExtra(id, extra);
                     Sesion.ok(req, "Asistencia guardada (" + codigos.values().stream().filter(x -> !x.isEmpty()).count() + " personas).");
                     ir(req, resp, "/ensayos/asistencia?id=" + id);
                 }
@@ -278,8 +293,15 @@ public class EnsayosServlet extends BaseServlet {
                     int id = entero(req, "idEnsayo");
                     List<Integer> figs = new ArrayList<>();
                     if (req.getParameterValues("figura") != null) for (String f : req.getParameterValues("figura")) { Integer x = Formato.entero(f); if (x != null) figs.add(x); }
-                    dao.guardarFigurasEnsenadas(id, figs, entero(req, "dicto"));
-                    Sesion.ok(req, figs.size() + " figuras registradas. Los asistentes ya pueden hacer su autoevaluación del ensayo.");
+                    boolean porNiveles = !"0".equals(req.getParameter("porNiveles"));
+                    Map<String, List<Integer>> dicto = new LinkedHashMap<>();
+                    for (String n : porNiveles ? List.of("AZUL", "VERDE", "AMARILLO", "ROJO") : List.of("TODOS")) {
+                        String[] vs = req.getParameterValues("dicto_" + n);
+                        if (vs == null) continue;
+                        for (String v : vs) { Integer x = Formato.entero(v); if (x != null) dicto.computeIfAbsent(n, k -> new ArrayList<>()).add(x); }
+                    }
+                    dao.guardarFigurasEnsenadas(id, figs, porNiveles, dicto);
+                    Sesion.ok(req, figs.size() + " figuras registradas" + (porNiveles ? "" : " (todos juntos, sin niveles)") + ". Los asistentes ya pueden hacer su autoevaluación del ensayo.");
                     ir(req, resp, "/ensayos/detalle?id=" + id);
                 }
                 default -> resp.sendError(404);

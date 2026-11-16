@@ -1,0 +1,14 @@
+<%-- Lista de pendientes (Inicio y pestaña Pendientes). Antes: <c:set var="maxPend" value="N"/> (0 = todos) --%>
+<c:choose>
+  <c:when test="${empty pendientes}"><p class="empty">¡Nada pendiente! Estás al día con todo 🎉</p></c:when>
+  <c:otherwise>
+    <ul class="pend-lista">
+      <c:forEach var="p" items="${pendientes}" varStatus="st"><c:if test="${maxPend == 0 or st.index lt maxPend}">
+        <li class="pend ${p.tono}"><span class="pend-ico" aria-hidden="true">${p.icono}</span>
+          <span class="pend-txt"><b><c:out value="${p.titulo}"/></b><small><c:out value="${p.detalle}"/></small></span>
+          <a class="btn ${p.tono == 'info' ? 'btn-secondary' : 'btn-primary'} btn-sm" href="${ctx}${p.url}">${p.boton}</a></li>
+      </c:if></c:forEach>
+    </ul>
+    <c:if test="${maxPend gt 0 and fn:length(pendientes) gt maxPend}"><a class="small" href="${ctx}/pendientes">Ver los ${fn:length(pendientes)} pendientes →</a></c:if>
+  </c:otherwise>
+</c:choose>

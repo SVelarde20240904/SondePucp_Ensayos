@@ -45,6 +45,7 @@ public class EnsayoDao extends BaseDao {
         e.setAutoevaluaron(rs.getInt("autoevaluaron"));
         e.setNivelesEnsenados(rs.getString("niveles"));
         e.setDictantesTexto(rs.getString("dictan"));
+        e.setPorNiveles(rs.getBoolean("por_niveles"));
         return e;
     }
 
@@ -293,6 +294,25 @@ public class EnsayoDao extends BaseDao {
         }
     }
 
+    /** Mi historial de ensayos desde una fecha (confirmación, motivo y asistencia real), del más reciente al más antiguo. */
+    public List<Asistencia> historialMio(int idMiembro, LocalDate desde) throws SQLException {
+        String sql = "SELECT e.id_ensayo, e.fecha, e.tipo, a.confirmacion, a.motivo, a.estado_real FROM ensayo e JOIN asistencia a ON a.id_ensayo=e.id_ensayo AND a.id_miembro=? " +
+                     "WHERE e.fecha < CURDATE() AND e.fecha >= ? AND e.estado<>'CANCELADO' AND e.estado<>'BORRADOR' ORDER BY e.fecha DESC";
+        try (Connection c = getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setInt(1, idMiembro); setFecha(ps, 2, desde);
+            List<Asistencia> l = new ArrayList<>();
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Asistencia a = new Asistencia();
+                    a.setIdEnsayo(rs.getInt("id_ensayo")); a.setFecha(fecha(rs, "fecha")); a.setTipo(rs.getString("tipo"));
+                    a.setConfirmacion(rs.getString("confirmacion")); a.setMotivo(rs.getString("motivo")); a.setEstadoReal(rs.getString("estado_real"));
+                    l.add(a);
+                }
+            }
+            return l;
+        }
+    }
+
     /** % de asistencia del miembro en el ciclo (ensayos con asistencia registrada). */
     public int porcentajeAsistencia(int idMiembro) throws SQLException {
         String sql = "SELECT ROUND(100*SUM(estado_real IN ('AP','AN','TJ','TI'))/NULLIF(SUM(estado_real IS NOT NULL),0)) FROM asistencia WHERE id_miembro=?";
@@ -350,7 +370,10 @@ public class EnsayoDao extends BaseDao {
     // ---------------- Figuras enseñadas y avances ----------------
 
     public List<FiguraSugerida> figurasEnsenadas(int idEnsayo) throws SQLException {
-        String sql = "SELECT ef.id_figura, f.nombre, ef.nivel, m.nombre AS dicto FROM ensayo_figura ef JOIN figura f ON f.id_figura=ef.id_figura " +
+        // quién enseñó: los profes de ese nivel (o los de "todos" si fue sin niveles); si no hay, el dictó antiguo de la figura
+        String sql = "SELECT ef.id_figura, f.nombre, ef.nivel, COALESCE((SELECT GROUP_CONCAT(DISTINCT x.nombre ORDER BY x.nombre SEPARATOR ' + ') FROM ensayo_dicto d " +
+                     "JOIN miembro x ON x.id_miembro=d.id_miembro WHERE d.id_ensayo=ef.id_ensayo AND (d.nivel=ef.nivel OR d.nivel='TODOS')), m.nombre) AS dicto " +
+                     "FROM ensayo_figura ef JOIN figura f ON f.id_figura=ef.id_figura " +
                      "LEFT JOIN miembro m ON m.id_miembro=ef.dicto WHERE ef.id_ensayo=? ORDER BY FIELD(ef.nivel,'AZUL','VERDE','AMARILLO','ROJO'), f.nombre";
         try (Connection c = getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setInt(1, idEnsayo);
@@ -366,15 +389,27 @@ public class EnsayoDao extends BaseDao {
         }
     }
 
-    /** Reemplaza las figuras enseñadas (guarda el color que tenía cada figura en ese momento). */
-    public void guardarFigurasEnsenadas(int idEnsayo, List<Integer> figuras, Integer dicto) throws SQLException {
+    /**
+     * Reemplaza las figuras enseñadas (guarda el color que tenía cada figura en ese momento), si se trabajó por niveles
+     * y quién enseñó cada nivel (nivel o TODOS -> ids).
+     */
+    public void guardarFigurasEnsenadas(int idEnsayo, List<Integer> figuras, boolean porNiveles, Map<String, List<Integer>> dicto) throws SQLException {
         try (Connection c = getConnection()) {
             c.setAutoCommit(false);
             try {
                 try (PreparedStatement ps = c.prepareStatement("DELETE FROM ensayo_figura WHERE id_ensayo=?")) { ps.setInt(1, idEnsayo); ps.executeUpdate(); }
                 try (PreparedStatement ps = c.prepareStatement(
                         "INSERT INTO ensayo_figura (id_ensayo, id_figura, nivel, dicto) SELECT ?, id_figura, color, ? FROM v_color_figura WHERE id_figura=?")) {
-                    for (Integer f : figuras) { ps.setInt(1, idEnsayo); setEntero(ps, 2, dicto); ps.setInt(3, f); ps.addBatch(); }
+                    for (Integer f : figuras) {
+                        ps.setInt(1, idEnsayo); ps.setNull(2, Types.INTEGER); ps.setInt(3, f); ps.addBatch();
+                    }
+                    ps.executeBatch();
+                }
+                try (PreparedStatement ps = c.prepareStatement("UPDATE ensayo SET por_niveles=? WHERE id_ensayo=?")) { ps.setBoolean(1, porNiveles); ps.setInt(2, idEnsayo); ps.executeUpdate(); }
+                try (PreparedStatement ps = c.prepareStatement("DELETE FROM ensayo_dicto WHERE id_ensayo=?")) { ps.setInt(1, idEnsayo); ps.executeUpdate(); }
+                try (PreparedStatement ps = c.prepareStatement("INSERT IGNORE INTO ensayo_dicto (id_ensayo, nivel, id_miembro) VALUES (?,?,?)")) {
+                    for (Map.Entry<String, List<Integer>> e : dicto.entrySet())
+                        for (Integer m : e.getValue()) { ps.setInt(1, idEnsayo); ps.setString(2, e.getKey()); ps.setInt(3, m); ps.addBatch(); }
                     ps.executeBatch();
                 }
                 c.commit();
@@ -382,24 +417,70 @@ public class EnsayoDao extends BaseDao {
         }
     }
 
-    /** Figuras enseñadas que el miembro puede autoevaluar en ese ensayo (asistió; primero las de su nivel). */
+    /** Quién enseñó cada nivel: nivel (o TODOS) -> ids. */
+    public Map<String, Set<Integer>> dicto(int idEnsayo) throws SQLException {
+        Map<String, Set<Integer>> m = new HashMap<>();
+        try (Connection c = getConnection(); PreparedStatement ps = c.prepareStatement("SELECT nivel, id_miembro FROM ensayo_dicto WHERE id_ensayo=?")) {
+            ps.setInt(1, idEnsayo);
+            try (ResultSet rs = ps.executeQuery()) { while (rs.next()) m.computeIfAbsent(rs.getString(1), k -> new HashSet<>()).add(rs.getInt(2)); }
+        }
+        return m;
+    }
+
+    /** Asistentes que además estuvieron en otro nivel ese día: id -> niveles. */
+    public Map<Integer, Set<String>> nivelesExtra(int idEnsayo) throws SQLException {
+        Map<Integer, Set<String>> m = new HashMap<>();
+        try (Connection c = getConnection(); PreparedStatement ps = c.prepareStatement("SELECT id_miembro, nivel FROM ensayo_nivel_extra WHERE id_ensayo=?")) {
+            ps.setInt(1, idEnsayo);
+            try (ResultSet rs = ps.executeQuery()) { while (rs.next()) m.computeIfAbsent(rs.getInt(1), k -> new HashSet<>()).add(rs.getString(2)); }
+        }
+        return m;
+    }
+
+    public void guardarNivelesExtra(int idEnsayo, Map<Integer, Set<String>> extra) throws SQLException {
+        try (Connection c = getConnection()) {
+            c.setAutoCommit(false);
+            try {
+                try (PreparedStatement ps = c.prepareStatement("DELETE FROM ensayo_nivel_extra WHERE id_ensayo=?")) { ps.setInt(1, idEnsayo); ps.executeUpdate(); }
+                try (PreparedStatement ps = c.prepareStatement("INSERT IGNORE INTO ensayo_nivel_extra (id_ensayo, id_miembro, nivel) VALUES (?,?,?)")) {
+                    for (Map.Entry<Integer, Set<String>> e : extra.entrySet())
+                        for (String n : e.getValue()) { ps.setInt(1, idEnsayo); ps.setInt(2, e.getKey()); ps.setString(3, n); ps.addBatch(); }
+                    ps.executeBatch();
+                }
+                c.commit();
+            } catch (SQLException e) { c.rollback(); throw e; }
+        }
+    }
+
+    /**
+     * Figuras enseñadas que el miembro puede autoevaluar en ese ensayo (si asistió):
+     * - ensayo sin niveles (todos juntos) o miembro sin nivel: todas las que se vieron;
+     * - por niveles: las de su nivel + las de los niveles donde también estuvo ese día (si no hay ninguna, todas).
+     * Primero las suyas.
+     */
     public List<FiguraSugerida> figurasParaAutoevaluar(int idEnsayo, int idMiembro) throws SQLException {
-        String sql = "SELECT ef.id_figura, f.nombre, ef.nivel, (ef.nivel = n.nivel) AS de_su_nivel FROM ensayo_figura ef " +
+        String sql = "SELECT ef.id_figura, f.nombre, ef.nivel, " +
+                     " (ef.nivel = n.nivel OR EXISTS (SELECT 1 FROM ensayo_nivel_extra x WHERE x.id_ensayo=ef.id_ensayo AND x.id_miembro=a.id_miembro AND x.nivel=ef.nivel)) AS mio, " +
+                     " e.por_niveles, n.nivel AS su_nivel FROM ensayo_figura ef JOIN ensayo e ON e.id_ensayo=ef.id_ensayo " +
                      "JOIN figura f ON f.id_figura=ef.id_figura AND f.activa=1 " +
                      "JOIN asistencia a ON a.id_ensayo=ef.id_ensayo AND a.id_miembro=? AND a.estado_real IN ('AP','AN','TJ','TI') " +
-                     "JOIN v_nivel_miembro n ON n.id_miembro=a.id_miembro WHERE ef.id_ensayo=? ORDER BY de_su_nivel DESC, f.nombre";
+                     "LEFT JOIN v_nivel_miembro n ON n.id_miembro=a.id_miembro WHERE ef.id_ensayo=? " +
+                     "ORDER BY mio DESC, FIELD(ef.nivel,'AZUL','VERDE','AMARILLO','ROJO'), f.nombre";
         try (Connection c = getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setInt(1, idMiembro); ps.setInt(2, idEnsayo);
-            List<FiguraSugerida> todas = new ArrayList<>(), suNivel = new ArrayList<>();
+            List<FiguraSugerida> todas = new ArrayList<>(), mias = new ArrayList<>();
+            boolean porNiveles = true, sinNivel = false;
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     FiguraSugerida f = new FiguraSugerida();
                     f.setIdFigura(rs.getInt(1)); f.setFigura(rs.getString(2)); f.setNivel(rs.getString(3));
                     todas.add(f);
-                    if (rs.getBoolean(4)) suNivel.add(f);
+                    if (rs.getBoolean("mio")) mias.add(f);
+                    porNiveles = rs.getBoolean("por_niveles");
+                    sinNivel = rs.getString("su_nivel") == null;
                 }
             }
-            return suNivel.isEmpty() ? todas : suNivel;
+            return (!porNiveles || sinNivel || mias.isEmpty()) ? todas : mias;
         }
     }
 

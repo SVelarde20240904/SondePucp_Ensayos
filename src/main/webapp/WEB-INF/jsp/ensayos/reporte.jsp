@@ -18,7 +18,7 @@
       <div><b>${ensayo.tardanzas}</b><span>tardanzas</span></div><div><b>${ensayo.faltas}</b><span>faltas</span></div>
       <div><b>${ensayo.figurasEnsenadas}</b><span>figuras</span></div><div><b>+${ensayo.avances}</b><span>avances</span></div></div></div>
     <div class="rsec"><h2>FIGURAS ENSEÑADAS POR NIVEL</h2>
-      <table class="table"><thead><tr><th>Nivel</th><th>Figuras</th><th>Dictó</th></tr></thead><tbody>
+      <table class="table"><thead><tr><th>Nivel</th><th>Figuras</th><th>Enseñó</th></tr></thead><tbody>
         <c:forEach var="entry" items="${ensenadasPorNivel}"><tr><td><sdp:chip color="${entry.key}"/></td>
           <td><c:forEach var="f" items="${entry.value}" varStatus="s"><c:out value="${f.figura}"/>${s.last ? '' : ', '}</c:forEach></td><td><c:out value="${entry.value[0].dicto}"/></td></tr></c:forEach>
         <c:if test="${empty ensenadasPorNivel}"><tr><td colspan="3">No se registraron figuras enseñadas.</td></tr></c:if>

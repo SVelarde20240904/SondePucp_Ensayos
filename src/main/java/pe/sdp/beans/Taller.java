@@ -44,8 +44,22 @@ public class Taller {
     private final Map<String, List<TallerPaso>> pasos = new LinkedHashMap<>();       // nivel -> pasos
     private final List<TallerPersona> personas = new ArrayList<>();
     private final Map<String, String> checklistPor = new HashMap<>();                // nivel -> quién lo respondió
+    // lo mío (Inicio / Mi asistencia): SI / NO / SIN_RESPUESTA, motivo y qué hago en el taller (ej. "Dictas Básico")
+    private String miConfirmacion = "SIN_RESPUESTA", miMotivo, miPapel, miAsistencia;
+    private int confirmadosSi, confirmadosNo;
 
-    public Taller() { for (String n : NIVELES) { bloques.put(n, new ArrayList<>()); pasos.put(n, new ArrayList<>()); } }
+    // cronograma por secciones (llaves de horas con varios pasos): lo planeado y lo que se dictó al final
+    private final Map<String, List<TallerSeccion>> plan = new LinkedHashMap<>();
+    private final Map<String, List<TallerSeccion>> dictado = new LinkedHashMap<>();
+
+    public Taller() { for (String n : NIVELES) { bloques.put(n, new ArrayList<>()); pasos.put(n, new ArrayList<>()); plan.put(n, new ArrayList<>()); dictado.put(n, new ArrayList<>()); } }
+
+    public Map<String, List<TallerSeccion>> getPlan() { return plan; }
+    public Map<String, List<TallerSeccion>> getDictado() { return dictado; }
+    public boolean isHayDictado() { return dictado.values().stream().anyMatch(l -> !l.isEmpty()); }
+    /** Texto del editor de cada nivel (ver TallerSeccion.leer/escribir). */
+    public Map<String, String> getPlanTexto() { Map<String, String> m = new HashMap<>(); plan.forEach((k, v) -> m.put(k, TallerSeccion.escribir(v))); return m; }
+    public Map<String, String> getDictadoTexto() { Map<String, String> m = new HashMap<>(); dictado.forEach((k, v) -> m.put(k, TallerSeccion.escribir(v))); return m; }
 
     public int getIdTaller() { return idTaller; }
     public void setIdTaller(int idTaller) { this.idTaller = idTaller; }
@@ -85,6 +99,20 @@ public class Taller {
     public Map<String, List<TallerPaso>> getPasos() { return pasos; }
     public List<TallerPersona> getPersonas() { return personas; }
     public Map<String, String> getChecklistPor() { return checklistPor; }
+    public String getMiConfirmacion() { return miConfirmacion; }
+    public void setMiConfirmacion(String miConfirmacion) { this.miConfirmacion = miConfirmacion == null ? "SIN_RESPUESTA" : miConfirmacion; }
+    public String getMiMotivo() { return miMotivo; }
+    public void setMiMotivo(String miMotivo) { this.miMotivo = miMotivo; }
+    public String getMiPapel() { return miPapel; }
+    public void setMiPapel(String miPapel) { this.miPapel = miPapel; }
+    /** A_TIEMPO / TARDE / NO_SE_PRESENTO si participé (dicté, apoyé...), null si no. */
+    public String getMiAsistencia() { return miAsistencia; }
+    public void setMiAsistencia(String miAsistencia) { this.miAsistencia = miAsistencia; }
+    public int getConfirmadosSi() { return confirmadosSi; }
+    public void setConfirmadosSi(int confirmadosSi) { this.confirmadosSi = confirmadosSi; }
+    public int getConfirmadosNo() { return confirmadosNo; }
+    public void setConfirmadosNo(int confirmadosNo) { this.confirmadosNo = confirmadosNo; }
+    public String getDia() { return fecha == null ? "" : Formato.diaCorto(fecha); }
 
     public String getTitulo() { return (numero == null ? "" : numero + "º ") + "Taller SDP"; }
     public String getFechaTexto() { return fecha == null ? "" : Formato.diaCorto(fecha) + " " + Formato.ddmmyyyy(fecha); }

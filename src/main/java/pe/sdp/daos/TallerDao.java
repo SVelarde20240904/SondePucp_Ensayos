@@ -59,9 +59,22 @@ public class TallerDao extends BaseDao {
                 ps.setInt(1, id);
                 try (ResultSet rs = ps.executeQuery()) { if (!rs.next()) return null; t = mapear(rs); t.setFinalPor(rs.getString("final_nombre")); }
             }
-            try (PreparedStatement ps = c.prepareStatement("SELECT nivel, hora, actividad, duracion FROM taller_bloque WHERE id_taller=? ORDER BY nivel, orden")) {
+            try (PreparedStatement ps = c.prepareStatement("SELECT nivel, hora, actividad, duracion, grupo, estilo, version FROM taller_bloque WHERE id_taller=? ORDER BY nivel, version, orden")) {
                 ps.setInt(1, id);
-                try (ResultSet rs = ps.executeQuery()) { while (rs.next()) t.getBloques().get(rs.getString(1)).add(new String[]{nz(rs.getString(2)), rs.getString(3), nz(rs.getString(4))}); }
+                try (ResultSet rs = ps.executeQuery()) {
+                    String clave = null; TallerSeccion sec = null;
+                    while (rs.next()) {
+                        String nivel = rs.getString(1), version = rs.getString(7);
+                        if ("PLAN".equals(version)) t.getBloques().get(nivel).add(new String[]{nz(rs.getString(2)), rs.getString(3), nz(rs.getString(4))});
+                        String k = nivel + version + rs.getInt(5);
+                        if (!k.equals(clave)) {
+                            clave = k; sec = new TallerSeccion(nz(rs.getString(2)), rs.getString(6));
+                            ("PLAN".equals(version) ? t.getPlan() : t.getDictado()).get(nivel).add(sec);
+                        }
+                        String act = rs.getString(3);
+                        if (act != null && !act.isEmpty()) sec.item(act, rs.getString(4));
+                    }
+                }
             }
             try (PreparedStatement ps = c.prepareStatement("SELECT tp.*, p.nombre FROM taller_paso tp JOIN paso_taller p ON p.id_paso=tp.id_paso " +
                     "WHERE tp.id_taller=? ORDER BY tp.nivel, tp.planificado DESC, tp.seccion, tp.orden")) {
@@ -129,6 +142,94 @@ public class TallerDao extends BaseDao {
         }
     }
 
+    // ===================== CONFIRMAR ASISTENCIA (MIEMBROS) =====================
+
+    /** Qué hace alguien en el taller, en palabras: "Dictas Básico", "Apoyo en Intro a la rueda", "Maestro(a) de taller". */
+    static String papel(String funcion, String nivel) {
+        return switch (funcion) {
+            case "TALLERISTA" -> "Dictas " + Taller.nombreNivel(nivel);
+            case "APOYO" -> "Apoyo" + (nivel == null ? "" : " en " + Taller.nombreNivel(nivel));
+            case "MAESTRO" -> "Maestro(a) de taller";
+            default -> "Música social";
+        };
+    }
+
+    /** Talleres programados desde hoy, con mi confirmación y mi papel en el dictado (si tengo uno). */
+    public List<Taller> proximosParaMi(int yo, int limite) throws SQLException {
+        String sql = "SELECT t.*, k.respuesta, k.motivo, " +
+                " (SELECT GROUP_CONCAT(CONCAT(p.funcion,':',COALESCE(p.nivel,'')) ORDER BY p.id) FROM taller_persona p WHERE p.id_taller=t.id_taller AND p.id_miembro=? AND p.planeado=1) AS papeles, " +
+                " (SELECT COUNT(*) FROM taller_confirmacion x WHERE x.id_taller=t.id_taller AND x.respuesta='SI') AS si, " +
+                " (SELECT COUNT(*) FROM taller_confirmacion x WHERE x.id_taller=t.id_taller AND x.respuesta='NO') AS no " +
+                "FROM taller t LEFT JOIN taller_confirmacion k ON k.id_taller=t.id_taller AND k.id_miembro=? " +
+                "WHERE t.estado='PROGRAMADO' AND t.fecha >= CURDATE() ORDER BY t.fecha LIMIT ?";
+        try (Connection c = getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setInt(1, yo); ps.setInt(2, yo); ps.setInt(3, limite);
+            List<Taller> l = new ArrayList<>();
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Taller t = mapear(rs);
+                    t.setMiConfirmacion(rs.getString("respuesta")); t.setMiMotivo(rs.getString("motivo"));
+                    t.setMiPapel(papeles(rs.getString("papeles")));
+                    t.setConfirmadosSi(rs.getInt("si")); t.setConfirmadosNo(rs.getInt("no"));
+                    l.add(t);
+                }
+            }
+            return l;
+        }
+    }
+
+    private static String papeles(String g) {
+        if (g == null || g.isBlank()) return null;
+        List<String> l = new ArrayList<>();
+        for (String x : g.split(",")) { String[] f = x.split(":", -1); l.add(papel(f[0], f[1].isEmpty() ? null : f[1])); }
+        return String.join(" · ", l);
+    }
+
+    public void confirmar(int idTaller, int yo, String respuesta, String motivo) throws SQLException {
+        try (Connection c = getConnection(); PreparedStatement ps = c.prepareStatement(
+                "INSERT INTO taller_confirmacion (id_taller, id_miembro, respuesta, motivo) VALUES (?,?,?,?) " +
+                "ON DUPLICATE KEY UPDATE respuesta=VALUES(respuesta), motivo=VALUES(motivo), fecha=NOW()")) {
+            ps.setInt(1, idTaller); ps.setInt(2, yo); ps.setString(3, respuesta);
+            setTexto(ps, 4, motivo == null ? null : (motivo.length() > 200 ? motivo.substring(0, 200) : motivo));
+            ps.executeUpdate();
+        }
+    }
+
+    /** Mis talleres pasados (los que confirmé o en los que participé), del más reciente al más antiguo. */
+    public List<Taller> misTalleres(int yo, int limite) throws SQLException {
+        String sql = "SELECT t.*, k.respuesta, k.motivo, " +
+                " (SELECT GROUP_CONCAT(CONCAT(p.funcion,':',COALESCE(p.nivel,'')) ORDER BY p.id) FROM taller_persona p WHERE p.id_taller=t.id_taller AND p.id_miembro=?) AS papeles, " +
+                " (SELECT p.asistencia FROM taller_persona p WHERE p.id_taller=t.id_taller AND p.id_miembro=? ORDER BY (p.asistencia='NO_SE_PRESENTO'), p.id LIMIT 1) AS asis " +
+                "FROM taller t LEFT JOIN taller_confirmacion k ON k.id_taller=t.id_taller AND k.id_miembro=? " +
+                "WHERE t.estado<>'CANCELADO' AND t.fecha < CURDATE() AND (k.id_miembro IS NOT NULL OR EXISTS (SELECT 1 FROM taller_persona p WHERE p.id_taller=t.id_taller AND p.id_miembro=?)) " +
+                "ORDER BY t.fecha DESC LIMIT ?";
+        try (Connection c = getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setInt(1, yo); ps.setInt(2, yo); ps.setInt(3, yo); ps.setInt(4, yo); ps.setInt(5, limite);
+            List<Taller> l = new ArrayList<>();
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Taller t = mapear(rs);
+                    t.setMiConfirmacion(rs.getString("respuesta")); t.setMiMotivo(rs.getString("motivo"));
+                    t.setMiPapel(papeles(rs.getString("papeles"))); t.setMiAsistencia(rs.getString("asis"));
+                    l.add(t);
+                }
+            }
+            return l;
+        }
+    }
+
+    /** Quiénes confirmaron un taller: {nombre, SI/NO, motivo}. */
+    public List<String[]> confirmaciones(int idTaller) throws SQLException {
+        try (Connection c = getConnection(); PreparedStatement ps = c.prepareStatement(
+                "SELECT m.nombre, k.respuesta, k.motivo FROM taller_confirmacion k JOIN miembro m ON m.id_miembro=k.id_miembro " +
+                "WHERE k.id_taller=? ORDER BY k.respuesta DESC, m.nombre")) {
+            ps.setInt(1, idTaller);
+            List<String[]> l = new ArrayList<>();
+            try (ResultSet rs = ps.executeQuery()) { while (rs.next()) l.add(new String[]{rs.getString(1), rs.getString(2), rs.getString(3)}); }
+            return l;
+        }
+    }
+
     // ===================== CRONOGRAMA (PLAN) =====================
 
     /**
@@ -151,20 +252,18 @@ public class TallerDao extends BaseDao {
                         llenar(ps, t); ps.setInt(10, id); ps.executeUpdate();
                     }
                 }
-                // bloques: se reemplazan
-                try (PreparedStatement del = c.prepareStatement("DELETE FROM taller_bloque WHERE id_taller=?")) { del.setInt(1, id); del.executeUpdate(); }
-                try (PreparedStatement ps = c.prepareStatement("INSERT INTO taller_bloque (id_taller, nivel, orden, hora, actividad, duracion) VALUES (?,?,?,?,?,?)")) {
-                    for (String nivel : Taller.NIVELES) {
-                        int o = 0;
-                        for (String[] b : t.getBloques().get(nivel)) {
-                            ps.setInt(1, id); ps.setString(2, nivel); ps.setInt(3, ++o); setTexto(ps, 4, b[0]); ps.setString(5, b[1]); setTexto(ps, 6, b[2]);
-                            ps.addBatch();
-                        }
+                // cronograma (plan): se reemplaza
+                guardarSecciones(c, id, "PLAN", t.getPlan());
+                // pasos planificados: salen de las secciones del cronograma; si ese nivel ya tiene checklist (✅/❌) no se tocan
+                for (String nivel : Taller.NIVELES) {
+                    if (tieneChecklist(c, id, nivel)) continue;
+                    List<TallerPaso> pasos = new ArrayList<>(); int sec = 1;
+                    for (TallerSeccion s : t.getPlan().get(nivel)) {
+                        if (s.isMusica()) { sec++; continue; }
+                        for (String p : s.pasos()) pasos.add(new TallerPaso(p.length() > 80 ? p.substring(0, 80) : p, sec));
                     }
-                    ps.executeBatch();
+                    guardarPlanPasos(c, id, nivel, pasos);
                 }
-                // pasos planificados
-                for (String nivel : Taller.NIVELES) guardarPlanPasos(c, id, nivel, t.getPasos().get(nivel));
                 // dictado planeado: se quitan los que ya no están y se agregan los nuevos (los que siguen conservan su asistencia)
                 List<TallerPersona> actuales = new ArrayList<>();
                 for (TallerPersona p : personas(c, id)) if (p.isPlaneado()) actuales.add(p);
@@ -183,6 +282,60 @@ public class TallerDao extends BaseDao {
                 }
                 c.commit();
                 return id;
+            } catch (SQLException e) { c.rollback(); throw e; }
+        }
+    }
+
+    private void guardarSecciones(Connection c, int id, String version, Map<String, List<TallerSeccion>> secciones) throws SQLException {
+        try (PreparedStatement del = c.prepareStatement("DELETE FROM taller_bloque WHERE id_taller=? AND version=?")) { del.setInt(1, id); del.setString(2, version); del.executeUpdate(); }
+        try (PreparedStatement ps = c.prepareStatement("INSERT INTO taller_bloque (id_taller, nivel, version, orden, grupo, hora, actividad, duracion, estilo) VALUES (?,?,?,?,?,?,?,?,?)")) {
+            for (String nivel : Taller.NIVELES) {
+                int o = 0, g = 0;
+                for (TallerSeccion s : secciones.get(nivel)) {
+                    g++;
+                    List<String[]> items = s.getItems().isEmpty() ? List.<String[]>of(new String[]{"", null}) : s.getItems();
+                    for (String[] it : items) {
+                        ps.setInt(1, id); ps.setString(2, nivel); ps.setString(3, version); ps.setInt(4, ++o); ps.setInt(5, g);
+                        setTexto(ps, 6, s.getHora().isEmpty() ? null : s.getHora()); ps.setString(7, it[0] == null ? "" : it[0]); setTexto(ps, 8, it[1]); ps.setString(9, s.getEstilo());
+                        ps.addBatch();
+                    }
+                }
+            }
+            ps.executeBatch();
+        }
+    }
+
+    private static boolean tieneChecklist(Connection c, int id, String nivel) throws SQLException {
+        try (PreparedStatement ps = c.prepareStatement("SELECT 1 FROM taller_checklist WHERE id_taller=? AND nivel=?")) {
+            ps.setInt(1, id); ps.setString(2, nivel);
+            try (ResultSet rs = ps.executeQuery()) { return rs.next(); }
+        }
+    }
+
+    /**
+     * Lo que se dictó al final (versión DICTADO del cronograma). Además deja los pasos como ✅ (los que están) o ❌ (los planificados que no),
+     * para que "Pasos por nivel" cuente lo que de verdad se dictó.
+     */
+    public void guardarDictado(int id, Map<String, List<TallerSeccion>> dictado) throws SQLException {
+        try (Connection c = getConnection()) {
+            c.setAutoCommit(false);
+            try {
+                guardarSecciones(c, id, "DICTADO", dictado);
+                for (String nivel : Taller.NIVELES) {
+                    List<TallerSeccion> secs = dictado.get(nivel);
+                    if (secs.isEmpty()) continue;
+                    Set<Integer> dictados = new LinkedHashSet<>();
+                    for (TallerSeccion s : secs) for (String p : s.pasos()) dictados.add(asegurarPaso(c, p.length() > 80 ? p.substring(0, 80) : p, nivel));
+                    try (PreparedStatement no = c.prepareStatement("UPDATE taller_paso SET ensenado=0 WHERE id_taller=? AND nivel=? AND planificado=1")) {
+                        no.setInt(1, id); no.setString(2, nivel); no.executeUpdate();
+                    }
+                    try (PreparedStatement si = c.prepareStatement("INSERT INTO taller_paso (id_taller, nivel, id_paso, orden, seccion, planificado, ensenado) " +
+                            "VALUES (?,?,?,999,99,0,1) ON DUPLICATE KEY UPDATE ensenado=1")) {
+                        for (Integer p : dictados) { si.setInt(1, id); si.setString(2, nivel); si.setInt(3, p); si.addBatch(); }
+                        si.executeBatch();
+                    }
+                }
+                c.commit();
             } catch (SQLException e) { c.rollback(); throw e; }
         }
     }
@@ -452,9 +605,10 @@ public class TallerDao extends BaseDao {
 
     // ===================== CATÁLOGO DE PASOS =====================
 
-    /** Pasos de un nivel (o todos con nivel null), con cuántas veces se planificaron/enseñaron. */
+    /** Pasos de un nivel (o todos con nivel null), con cuántas veces se DICTARON (✅ en el formulario post-taller). */
     public List<TallerPaso> catalogo(String nivel, boolean soloActivos) throws SQLException {
-        String sql = "SELECT p.*, (SELECT COUNT(*) FROM taller_paso tp WHERE tp.id_paso=p.id_paso) AS usos FROM paso_taller p WHERE 1=1 " +
+        String sql = "SELECT p.*, (SELECT COUNT(*) FROM taller_paso tp JOIN taller t ON t.id_taller=tp.id_taller " +
+                     "WHERE tp.id_paso=p.id_paso AND tp.ensenado=1 AND t.estado<>'CANCELADO') AS usos FROM paso_taller p WHERE 1=1 " +
                      (nivel != null ? "AND p.nivel=? " : "") + (soloActivos ? "AND p.activo=1 " : "") +
                      "ORDER BY FIELD(p.nivel,'PRINCIPIANTE','BASICO','INTRO_RUEDA','RUEDA_BASICA'), usos DESC, p.nombre";
         try (Connection c = getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {

@@ -21,15 +21,25 @@ public class PagoCuota {
     private final List<Cuota> cuotas = new ArrayList<>();
 
     private boolean anual;
+    private java.math.BigDecimal monto;   // lo que se registró al confirmar (null si aún no)
 
     /** Total según la fecha del pago (cada mes con su recargo; el anual es S/ 66). */
     public java.math.BigDecimal getTotal() {
+        if (monto != null) return monto;
         if (anual) return Cuota.ANUAL;
         java.math.BigDecimal t = java.math.BigDecimal.ZERO;
         for (Cuota c : cuotas) t = t.add(c.falta(fecha.toLocalDate()));
         return t;
     }
     public String getTotalTexto() { return Formato.soles(getTotal()); }
+    public java.math.BigDecimal getMonto() { return monto; }
+    public void setMonto(java.math.BigDecimal monto) { this.monto = monto; }
+    public boolean isConfirmado() { return "CONFIRMADO".equals(estado); }
+    public boolean isRechazado() { return "RECHAZADO".equals(estado); }
+    public String getEstadoTexto() { return isConfirmado() ? "Confirmado" : isRechazado() ? "Rechazado" : "En revisión"; }
+    public String getTono() { return isConfirmado() ? "ok" : isRechazado() ? "bad" : "info"; }
+    public String getFechaCorta() { return fecha == null ? "" : Formato.ddmmyyyy(fecha.toLocalDate()); }
+    public String getMedioTexto() { return medio == null ? "" : switch (medio) { case "YAPE" -> "Yape"; case "EFECTIVO" -> "Efectivo"; default -> "Otro"; }; }
     public boolean isAnual() { return anual; }
     public void setAnual(boolean anual) { this.anual = anual; }
     public String getMeses() {

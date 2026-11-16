@@ -50,12 +50,12 @@
 </div>
 
 <div class="row top">
-  <div class="card grow"><h2>Figuras enseñadas por nivel</h2><p>Lo que se trabajó en el ensayo</p>
+  <div class="card grow"><h2>Figuras enseñadas por nivel</h2><p>${ensayo.porNiveles ? 'Lo que se trabajó en el ensayo' : 'Se trabajó todos juntos, sin separarse por niveles'}</p>
     <c:choose>
       <c:when test="${empty ensenadasPorNivel}"><p class="empty">Aún no se registran las figuras enseñadas.
         <c:if test="${perm.contains('REGISTRAR_FIGURAS_ENSENADAS')}"><a href="${ctx}/ensayos/figuras?id=${ensayo.idEnsayo}">Registrarlas</a></c:if></p></c:when>
       <c:otherwise>
-        <table class="table"><thead><tr><th>Nivel</th><th>Figuras enseñadas</th><th>Dictó</th></tr></thead><tbody>
+        <table class="table"><thead><tr><th>Nivel</th><th>Figuras enseñadas</th><th>Enseñó</th></tr></thead><tbody>
           <c:forEach var="entry" items="${ensenadasPorNivel}"><tr><td><sdp:chip color="${entry.key}"/></td>
             <td><c:forEach var="f" items="${entry.value}" varStatus="s"><c:out value="${f.figura}"/>${s.last ? '' : ', '}</c:forEach></td>
             <td><c:out value="${entry.value[0].dicto}"/></td></tr></c:forEach>
@@ -63,9 +63,9 @@
       </c:otherwise>
     </c:choose>
   </div>
-  <div class="card w-540"><h2>Avances del ensayo</h2><p>Autoevaluación del ensayo (solo sube)</p>
+  <div class="card w-540"><h2>Cambios del ensayo</h2><p>Lo que cada asistente subió (o se recalificó) en su autoevaluación del ensayo</p>
     <c:choose>
-      <c:when test="${empty avances}"><p class="empty">Todavía nadie mejoró de color en este ensayo.</p></c:when>
+      <c:when test="${empty avances}"><p class="empty">Todavía nadie cambió de color en este ensayo.</p></c:when>
       <c:otherwise>
         <table class="table"><thead><tr><th>Miembro</th><th>Figura</th><th>Cambio</th></tr></thead><tbody>
           <c:forEach var="h" items="${avances}" end="7"><tr><td><c:out value="${h.miembro}"/></td><td><c:out value="${h.figura}"/></td><td><sdp:cambio antes="${h.colorAnterior}" despues="${h.colorNuevo}"/></td></tr></c:forEach>

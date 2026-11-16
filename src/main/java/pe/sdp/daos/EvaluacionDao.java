@@ -96,9 +96,10 @@ public class EvaluacionDao extends BaseDao {
         return guardar(idMiembro, colores, "MENSUAL", null, idPeriodo, idMiembro, null, false);
     }
 
-    /** Del ensayo: solo sube. Devuelve cuántas figuras mejoraron. */
+    /** Del ensayo: sube o baja (recalificarse). Devuelve cuántas figuras cambiaron. */
     public int guardarEnsayo(int idMiembro, Map<Integer, String> colores, int idEnsayo) throws SQLException {
-        return guardar(idMiembro, colores, "ENSAYO", idEnsayo, null, idMiembro, null, true);
+        // ya no es "solo sube": si practicando alguien se da cuenta de que no la sabía, puede bajarse
+        return guardar(idMiembro, colores, "ENSAYO", idEnsayo, null, idMiembro, null, false);
     }
 
     /** Corrección del admin. */
@@ -145,7 +146,9 @@ public class EvaluacionDao extends BaseDao {
                     if (!soloSube && nuevo.equals(actual) && "MENSUAL".equals(fuente)) {
                         // sin cambio: igual se registra para saber que respondió el periodo
                     }
-                    boolean aplica = !soloSube || Formato.valor(nuevo) > Formato.valor(actual);
+                    // ENSAYO: cuenta como aplicado solo si cambió (sube o baja); los repetidos quedan solo para saber que respondió
+                    boolean aplica = soloSube ? Formato.valor(nuevo) > Formato.valor(actual)
+                                              : (!"ENSAYO".equals(fuente) || !nuevo.equals(actual));
                     if (aplica && !nuevo.equals(actual)) {
                         up.setInt(1, idMiembro); up.setInt(2, e.getKey()); up.setString(3, nuevo); up.executeUpdate();
                         aplicados++;
@@ -256,4 +259,31 @@ public class EvaluacionDao extends BaseDao {
             try (ResultSet rs = ps.executeQuery()) { rs.next(); return new int[]{rs.getInt(1), rs.getInt(2), rs.getInt(3)}; }
         }
     }
+
+    // ---------------- La mano en el tiempo ----------------
+
+    /** Todos los cambios aplicados, en orden: {id_miembro, id_figura, color, fecha}. Para reconstruir la mano en cualquier fecha. */
+    public List<Object[]> cambiosAplicados(Integer soloMiembro) throws SQLException {
+        String sql = "SELECT id_miembro, id_figura, color_nuevo, fecha FROM historial_evaluacion WHERE aplicado=1 " +
+                     (soloMiembro == null ? "" : "AND id_miembro=? ") + "ORDER BY fecha, id_historial";
+        try (Connection c = getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
+            if (soloMiembro != null) ps.setInt(1, soloMiembro);
+            List<Object[]> l = new ArrayList<>();
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) l.add(new Object[]{rs.getInt(1), rs.getInt(2), rs.getString(3), rs.getTimestamp(4).toLocalDateTime()});
+            }
+            return l;
+        }
+    }
+
+    /** La mano de hoy: {id_miembro, id_figura} -> color. */
+    public Map<Long, String> manoActual() throws SQLException {
+        Map<Long, String> m = new HashMap<>();
+        try (Connection c = getConnection(); Statement st = c.createStatement(); ResultSet rs = st.executeQuery("SELECT id_miembro, id_figura, color FROM evaluacion")) {
+            while (rs.next()) m.put(clave(rs.getInt(1), rs.getInt(2)), rs.getString(3));
+        }
+        return m;
+    }
+
+    public static long clave(int miembro, int figura) { return miembro * 100000L + figura; }
 }

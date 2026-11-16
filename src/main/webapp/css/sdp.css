@@ -611,3 +611,79 @@ textarea.wa { font-size: 13px; font-weight: 500; }
 .matriz-cuotas th.right, .matriz-cuotas td.right { text-align: right; }
 .matriz-cuotas .tag { min-width: 44px; text-align: center; }
 .cuota-card .big { font-family: var(--display); font-size: 28px; font-weight: 700; color: var(--ink); }
+
+/* ---- utilidades v3 ---- */
+.table th.r, .table td.r { text-align: right; white-space: nowrap; }
+.table th.c, .table td.c { text-align: center; }
+.scroll-x { overflow-x: auto; max-width: 100%; -webkit-overflow-scrolling: touch; }
+/* Pendientes */
+.pend-lista { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
+.pend { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 12px; background: var(--bg); border-left: 4px solid var(--border); }
+.pend.bad { border-left-color: var(--rojo); } .pend.warn { border-left-color: var(--accent); } .pend.info { border-left-color: var(--primary); }
+.pend-ico { font-size: 20px; width: 28px; text-align: center; flex: none; }
+.pend-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.pend-txt b { font-size: 14px; } .pend-txt small { color: var(--text-2); font-size: 12px; }
+.pend .btn { flex: none; }
+.badge-n { display: inline-grid; place-items: center; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 99px; background: var(--accent); color: var(--ink); font-size: 11px; font-weight: 700; margin-left: 6px; }
+.section-title { font-family: var(--display); font-size: 18px; margin: 10px 0 -4px; color: var(--text); }
+/* Ensayos: quién enseñó y otros niveles */
+.dicto-filas { display: flex; flex-direction: column; gap: 10px; }
+.dicto-fila { display: grid; grid-template-columns: 110px 1fr; gap: 10px; align-items: start; padding: 8px 0; border-top: 1px solid var(--border); }
+.pill.sm span { padding: 5px 10px; font-size: 12px; }
+.otros-niveles { display: flex; gap: 4px; }
+.otros-niveles label { cursor: pointer; }
+.otros-niveles input { position: absolute; opacity: 0; pointer-events: none; }
+.otros-niveles span { display: inline-grid; place-items: center; width: 30px; height: 26px; border-radius: 8px; font-size: 11px; font-weight: 700; border: 1px solid var(--border); color: var(--text-2); background: var(--surface); }
+.otros-niveles .azul input:checked + span { background: var(--azul-soft); color: var(--azul); border-color: var(--azul); }
+.otros-niveles .verde input:checked + span { background: var(--verde-soft); color: var(--verde); border-color: var(--verde); }
+.otros-niveles .amarillo input:checked + span { background: var(--amarillo-soft); color: var(--amarillo); border-color: var(--amarillo); }
+.otros-niveles .rojo input:checked + span { background: var(--rojo-soft); color: var(--rojo); border-color: var(--rojo); }
+.otros-niveles input:focus-visible + span { outline: 2px solid var(--primary); }
+@media (max-width: 899px) { .dicto-fila { grid-template-columns: 1fr; } }
+.dicto-filas[hidden] { display: none; }
+/* Cronograma de talleres por secciones */
+.crono { display: flex; flex-direction: column; gap: 10px; }
+.crono-secciones { display: flex; flex-direction: column; gap: 8px; }
+.sec { border: 1px solid var(--border); border-left: 4px solid var(--primary); border-radius: 12px; padding: 10px; background: var(--surface); display: flex; flex-direction: column; gap: 6px; }
+.sec.activa { box-shadow: 0 0 0 2px var(--accent-soft); border-color: var(--accent); }
+.sec-inicio { border-left-color: var(--text-2); } .sec-filtro { border-left-color: var(--rojo); background: #FBF4F3; }
+.sec-musica { border-left-color: var(--azul); background: #F2F5FB; } .sec-final { border-left-color: var(--accent); background: #FBF7EE; }
+.sec-head { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.sec-head .hora { max-width: 130px; } .sec-head .estilo { max-width: 120px; }
+.sec-items { display: flex; flex-direction: column; gap: 6px; }
+.sec-item { display: grid; grid-template-columns: minmax(0, 1fr) 70px auto; gap: 6px; }
+.sec .mas-item { align-self: flex-start; }
+.sec .input { padding: 8px 10px; font-size: 13px; }
+.crono-acciones { flex-wrap: wrap; }
+/* Vista del cronograma (detalle) */
+.crono-tabla { width: 100%; border-collapse: collapse; font-size: 13px; }
+.crono-tabla td { padding: 6px 8px; border-top: 1px solid var(--border); vertical-align: top; }
+.crono-tabla td.h { white-space: nowrap; font-weight: 600; width: 92px; } .crono-tabla td.d { text-align: right; color: var(--text-2); width: 40px; white-space: nowrap; }
+.crono-tabla tr.filtro td { background: #FBF4F3; } .crono-tabla tr.musica td { background: #F2F5FB; color: var(--azul); font-weight: 600; } .crono-tabla tr.final td { background: #FBF7EE; }
+.crono-tabla td.cambio { box-shadow: inset 3px 0 0 var(--accent); }
+.crono-comparar { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 899px) { .crono-comparar { grid-template-columns: 1fr; } }
+/* Gráficas (js/graficas.js) */
+.graf { width: 100%; min-height: 120px; }
+.graf-grid { stroke: var(--border); stroke-width: 1; }
+.graf-base { stroke: #B9BACB; stroke-width: 1; }
+.graf-guia { stroke: #9FA1B8; stroke-width: 1; }
+.graf-eje { font: 500 11px var(--font); fill: var(--text-2); }
+.graf-etq { font: 500 12px var(--font); fill: var(--text); }
+.graf-valor { font: 600 12px var(--font); fill: var(--text); }
+.graf-tip { position: fixed; z-index: 99; display: none; pointer-events: none; background: var(--ink); color: #fff; padding: 8px 10px; border-radius: 10px; font-size: 12px; box-shadow: 0 6px 20px rgba(0,0,0,.2); max-width: 240px; }
+.graf-tip div { display: flex; align-items: center; gap: 6px; margin-top: 2px; }
+.graf-tip i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+.graf-leyenda { display: flex; gap: 14px; font-size: 12px; color: var(--text-2); }
+.graf-leyenda i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; margin-right: 6px; vertical-align: -1px; }
+/* La mano en el tiempo (matriz de cuadritos) */
+table.mano { border-collapse: separate; border-spacing: 2px; font-size: 11px; }
+table.mano thead th { height: 120px; vertical-align: bottom; padding: 0; }
+table.mano thead th span { display: inline-block; writing-mode: vertical-rl; transform: rotate(180deg); white-space: nowrap; max-height: 118px; overflow: hidden; text-overflow: ellipsis; color: var(--text-2); font-weight: 500; }
+table.mano tbody th { text-align: right; white-space: nowrap; padding-right: 8px; font-weight: 500; position: sticky; left: 0; background: var(--surface); }
+table.mano tbody th a { color: var(--text); text-decoration: none; } table.mano tbody th a:hover { text-decoration: underline; }
+table.mano td { padding: 0; }
+.mano-celda { display: block; width: 14px; height: 14px; border-radius: 3px; background: var(--border); box-sizing: border-box; }
+.mano-celda.azul { background: var(--azul); } .mano-celda.verde { background: var(--verde); }
+.mano-celda.amarillo { background: #D9B04E; } .mano-celda.rojo { background: var(--rojo); }
+.mano-celda.cambio { outline: 2px solid var(--ink); outline-offset: 1px; }

@@ -43,5 +43,17 @@ public class Asistencia {
     public String getRolTexto() { return rolBaile == null ? "—" : ("LEADER".equals(rolBaile) ? "Leader" : "Follower"); }
     public boolean isAsistio() { return estadoReal != null && (estadoReal.equals("AP") || estadoReal.equals("AN") || estadoReal.equals("TJ") || estadoReal.equals("TI")); }
     public String getFechaCorta() { return Formato.ddmm(fecha); }
+    public String getDia() { return fecha == null ? "" : Formato.diaCorto(fecha); }
+    private String tipo;
+    public String getTipo() { return tipo; }
+    public void setTipo(String tipo) { this.tipo = tipo; }
+    public String getEstadoTexto() {
+        if (estadoReal == null) return "Sin registrar";
+        return switch (estadoReal) {
+            case "AP" -> "Asistió"; case "AN" -> "Asistió (no lo tenía planeado)"; case "TJ" -> "Tardanza justificada";
+            case "TI" -> "Tardanza injustificada"; case "FJ" -> "Falta justificada"; default -> "Falta injustificada";
+        };
+    }
+    public String getConfirmacionTexto() { return "SI".equals(confirmacion) ? "Dijo que sí" : "NO".equals(confirmacion) ? "Dijo que no" : "No respondió"; }
 
 }

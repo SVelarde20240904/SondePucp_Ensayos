@@ -35,6 +35,9 @@ public class Ensayo {
     private java.util.List<String> indicaciones;
     private java.util.List<Integer> dictantes;
     private String dictantesTexto;
+    private boolean porNiveles = true;
+    public boolean isPorNiveles() { return porNiveles; }
+    public void setPorNiveles(boolean porNiveles) { this.porNiveles = porNiveles; }
 
     public int getIdEnsayo() { return idEnsayo; }
     public void setIdEnsayo(int idEnsayo) { this.idEnsayo = idEnsayo; }

@@ -1,0 +1,16 @@
+<%-- Editor del cronograma de un nivel (js/cronograma.js). Antes: n = nivel, textoNivel = mapa nivel -> texto, catalogo = mapa nivel -> pasos --%>
+<div class="crono" data-nivel="${n}" data-inicio="${t.horaInicioIso}">
+  <textarea name="crono_${n}" hidden><c:out value="${textoNivel[n]}"/></textarea>
+  <div class="crono-secciones"></div>
+  <div class="inline crono-acciones">
+    <button type="button" class="btn btn-secondary btn-sm crono-mas-seccion">+ Sección de pasos</button>
+    <button type="button" class="btn btn-ghost btn-sm crono-mas-musica">+ Música (5')</button>
+    <button type="button" class="btn btn-ghost btn-sm crono-calcular" title="Pone las horas solas desde la hora de inicio, sumando los minutos de cada sección">⏱ Calcular horas</button>
+    <select class="input crono-copiar" aria-label="Copiar de otro nivel" style="max-width:220px"><option value="">Copiar de otro nivel…</option>
+      <c:forEach var="o" items="${t.niveles}"><c:if test="${o != n}"><option value="${o}">${o == 'PRINCIPIANTE' ? 'Principiante' : (o == 'BASICO' ? 'Básico' : (o == 'INTRO_RUEDA' ? 'Intro a la rueda' : 'Rueda básica'))}</option></c:if></c:forEach></select>
+  </div>
+  <c:if test="${not empty catalogo[n]}">
+    <span class="muted xs">Toca un paso para sumarlo a la sección marcada (si no está, escríbelo: se suma solo al catálogo).</span>
+    <div class="chips-pasos"><c:forEach var="p" items="${catalogo[n]}" end="40"><button type="button" class="chip-paso"><c:out value="${p.nombre}"/></button></c:forEach></div>
+  </c:if>
+</div>

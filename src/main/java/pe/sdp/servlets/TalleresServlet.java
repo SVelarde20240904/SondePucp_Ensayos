@@ -22,7 +22,8 @@ import java.util.*;
  *  /talleres/nuevo, /editar     cronograma: bloques y pasos por nivel + dictado planeado
  *  /talleres/detalle?id=        resumen, dictado final (asistencia, reemplazos), formularios y sugerencias
  *  /talleres/feedback?id=       feedback crudo por persona + resumen anónimo para enviar
- *  /talleres/flyer?id=          cronograma listo para compartir
+ *  /talleres/flyer?id=          cronograma listo para compartir (+ /flyer-nivel: imagen por nivel para publicar)
+ *  /talleres/lo-dictado?id=     lo que se dictó al final (el plan se conserva para comparar)
  *  /talleres/dictado            historial de dictado (como la hoja DICTADO DE NIVELES)
  *  /talleres/pasos              catálogo de pasos por nivel
  *  /talleres/formulario?id=     formulario post-taller (talleristas y apoyos de ese taller)
@@ -68,6 +69,7 @@ public class TalleresServlet extends BaseServlet {
                     if (entero(req, "id") != null) {
                         t = dao.obtener(entero(req, "id"));
                         if (t == null) { Sesion.error(req, "No encontré ese taller."); ir(req, resp, "/talleres"); return; }
+                        for (String n : Taller.NIVELES) if (t.getPlan().get(n).isEmpty()) t.getPlan().get(n).addAll(TallerSeccion.plantilla());
                     } else {
                         t = new Taller();
                         LocalDate jueves = LocalDate.now(Formato.ZONA);
@@ -75,10 +77,10 @@ public class TalleresServlet extends BaseServlet {
                         t.setFecha(jueves); t.setCiclo(ciclo(jueves)); t.setNumero(dao.siguienteNumero(t.getCiclo()));
                         Taller ant = dao.ultimo();   // el cronograma del taller anterior sirve de plantilla
                         if (ant != null) {
-                            for (String n : Taller.NIVELES) t.getBloques().get(n).addAll(ant.getBloques().get(n));
+                            for (String n : Taller.NIVELES) t.getPlan().get(n).addAll(ant.getPlan().get(n).isEmpty() ? TallerSeccion.plantilla() : ant.getPlan().get(n));
                             t.setLugar(ant.getLugar()); t.setHoraInicio(ant.getHoraInicio()); t.setHoraFin(ant.getHoraFin());
                             req.setAttribute("plantilla", ant);
-                        }
+                        } else for (String n : Taller.NIVELES) t.getPlan().get(n).addAll(TallerSeccion.plantilla());
                     }
                     datosFormulario(req, t);
                     vista(req, resp, "talleres/form");
@@ -95,6 +97,7 @@ public class TalleresServlet extends BaseServlet {
                     req.setAttribute("nFeedback", nfb);
                     req.setAttribute("activos", miembros.listarActivos());
                     req.setAttribute("yoEnTaller", !dao.misFunciones(t.getIdTaller(), yo).isEmpty());
+                    req.setAttribute("confirmaciones", dao.confirmaciones(t.getIdTaller()));
                     vista(req, resp, "talleres/detalle");
                 }
                 case "/feedback" -> {
@@ -122,6 +125,27 @@ public class TalleresServlet extends BaseServlet {
                     Taller t = pedido(req, resp); if (t == null) return;
                     req.setAttribute("t", t);
                     req.getRequestDispatcher("/WEB-INF/jsp/talleres/flyer.jsp").forward(req, resp);
+                }
+                case "/flyer-nivel" -> {
+                    Taller t = pedido(req, resp); if (t == null) return;
+                    String n = req.getParameter("nivel");
+                    if (!Taller.NIVELES.contains(n)) n = Taller.NIVELES.get(0);
+                    boolean dict = "dictado".equals(req.getParameter("v")) && !t.getDictado().get(n).isEmpty();
+                    req.setAttribute("t", t);
+                    req.setAttribute("nivel", n);
+                    req.setAttribute("datos", datosFlyer(t, n, dict));
+                    vista(req, resp, "talleres/flyer-nivel");
+                }
+                case "/lo-dictado" -> {
+                    Taller t = pedido(req, resp); if (t == null) return;
+                    // se parte de lo ya registrado o, si no hay, del plan
+                    Map<String, String> texto = new HashMap<>();
+                    for (String n : Taller.NIVELES)
+                        texto.put(n, TallerSeccion.escribir(t.getDictado().get(n).isEmpty() ? t.getPlan().get(n) : t.getDictado().get(n)));
+                    req.setAttribute("t", t);
+                    req.setAttribute("textoNivel", texto);
+                    req.setAttribute("catalogo", catalogo());
+                    vista(req, resp, "talleres/lo-dictado");
                 }
                 case "/dictado" -> {
                     List<Taller> talleres = new ArrayList<>(dao.listar());
@@ -168,21 +192,62 @@ public class TalleresServlet extends BaseServlet {
         // primero los del team Talleres
         activos.sort(Comparator.comparing((Miembro m) -> !m.getTeams().contains("Talleres")).thenComparing(Miembro::getNombre));
         req.setAttribute("activos", activos);
+        req.setAttribute("catalogo", catalogo());
+        req.setAttribute("textoNivel", t.getPlanTexto());
+    }
+
+    private Map<String, List<TallerPaso>> catalogo() throws SQLException {
         Map<String, List<TallerPaso>> catalogo = new LinkedHashMap<>();
         for (String n : Taller.NIVELES) catalogo.put(n, dao.catalogo(n, true));
-        req.setAttribute("catalogo", catalogo);
-        // texto de los pasos planificados (uno por línea, "MÚSICA" separa secciones)
-        Map<String, String> pasosTexto = new HashMap<>();
-        for (String n : Taller.NIVELES) {
-            StringBuilder sb = new StringBuilder(); int sec = 1;
-            for (TallerPaso p : t.getPasos().get(n)) {
-                if (!p.isPlanificado()) continue;
-                while (p.getSeccion() > sec) { sb.append("MÚSICA\n"); sec++; }
-                sb.append(p.getNombre()).append('\n');
-            }
-            pasosTexto.put(n, sb.toString());
+        return catalogo;
+    }
+
+    /** Lo que dibuja la imagen del nivel (en el formato que se publica): JSON simple. */
+    private String datosFlyer(Taller t, String n, boolean dictado) throws SQLException {
+        StringBuilder sb = new StringBuilder("{");
+        List<String> tal = new ArrayList<>(), apo = new ArrayList<>();
+        for (TallerPersona p : t.personasDe("TALLERISTA", n)) if (p.isEfectivo() || !dictado) tal.add(p.getNombre().split(" ")[0]);
+        for (TallerPersona p : t.personasDe("APOYO", n)) if (p.isEfectivo() || !dictado) apo.add(p.getNombre().split(" ")[0]);
+        sb.append("\"nivel\":").append(json(Taller.nombreNivel(n)));
+        sb.append(",\"columna\":").append(json(n.endsWith("RUEDA") || n.startsWith("RUEDA") ? "Rueda" : "Pasos"));
+        sb.append(",\"talleristas\":").append(json(unir(tal)));
+        sb.append(",\"apoyos\":").append(json(unir(apo)));
+        sb.append(",\"fecha\":").append(json(t.getFechaTexto() + " · " + t.getHorario()));
+        sb.append(",\"lema\":").append(json(new pe.sdp.daos.ConfigDao().valor("flyer.lema", "¡11 años repartiendo cubanía!")));
+        sb.append(",\"secciones\":[");
+        boolean primera = true;
+        for (TallerSeccion sec : (dictado ? t.getDictado() : t.getPlan()).get(n)) {
+            sb.append(primera ? "" : ",").append("{\"hora\":").append(json(sec.getHora())).append(",\"estilo\":").append(json(sec.getEstilo())).append(",\"items\":[");
+            boolean pi = true;
+            for (String[] it : sec.getItems()) { sb.append(pi ? "" : ",").append("[").append(json(it[0])).append(",").append(json(it[1])).append("]"); pi = false; }
+            if (sec.getItems().isEmpty()) sb.append("[\"\",null]");
+            sb.append("]}"); primera = false;
         }
-        req.setAttribute("pasosTexto", pasosTexto);
+        return sb.append("]}").toString();
+    }
+
+    private static String unir(List<String> l) {
+        if (l.isEmpty()) return "";
+        if (l.size() == 1) return l.get(0);
+        return String.join(", ", l.subList(0, l.size() - 1)) + " y " + l.get(l.size() - 1);
+    }
+
+    /** Texto JSON seguro para meterlo dentro de un script (sin </script>). */
+    private static String json(String v) {
+        if (v == null) return "null";
+        StringBuilder sb = new StringBuilder("\"");
+        for (char ch : v.toCharArray()) {
+            switch (ch) {
+                case '"' -> sb.append("\\\"");
+                case '\\' -> sb.append("\\\\");
+                case '\n' -> sb.append("\\n");
+                case '<' -> sb.append("\\u003c");
+                case '>' -> sb.append("\\u003e");
+                case '&' -> sb.append("\\u0026");
+                default -> { if (ch < 0x20) sb.append(String.format("\\u%04x", (int) ch)); else sb.append(ch); }
+            }
+        }
+        return sb.append('"').toString();
     }
 
     // ===================== FORMULARIO POST-TALLER =====================
@@ -238,6 +303,20 @@ public class TalleresServlet extends BaseServlet {
             if (!Sesion.requiere(req, resp, PERM)) return;
             switch (r) {
                 case "/nuevo", "/editar" -> postCronograma(req, resp, yo);
+                case "/lo-dictado" -> {
+                    Taller t = pedido(req, resp); if (t == null) return;
+                    Map<String, List<TallerSeccion>> d = new LinkedHashMap<>();
+                    for (String n : Taller.NIVELES) d.put(n, TallerSeccion.leer(req.getParameter("crono_" + n)));
+                    dao.guardarDictado(t.getIdTaller(), d);
+                    Sesion.ok(req, "Guardado lo que se dictó. El plan se mantiene para comparar.");
+                    ir(req, resp, "/talleres/detalle?id=" + t.getIdTaller() + "#cronograma");
+                }
+                case "/flyer-lema" -> {
+                    String lema = texto(req, "lema");
+                    if (lema != null) new pe.sdp.daos.ConfigDao().guardar("flyer.lema", lema.length() > 80 ? lema.substring(0, 80) : lema);
+                    Sesion.ok(req, "Frase del pie guardada.");
+                    ir(req, resp, "/talleres/flyer-nivel?id=" + entero(req, "id") + "&nivel=" + Optional.ofNullable(texto(req, "nivel")).orElse(""));
+                }
                 case "/detalle" -> {
                     Taller t = pedido(req, resp); if (t == null) return;
                     int id = t.getIdTaller();
@@ -254,6 +333,9 @@ public class TalleresServlet extends BaseServlet {
                             String[] quienes = req.getParameterValues("extraMiembro"), fs = req.getParameterValues("extraFuncion"),
                                      ns = req.getParameterValues("extraNivel"), rs = req.getParameterValues("extraReemplaza"), as = req.getParameterValues("extraAsistencia");
                             Set<String> vistos = new HashSet<>();
+                            // nadie puede estar dos veces con la misma función en un taller (ej. tallerista en el plan y otra vez como adicional)
+                            for (TallerPersona p : t.getPersonas()) vistos.add(p.getIdMiembro() + "|" + p.getFuncion());
+                            List<String> repetidos = new ArrayList<>();
                             for (int i = 0; quienes != null && i < quienes.length; i++) {
                                 Integer quien;
                                 try { quien = quienes[i] == null || quienes[i].isBlank() ? null : Integer.valueOf(quienes[i].trim()); } catch (NumberFormatException ex) { quien = null; }
@@ -261,7 +343,7 @@ public class TalleresServlet extends BaseServlet {
                                 String f = val(fs, i), n = val(ns, i);
                                 if (!List.of("TALLERISTA", "APOYO", "MAESTRO", "MUSICA").contains(f)) f = "APOYO";
                                 if (!Taller.NIVELES.contains(n) || "MAESTRO".equals(f) || "MUSICA".equals(f)) n = null;
-                                if (!vistos.add(quien + "|" + f + "|" + n)) continue;   // la misma fila dos veces
+                                if (!vistos.add(quien + "|" + f)) { repetidos.add(nombreDe(t, quien)); continue; }
                                 TallerPersona x = new TallerPersona(quien, f, n);
                                 try { String re = val(rs, i); x.setReemplazaA(re == null || re.isBlank() ? null : Integer.valueOf(re.trim())); } catch (NumberFormatException ex) { x.setReemplazaA(null); }
                                 x.setAsistencia("TARDE".equals(val(as, i)) ? "TARDE" : "A_TIEMPO");
@@ -269,6 +351,8 @@ public class TalleresServlet extends BaseServlet {
                             }
                             dao.registrarFinal(id, asis, extras, yo);
                             Sesion.ok(req, extras.isEmpty() ? "Dictado final guardado." : "Dictado final guardado. Se agregó a " + extras.size() + (extras.size() == 1 ? " persona." : " personas."));
+                            if (!repetidos.isEmpty())
+                                Sesion.error(req, "No se agregó otra vez a " + String.join(", ", new LinkedHashSet<>(repetidos)) + ": ya está en este taller con esa función.");
                         }
                         case "quitarExtra" -> { dao.quitarExtra(id, entero(req, "idPersona")); Sesion.ok(req, "Se quitó del dictado final."); }
                         case "cancelar" -> { dao.cambiarEstado(id, "CANCELADO"); Sesion.ok(req, "Taller cancelado."); }
@@ -335,24 +419,8 @@ public class TalleresServlet extends BaseServlet {
         else if ("BORRADOR".equals(t.getEstado())) t.setEstado("PROGRAMADO");
         List<TallerPersona> plan = new ArrayList<>();
         for (String n : Taller.NIVELES) {
-            // bloques (filas del cronograma)
-            String[] hs = req.getParameterValues("bh_" + n), as = req.getParameterValues("ba_" + n), ds = req.getParameterValues("bd_" + n);
-            if (as != null) for (int i = 0; i < as.length; i++) {
-                String act = Formato.vacio(as[i]);
-                if (act == null) continue;
-                t.getBloques().get(n).add(new String[]{corta(hs != null && i < hs.length ? hs[i] : null, 20), corta(act, 300), corta(ds != null && i < ds.length ? ds[i] : null, 10)});
-            }
-            // pasos: uno por línea, "MÚSICA" (o ---) separa secciones
-            String txt = req.getParameter("pasos_" + n);
-            if (txt != null) {
-                int sec = 1; boolean hay = false;
-                for (String linea : txt.split("\\r?\\n")) {
-                    String l = linea.trim().replaceFirst("^[•·\\-*]\\s*", "").trim();
-                    if (l.isEmpty()) continue;
-                    if (l.matches("(?iu)(m[uú]sica.*|-{3,}|🎶.*)")) { if (hay) { sec++; hay = false; } continue; }
-                    t.getPasos().get(n).add(new TallerPaso(corta(l, 80), sec)); hay = true;
-                }
-            }
+            // cronograma por secciones (el editor lo manda como texto)
+            t.getPlan().get(n).addAll(TallerSeccion.leer(req.getParameter("crono_" + n)));
             for (String v : valores(req, "tal_" + n)) plan.add(new TallerPersona(v.isEmpty() ? 0 : Integer.parseInt(v), "TALLERISTA", n));
             for (String v : valores(req, "apo_" + n)) plan.add(new TallerPersona(Integer.parseInt(v), "APOYO", n));
         }
@@ -370,9 +438,6 @@ public class TalleresServlet extends BaseServlet {
             // se vuelve a mostrar con lo escrito
             for (TallerPersona p : plan) t.getPersonas().add(p);
             datosFormulario(req, t);
-            Map<String, String> pt = new HashMap<>();
-            for (String n : Taller.NIVELES) pt.put(n, Optional.ofNullable(req.getParameter("pasos_" + n)).orElse(""));
-            req.setAttribute("pasosTexto", pt);
             vista(req, resp, "talleres/form");
             return;
         }
@@ -432,4 +497,8 @@ public class TalleresServlet extends BaseServlet {
     }
 
     private static String val(String[] a, int i) { return a != null && i < a.length ? a[i] : null; }
+
+    private static String nombreDe(Taller t, int idMiembro) {
+        return t.getPersonas().stream().filter(p -> p.getIdMiembro() == idMiembro).map(TallerPersona::getNombre).findFirst().orElse("esa persona");
+    }
 }

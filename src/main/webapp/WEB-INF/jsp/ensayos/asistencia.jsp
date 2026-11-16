@@ -9,10 +9,11 @@
 
 <div class="legend"><span><sdp:code valor="AP"/> Asistencia puntual</span><span><sdp:code valor="AN"/> No planeada (dijo que no, pero vino)</span><span><sdp:code valor="TJ"/> Tardanza justificada</span>
   <span><sdp:code valor="TI"/> Tardanza injustificada</span><span><sdp:code valor="FJ"/> Falta justificada</span><span><sdp:code valor="FI"/> Falta injustificada</span>
-  <span class="c-amarillo bold">“Sin respuesta” = no marcó la encuesta</span></div>
+  <span class="c-amarillo bold">“Sin respuesta” = no marcó la encuesta</span>
+  <span><b>También en</b>: si ese día estuvo en otro nivel (lo sumaron al siguiente o le enseñaron lo que le faltaba). Así autoevalúa las figuras de ambos.</span></div>
 
 <div class="card"><h2>Miembros</h2><p>Primero los que confirmaron · ${ensayo.confirmados} confirmados, ${ensayo.sinRespuesta} sin respuesta</p>
-  <table class="table cards-compact"><thead><tr><th>Miembro</th><th>Rol</th><th>Nivel</th><th>Confirmó</th><th>Asistencia real</th></tr></thead><tbody>
+  <table class="table cards-compact"><thead><tr><th>Miembro</th><th>Rol</th><th>Nivel</th><th>Confirmó</th><th>Asistencia real</th><th title="Si ese día también estuvo en otro nivel (lo sumaron al siguiente o le enseñaron lo que le faltaba)">También en</th></tr></thead><tbody>
   <c:forEach var="a" items="${filas}">
     <tr><td><c:choose><c:when test="${perm.contains('VER_CRONOGRAMA')}"><a href="${ctx}/ensayos/miembro?id=${a.idMiembro}" target="_blank" title="Ver ficha"><c:out value="${a.miembro}"/></a></c:when><c:otherwise><c:out value="${a.miembro}"/></c:otherwise></c:choose><c:if test="${a.equipoEnsayos}"> <span class="tag info">ENS</span></c:if><c:if test="${not empty a.motivo}"><small>Motivo: <c:out value="${a.motivo}"/></small></c:if></td>
       <td class="no-label"><span class="tag info role">${a.rolTexto}</span></td><td class="no-label"><sdp:chip color="${a.nivel}"/></td>
@@ -22,7 +23,11 @@
           <label class="${c == 'AN' ? 'AP' : c}"><input type="radio" name="asis_${a.idMiembro}" value="${c}" ${a.estadoReal == c ? 'checked' : ''}><span>${c}</span></label>
         </c:forEach>
         <label class="none"><input type="radio" name="asis_${a.idMiembro}" value="" ${empty a.estadoReal ? 'checked' : ''}><span title="Sin marcar">·</span></label>
-      </div></td></tr>
+      </div></td>
+      <td class="no-label"><div class="otros-niveles">
+        <c:forEach var="lv" items="${['AZUL','VERDE','AMARILLO','ROJO']}"><c:if test="${lv != a.nivel}">
+          <label class="${fn:toLowerCase(lv)}" title="También estuvo en ${lv}"><input type="checkbox" name="extra_${a.idMiembro}" value="${lv}" ${extra[a.idMiembro].contains(lv) ? 'checked' : ''}><span>${fn:substring(lv,0,2)}</span></label>
+        </c:if></c:forEach></div></td></tr>
   </c:forEach>
   </tbody></table>
 </div>

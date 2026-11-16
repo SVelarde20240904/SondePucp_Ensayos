@@ -22,10 +22,11 @@
     </nav>
   </c:when>
   <c:when test="${grupo == 'finanzas'}">
-    <nav class="inline subtabs" aria-label="Secciones de Cuotas">
+    <nav class="inline subtabs" aria-label="Secciones de Finanzas">
       <a class="pill-link${sub == 'resumen' ? ' on' : ''}" href="${ctx}/finanzas">Resumen</a>
       <a class="pill-link${sub == 'matriz' ? ' on' : ''}" href="${ctx}/finanzas/matriz">Matriz</a>
       <a class="pill-link${sub == 'mes' ? ' on' : ''}" href="${ctx}/finanzas/mes">Por mes</a>
+      <a class="pill-link${sub == 'caja' ? ' on' : ''}" href="${ctx}/finanzas/caja">Caja</a>
     </nav>
   </c:when>
 </c:choose>

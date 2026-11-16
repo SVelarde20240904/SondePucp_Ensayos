@@ -126,6 +126,111 @@ public class ArranqueDao extends BaseDao {
                 }
                 hecho.add("cuotas: pagos parciales, pago anual y encargado de cobro");
             }
+            if (!existeTabla(c, "config")) {
+                try (Statement st = c.createStatement()) {
+                    st.executeUpdate("CREATE TABLE config (clave VARCHAR(40) PRIMARY KEY, valor VARCHAR(500) NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+                    // la barra de emojis que ya estaba es la de team Ensayos; las otras secciones se llenan desde Roles y permisos
+                    st.executeUpdate("INSERT INTO config (clave, valor) VALUES ('emojis.ENSAYOS','⚾😑💃🏻🦉🐥🌈🌕🐧👀🍄🍗')");
+                }
+                hecho.add("config (emojis del pie por sección)");
+            }
+            if (!existeTabla(c, "taller_confirmacion")) {
+                try (Statement st = c.createStatement()) {
+                    // cada miembro confirma si va al taller del jueves (como con los ensayos)
+                    st.executeUpdate("CREATE TABLE taller_confirmacion (id_taller INT NOT NULL, id_miembro INT NOT NULL, respuesta ENUM('SI','NO') NOT NULL, " +
+                                     "motivo VARCHAR(200) NULL, fecha DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY (id_taller, id_miembro), " +
+                                     "CONSTRAINT fk_tk_taller FOREIGN KEY (id_taller) REFERENCES taller(id_taller) ON DELETE CASCADE, " +
+                                     "CONSTRAINT fk_tk_miembro FOREIGN KEY (id_miembro) REFERENCES miembro(id_miembro)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+                }
+                hecho.add("confirmar asistencia a talleres");
+            }
+            if (!existeColumna(c, "ensayo", "por_niveles")) {
+                try (Statement st = c.createStatement()) {
+                    String COL = "ENUM('AZUL','VERDE','AMARILLO','ROJO')";
+                    // ensayos donde todos trabajaron juntos (sin separarse por niveles)
+                    st.executeUpdate("ALTER TABLE ensayo ADD COLUMN por_niveles TINYINT(1) NOT NULL DEFAULT 1 AFTER estado");
+                    // alguien que estuvo en más de un nivel ese día (ej. lo sumaron al siguiente): autoevalúa las figuras de ambos
+                    st.executeUpdate("CREATE TABLE ensayo_nivel_extra (id_ensayo INT NOT NULL, id_miembro INT NOT NULL, nivel " + COL + " NOT NULL, " +
+                                     "PRIMARY KEY (id_ensayo, id_miembro, nivel), " +
+                                     "CONSTRAINT fk_ene_ensayo FOREIGN KEY (id_ensayo) REFERENCES ensayo(id_ensayo) ON DELETE CASCADE, " +
+                                     "CONSTRAINT fk_ene_miembro FOREIGN KEY (id_miembro) REFERENCES miembro(id_miembro)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+                    // quién enseñó cada nivel: varios profes por nivel y un profe en varios niveles (TODOS = ensayo sin niveles)
+                    st.executeUpdate("CREATE TABLE ensayo_dicto (id_ensayo INT NOT NULL, nivel ENUM('AZUL','VERDE','AMARILLO','ROJO','TODOS') NOT NULL, id_miembro INT NOT NULL, " +
+                                     "PRIMARY KEY (id_ensayo, nivel, id_miembro), " +
+                                     "CONSTRAINT fk_edi_ensayo FOREIGN KEY (id_ensayo) REFERENCES ensayo(id_ensayo) ON DELETE CASCADE, " +
+                                     "CONSTRAINT fk_edi_miembro FOREIGN KEY (id_miembro) REFERENCES miembro(id_miembro)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+                    st.executeUpdate("INSERT IGNORE INTO ensayo_dicto (id_ensayo, nivel, id_miembro) SELECT DISTINCT id_ensayo, nivel, dicto FROM ensayo_figura " +
+                                     "WHERE dicto IS NOT NULL AND nivel IS NOT NULL");
+                }
+                hecho.add("ensayos: sin niveles, asistentes en varios niveles y varios profes por nivel");
+                // "avances" = solo lo que SUBIÓ (desde ahora en el ensayo también se puede bajar)
+                try (Statement st = c.createStatement()) {
+                    st.executeUpdate("CREATE OR REPLACE VIEW v_ensayo_resumen AS SELECT en.id_ensayo, en.fecha, en.tipo, en.estado, " +
+                            "SUM(a.confirmacion = 'SI') AS confirmados, SUM(a.confirmacion = 'SIN_RESPUESTA') AS sin_respuesta, " +
+                            "SUM(a.estado_real IN ('AP','AN','TJ','TI')) AS asistieron, SUM(a.estado_real IN ('AP','AN')) AS puntuales, " +
+                            "SUM(a.estado_real IN ('TJ','TI')) AS tardanzas, SUM(a.estado_real IN ('FJ','FI')) AS faltas, " +
+                            "(SELECT COUNT(*) FROM ensayo_figura ef WHERE ef.id_ensayo = en.id_ensayo) AS figuras_ensenadas, " +
+                            "(SELECT COUNT(*) FROM historial_evaluacion h WHERE h.id_ensayo = en.id_ensayo AND h.aplicado = 1 " +
+                            " AND FIELD(h.color_nuevo,'ROJO','AMARILLO','VERDE','AZUL') > FIELD(COALESCE(h.color_anterior,''),'ROJO','AMARILLO','VERDE','AZUL')) AS avances " +
+                            "FROM ensayo en LEFT JOIN asistencia a ON a.id_ensayo = en.id_ensayo GROUP BY en.id_ensayo, en.fecha, en.tipo, en.estado");
+                }
+            }
+            if (!existeColumna(c, "taller_bloque", "grupo")) {
+                try (Statement st = c.createStatement()) {
+                    // cronograma por secciones: varias filas (pasos) comparten la misma llave de horas (grupo);
+                    // estilo para el flyer; versión PLAN (lo planeado) o DICTADO (lo que se dictó al final)
+                    st.executeUpdate("ALTER TABLE taller_bloque ADD COLUMN grupo SMALLINT NOT NULL DEFAULT 0 AFTER orden, " +
+                                     "ADD COLUMN estilo ENUM('INICIO','FILTRO','NORMAL','MUSICA','FINAL') NOT NULL DEFAULT 'NORMAL' AFTER duracion, " +
+                                     "ADD COLUMN version ENUM('PLAN','DICTADO') NOT NULL DEFAULT 'PLAN' AFTER nivel, MODIFY actividad VARCHAR(300) NOT NULL DEFAULT ''");
+                }
+                // las filas sin hora siguen a la llave de arriba (así estaban en los flyers)
+                try (Statement st = c.createStatement(); ResultSet rs = st.executeQuery("SELECT id_bloque, id_taller, nivel, hora, actividad FROM taller_bloque ORDER BY id_taller, nivel, orden");
+                     PreparedStatement up = c.prepareStatement("UPDATE taller_bloque SET grupo=?, estilo=? WHERE id_bloque=?")) {
+                    int grupo = 0; String clave = "";
+                    while (rs.next()) {
+                        String k = rs.getInt(2) + rs.getString(3);
+                        if (!k.equals(clave)) { clave = k; grupo = 0; }
+                        String hora = rs.getString(4);
+                        if (grupo == 0 || (hora != null && !hora.isBlank())) grupo++;
+                        up.setInt(1, grupo); up.setString(2, pe.sdp.beans.TallerSeccion.adivinarEstilo(rs.getString(5))); up.setInt(3, rs.getInt(1));
+                        up.addBatch();
+                    }
+                    up.executeBatch();
+                }
+                try (Statement st = c.createStatement()) {
+                    st.executeUpdate("INSERT IGNORE INTO config (clave, valor) VALUES ('flyer.lema','¡11 años repartiendo cubanía!')");
+                }
+                hecho.add("talleres: cronograma por secciones (plan y lo que se dictó)");
+            }
+            if (!existeTabla(c, "caja_movimiento")) {
+                try (Statement st = c.createStatement()) {
+                    // caja: ingresos y gastos (las cuotas pagadas por la web entran solas, no se guardan aquí)
+                    st.executeUpdate("CREATE TABLE caja_movimiento (id INT AUTO_INCREMENT PRIMARY KEY, fecha DATE NOT NULL, tipo ENUM('INGRESO','GASTO') NOT NULL, " +
+                                     "categoria VARCHAR(40) NOT NULL, concepto VARCHAR(200) NOT NULL, monto DECIMAL(9,2) NOT NULL, proyecto VARCHAR(80) NULL, " +
+                                     "registrado_por INT NULL, fecha_registro DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, KEY ix_caja_fecha (fecha), " +
+                                     "CONSTRAINT ck_caja_monto CHECK (monto > 0), " +
+                                     "CONSTRAINT fk_caja_reg FOREIGN KEY (registrado_por) REFERENCES miembro(id_miembro) ON DELETE SET NULL) " +
+                                     "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+                    st.executeUpdate("INSERT IGNORE INTO config (clave, valor) VALUES ('caja.saldo_inicial','2279.05'),('caja.desde','2026-01-01')");
+                    // registrar y borrar movimientos: moderador y admin de finanzas (y el Owner); el equipo solo ve
+                    st.executeUpdate("INSERT IGNORE INTO permiso (id_permiso, codigo, descripcion, seccion) SELECT COALESCE(MAX(id_permiso),0)+1, " +
+                                     "'GESTIONAR_CAJA', 'Registrar ingresos y gastos de la caja', 'FINANZAS' FROM permiso");
+                    st.executeUpdate("INSERT IGNORE INTO rol_permiso (id_rol, id_permiso) SELECT r.id_rol, p.id_permiso FROM permiso p " +
+                                     "JOIN (SELECT 3 AS id_rol UNION SELECT 10 UNION SELECT 11) r WHERE p.codigo='GESTIONAR_CAJA'");
+                }
+                hecho.add("caja de Finanzas (saldo, ingresos y gastos)");
+            }
+            // Nadie puede figurar dos veces con la misma función en un taller (pasaba al sumarse como "adicional" siendo del plan).
+            // Se queda la fila del plan (o la más antigua) y hereda la asistencia/nivel de la repetida si le faltaba.
+            try (Statement st = c.createStatement()) {
+                st.executeUpdate("UPDATE taller_persona k JOIN taller_persona d ON d.id_taller=k.id_taller AND d.id_miembro=k.id_miembro AND d.funcion=k.funcion " +
+                                 "AND (k.planeado > d.planeado OR (k.planeado = d.planeado AND k.id < d.id)) " +
+                                 "SET k.asistencia = IF(k.asistencia IS NULL OR k.asistencia='NO_SE_PRESENTO', COALESCE(d.asistencia, k.asistencia), k.asistencia), " +
+                                 "k.nivel = COALESCE(k.nivel, d.nivel)");
+                int n = st.executeUpdate("DELETE d FROM taller_persona d JOIN taller_persona k ON d.id_taller=k.id_taller AND d.id_miembro=k.id_miembro AND d.funcion=k.funcion " +
+                                         "AND (k.planeado > d.planeado OR (k.planeado = d.planeado AND k.id < d.id))");
+                if (n > 0) hecho.add(n + " tallerista(s) repetidos en el dictado de talleres");
+            }
         }
         return hecho;
     }

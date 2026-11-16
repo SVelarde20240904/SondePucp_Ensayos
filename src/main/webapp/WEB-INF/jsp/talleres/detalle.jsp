@@ -4,7 +4,11 @@
   <p>${t.fechaTexto} · ${t.horario}<c:if test="${not empty t.lugar}"> · <c:out value="${t.lugar}"/></c:if></p>
   <div class="inline"><sdp:tag texto="${t.estadoTexto}" tono="${t.estadoTono}"/><c:if test="${t.finalRegistrado}"><span class="tag ok">Dictado final registrado</span></c:if></div></div>
   <div class="actions"><a class="btn btn-secondary" href="${ctx}/talleres">← Talleres</a>
-    <a class="btn btn-secondary" href="${ctx}/talleres/editar?id=${t.idTaller}">Editar cronograma</a>
+    <c:choose>
+      <c:when test="${t.pasado}"><a class="btn btn-secondary" href="${ctx}/talleres/lo-dictado?id=${t.idTaller}">${t.hayDictado ? 'Corregir lo dictado' : 'Registrar lo que se dictó'}</a>
+        <a class="btn btn-ghost" href="${ctx}/talleres/editar?id=${t.idTaller}">Editar plan</a></c:when>
+      <c:otherwise><a class="btn btn-secondary" href="${ctx}/talleres/editar?id=${t.idTaller}">Editar cronograma</a></c:otherwise>
+    </c:choose>
     <a class="btn btn-secondary" href="${ctx}/talleres/flyer?id=${t.idTaller}" target="_blank">Ver flyer</a>
     <a class="btn btn-primary" href="${ctx}/talleres/feedback?id=${t.idTaller}">Feedback (${nFeedback})</a></div>
   <span class="star"></span></section>
@@ -12,26 +16,24 @@
 <c:if test="${yoEnTaller}"><div class="note info inline" style="justify-content:space-between">Estuviste en este taller.
   <a class="btn btn-primary btn-sm" href="${ctx}/talleres/formulario?id=${t.idTaller}">${respuestas.containsKey(u.idMiembro) ? 'Ver o corregir mi formulario' : 'Llenar mi formulario'}</a></div></c:if>
 
-<div class="grid-2 niveles-taller">
+<div class="${t.hayDictado ? 'stack' : 'grid-2'} niveles-taller" id="cronograma">
 <c:forEach var="n" items="${t.niveles}">
   <div class="card"><h2>${n == 'PRINCIPIANTE' ? 'Principiante' : (n == 'BASICO' ? 'Básico' : (n == 'INTRO_RUEDA' ? 'Intro a la rueda' : 'Rueda básica'))}</h2>
     <c:forEach var="p" items="${t.personasDe('TALLERISTA', n)}"><div class="persona-taller"><span><b><c:out value="${p.nombre}"/></b><small>Tallerista${p.planeado ? '' : (empty p.reemplazaNombre ? ' · se sumó' : ' · reemplazó a '.concat(p.reemplazaNombre))}</small></span><sdp:tag texto="${p.asistenciaTexto}" tono="${p.asistenciaTono}"/></div></c:forEach>
     <c:forEach var="p" items="${t.personasDe('APOYO', n)}"><div class="persona-taller"><span><c:out value="${p.nombre}"/><small>Apoyo${p.planeado ? '' : (empty p.reemplazaNombre ? ' · se sumó' : ' · reemplazó a '.concat(p.reemplazaNombre))}</small></span><sdp:tag texto="${p.asistenciaTexto}" tono="${p.asistenciaTono}"/></div></c:forEach>
     <c:if test="${empty t.personasDe('TALLERISTA', n)}"><p class="muted small">Sin talleristas asignados.</p></c:if>
-    <span class="label" style="margin-top:8px">Pasos</span>
     <c:choose>
-      <c:when test="${empty t.pasos[n]}"><p class="muted small">Sin pasos registrados.</p></c:when>
-      <c:otherwise>
-        <ul class="pasos-lista">
-          <c:set var="sec" value="1"/>
-          <c:forEach var="p" items="${t.pasos[n]}">
-            <c:if test="${p.planificado and p.seccion > sec}"><li class="musica">🎶 Música</li><c:set var="sec" value="${p.seccion}"/></c:if>
-            <li>${p.marca} <c:out value="${p.nombre}"/><c:if test="${not p.planificado}"> <span class="tag info">agregado</span></c:if></li>
-          </c:forEach>
-        </ul>
-        <p class="muted xs">${empty t.checklistPor[n] ? 'Checklist pendiente (lo llena uno de los talleristas).' : 'Checklist de '.concat(t.checklistPor[n])}</p>
-      </c:otherwise>
+      <c:when test="${not empty t.dictado[n]}">
+        <div class="crono-comparar">
+          <div><span class="label">Planeado</span><c:set var="secs" value="${t.plan[n]}"/><%@ include file="/WEB-INF/jsp/includes/crono-vista.jspf" %></div>
+          <div><span class="label">Lo que se dictó</span><c:set var="secs" value="${t.dictado[n]}"/><%@ include file="/WEB-INF/jsp/includes/crono-vista.jspf" %></div>
+        </div>
+      </c:when>
+      <c:otherwise><span class="label" style="margin-top:8px">Cronograma</span><c:set var="secs" value="${t.plan[n]}"/><%@ include file="/WEB-INF/jsp/includes/crono-vista.jspf" %></c:otherwise>
     </c:choose>
+    <c:if test="${not empty t.checklistPor[n]}">
+      <p class="muted xs">Checklist de <c:out value="${t.checklistPor[n]}"/>: <c:forEach var="p" items="${t.pasos[n]}" varStatus="s2">${p.marca} <c:out value="${p.nombre}"/>${s2.last ? '' : ' · '}</c:forEach></p>
+    </c:if>
   </div>
 </c:forEach>
 </div>
@@ -99,6 +101,13 @@
           <c:choose><c:when test="${respuestas.containsKey(p.idMiembro)}"><span class="tag ok">✓ ${respuestas[p.idMiembro]}</span></c:when><c:otherwise><span class="tag warn">Pendiente</span></c:otherwise></c:choose></div>
       </c:if></c:forEach>
       <c:if test="${not hayEsperados}"><p class="empty">Nadie asignado todavía.</p></c:if>
+    </div>
+    <div class="card"><h2>¿Quiénes van?</h2><p>Lo que respondieron los miembros en “Mi asistencia”</p>
+      <c:forEach var="k" items="${confirmaciones}">
+        <div class="persona-taller"><span><c:out value="${k[0]}"/><c:if test="${not empty k[2]}"><small><c:out value="${k[2]}"/></small></c:if></span>
+          <span class="tag ${k[1] == 'SI' ? 'ok' : 'neutral'}">${k[1] == 'SI' ? 'Va' : 'No va'}</span></div>
+      </c:forEach>
+      <c:if test="${empty confirmaciones}"><p class="empty">Nadie respondió todavía.</p></c:if>
     </div>
     <div class="card"><h2>Sugerencias para el taller</h2>
       <c:forEach var="s" items="${sugerencias}"><div class="sugerencia"><p><c:out value="${s.texto}"/></p><span class="muted xs">${s.de} · ${s.fechaTexto}</span></div></c:forEach>

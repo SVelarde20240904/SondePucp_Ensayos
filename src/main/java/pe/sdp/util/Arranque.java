@@ -30,6 +30,8 @@ public class Arranque implements ServletContextListener {
         } catch (Exception ex) {
             LOG.severe("SDP · No se pudo actualizar la BD: " + ex.getMessage());
         }
+        try { e.getServletContext().setAttribute("emojis", new pe.sdp.daos.ConfigDao().emojis()); }
+        catch (Exception ex) { LOG.warning("SDP · No se pudieron leer los emojis del pie: " + ex.getMessage()); }
         try {
             String correo = Config.get("SDP_ADMIN_CORREO", null, null);
             String clave = Config.get("SDP_ADMIN_CLAVE", null, null);
