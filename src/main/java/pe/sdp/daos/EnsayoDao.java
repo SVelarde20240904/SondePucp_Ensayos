@@ -484,6 +484,16 @@ public class EnsayoDao extends BaseDao {
         }
     }
 
+    /** ¿Puede autoevaluarse en ese ensayo? (no cancelado, de los últimos 7 días, ya pasó o está cerrado, y asistió) */
+    public boolean puedeAutoevaluar(int idEnsayo, int idMiembro) throws SQLException {
+        String sql = "SELECT 1 FROM ensayo e JOIN asistencia a ON a.id_ensayo=e.id_ensayo AND a.id_miembro=? AND a.estado_real IN ('AP','AN','TJ','TI') " +
+                     "WHERE e.id_ensayo=? AND e.estado<>'CANCELADO' AND e.fecha >= CURDATE() - INTERVAL 7 DAY AND (e.fecha <= CURDATE() OR e.estado='CERRADO')";
+        try (Connection c = getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setInt(1, idMiembro); ps.setInt(2, idEnsayo);
+            try (ResultSet rs = ps.executeQuery()) { return rs.next(); }
+        }
+    }
+
     /** Último ensayo (máx. 7 días atrás) con figuras registradas que el miembro aún no autoevaluó. */
     public Ensayo autoevaluacionPendiente(int idMiembro) throws SQLException {
         String sql = "SELECT e.id_ensayo FROM ensayo e JOIN asistencia a ON a.id_ensayo=e.id_ensayo AND a.id_miembro=? AND a.estado_real IN ('AP','AN','TJ','TI') " +

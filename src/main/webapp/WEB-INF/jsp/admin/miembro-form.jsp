@@ -8,6 +8,7 @@
     <c:otherwise><c:out value="${m.nombre}"/> · ${empty m.nivel ? 'sin nivel' : 'nivel '.concat(m.nivel)} · miembro desde ${m.miembroDesde}${m.activo ? '' : ' · INACTIVO'}</c:otherwise></c:choose></p></div>
   <div class="actions"><a class="btn btn-secondary" href="${ctx}/admin/miembros">Cancelar</a><button class="btn btn-primary" name="action" value="guardar">Guardar</button></div>
   <span class="star"></span></section>
+<c:if test="${soloOwner}"><div class="note warn">🔒 Esta cuenta es de un Owner: puedes verla, pero solo otro Owner puede editarla, generarle clave, inactivarla o eliminarla.</div></c:if>
 
 <div class="row top">
   <div class="stack grow">

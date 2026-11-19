@@ -3,7 +3,7 @@
 #
 #    docker compose -f docker-compose.local.yml up -d --build
 #
-#  - La app queda en http://localhost:8080 (y en http://IP-DE-TU-LAPTOP:8080 desde tu celular en la misma Wi-Fi)
+#  - La app queda en http://localhost:8080 (solo desde tu laptop; para el celular en la misma Wi-Fi: $env:SDP_IP="0.0.0.0")
 #  - La primera vez crea la BD vacía con db/schema.sql. Los datos reales se cargan aparte (ver README → "Probar antes de comprar hosting")
 #  - Para apagar: docker compose -f docker-compose.local.yml down   (los datos se quedan guardados)
 #  - Para borrar TODO y empezar de cero: ... down -v
@@ -34,13 +34,16 @@ services:
       db:
         condition: service_healthy
     ports:
-      - "8080:8080"
+      # solo tu laptop (y el túnel de Cloudflare) llegan a la web. Para abrirla a tu Wi-Fi: $env:SDP_IP="0.0.0.0"
+      - "${SDP_IP:-127.0.0.1}:8080:8080"
     environment:
       DB_URL: jdbc:mysql://db:3306/sdp_ensayos?serverTimezone=America/Lima&useUnicode=true&characterEncoding=UTF-8
       DB_USER: sdp
       DB_PASSWORD: ${DB_PASSWORD:-sdp-local}
-      # desarrollo = deja entrar a las cuentas de prueba @sdp.test · produccion = como en el hosting
-      SDP_ENTORNO: ${SDP_ENTORNO:-desarrollo}
+      # produccion = como en el hosting (es lo normal; ya no hace falta ponerlo a mano)
+      SDP_ENTORNO: ${SDP_ENTORNO:-produccion}
+      # las cuentas de prueba @sdp.test solo entran si pones $env:SDP_CUENTAS_PRUEBA="true" (nunca con el túnel abierto)
+      SDP_CUENTAS_PRUEBA: ${SDP_CUENTAS_PRUEBA:-false}
       # sin HTTPS en tu laptop; con un túnel (cloudflared) el HTTPS lo pone el túnel
       SDP_FORZAR_HTTPS: ${SDP_FORZAR_HTTPS:-false}
       SDP_ADMIN_CORREO: ${SDP_ADMIN_CORREO:-}

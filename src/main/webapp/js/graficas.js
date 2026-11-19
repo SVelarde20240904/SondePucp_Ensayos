@@ -13,6 +13,8 @@
     (kids || []).forEach(function (c) { e.appendChild(c); });
     return e;
   }
+  // los nombres (categorías, cobradores, series) los escribe gente: en el tooltip van escapados, nunca como HTML
+  function esc(v) { return String(v).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function txt(x, y, s, a) { var t = svg('text', Object.assign({ x: x, y: y }, a || {})); t.textContent = s; return t; }
   function soles(v) { v = Math.round(v * 100) / 100; return 'S/ ' + (v % 1 === 0 ? v.toLocaleString('es-PE') : v.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })); }
   function limpio(max) {   // tope "redondo" para el eje
@@ -76,8 +78,8 @@
       });
       // zona de hover más grande que la barra
       var hit = svg('rect', { x: m.l + banda * i, y: m.t, width: banda, height: alto, fill: 'transparent' });
-      hover(hit, '<b>' + et + '</b>' + series.map(function (s, k) {
-        return '<div><i style="background:' + (s.color || (k ? C2 : C1)) + '"></i>' + s.nombre + ': ' + (opt.fmt || soles)(s.valores[i] || 0) + '</div>';
+      hover(hit, '<b>' + esc(et) + '</b>' + series.map(function (s, k) {
+        return '<div><i style="background:' + (s.color || (k ? C2 : C1)) + '"></i>' + esc(s.nombre) + ': ' + esc((opt.fmt || soles)(s.valores[i] || 0)) + '</div>';
       }).join(''));
       f.s.appendChild(hit);
       if (etiquetas.length <= 14 || i % 2 === 0) f.s.appendChild(txt(m.l + banda * i + banda / 2, f.H - 8, et, { 'class': 'graf-eje', 'text-anchor': 'middle' }));
@@ -109,7 +111,7 @@
       var i = Math.max(0, Math.min(ult, Math.round((cx - m.l) / paso)));
       guia.setAttribute('x1', X(i)); guia.setAttribute('x2', X(i)); guia.setAttribute('visibility', 'visible');
       punto.setAttribute('cx', X(i)); punto.setAttribute('cy', Y(valores[i])); punto.setAttribute('visibility', 'visible');
-      mostrar(e, '<b>' + etiquetas[i] + '</b><div>' + (opt.nombre || 'Valor') + ': ' + soles(valores[i]) + '</div>');
+      mostrar(e, '<b>' + esc(etiquetas[i]) + '</b><div>' + esc(opt.nombre || 'Valor') + ': ' + esc(soles(valores[i])) + '</div>');
     }
     capa.addEventListener('mousemove', mover); capa.addEventListener('touchstart', mover, { passive: true });
     capa.addEventListener('mouseleave', function () { ocultar(); guia.setAttribute('visibility', 'hidden'); punto.setAttribute('visibility', 'hidden'); });
@@ -137,7 +139,7 @@
       f.s.appendChild(svg('path', { d: 'M' + x + ',' + yy + 'H' + (x + ancho - r) + 'Q' + (x + ancho) + ',' + yy + ' ' + (x + ancho) + ',' + (yy + r) + 'V' + (yy + h - r) + 'Q' + (x + ancho) + ',' + (yy + h) + ' ' + (x + ancho - r) + ',' + (yy + h) + 'H' + x + 'Z', fill: opt.color || C1 }));
       f.s.appendChild(txt(x + ancho + 6, yy + 13, (opt.fmt || soles)(it.v), { 'class': 'graf-valor' }));
       var hit = svg('rect', { x: 0, y: y, width: f.W, height: fila, fill: 'transparent' });
-      hover(hit, '<b>' + it.k + '</b><div>' + (opt.fmt || soles)(it.v) + (opt.extra ? opt.extra(it) : '') + '</div>');
+      hover(hit, '<b>' + esc(it.k) + '</b><div>' + esc((opt.fmt || soles)(it.v)) + (opt.extra ? esc(opt.extra(it)) : '') + '</div>');
       f.s.appendChild(hit);
     });
   };

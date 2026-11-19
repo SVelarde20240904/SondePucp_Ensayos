@@ -114,6 +114,13 @@ public class ArranqueDao extends BaseDao {
                 migrarFinanzas(c);
                 hecho.add("módulo Finanzas · cuotas (roles, permisos, cuotas y pagos)");
             }
+            // registro de claves temporales: quién la generó y cuándo (la persona lo ve al entrar)
+            if (!existeColumna(c, "miembro", "clave_restablecida_por")) {
+                try (Statement st = c.createStatement()) {
+                    st.executeUpdate("ALTER TABLE miembro ADD COLUMN clave_restablecida_por INT NULL, ADD COLUMN clave_restablecida_en DATETIME NULL");
+                }
+                hecho.add("registro de claves temporales (quién y cuándo)");
+            }
             if (!existeColumna(c, "cuota", "abonado")) {
                 try (Statement st = c.createStatement()) {
                     // pagos parciales y montos fijos (deudas que vienen del Excel), pago anual y encargado de cobro

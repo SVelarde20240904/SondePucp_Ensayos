@@ -148,6 +148,10 @@ public class MiEspacioServlet extends BaseServlet {
             if (pendiente != null && !"mensual".equals(req.getParameter("tipo"))) idEnsayo = pendiente.getIdEnsayo();
         }
         if (idEnsayo != null) {
+            if (!ensayos.puedeAutoevaluar(idEnsayo, yo)) {
+                Sesion.error(req, "Ese ensayo ya no recibe autoevaluaciones (es para quienes asistieron, hasta 7 días después).");
+                ir(req, resp, "/inicio"); return;
+            }
             Ensayo e = ensayos.obtener(idEnsayo);
             List<FiguraSugerida> figs = ensayos.figurasParaAutoevaluar(idEnsayo, yo);
             Map<Integer, String> actual = new HashMap<>();
@@ -210,6 +214,24 @@ public class MiEspacioServlet extends BaseServlet {
                         if (p.startsWith("color_")) { Integer f = Formato.entero(p.substring(6)); if (f != null) colores.put(f, req.getParameter(p)); }
                     }
                     Integer idEnsayo = entero(req, "idEnsayo");
+                    // el servidor revisa lo mismo que la pantalla: solo se guardan las figuras que te tocan, cuando te tocan
+                    if (idEnsayo != null) {
+                        if (!ensayos.puedeAutoevaluar(idEnsayo, yo)) {
+                            Sesion.error(req, "Ese ensayo ya no recibe autoevaluaciones (es para quienes asistieron, hasta 7 días después).");
+                            ir(req, resp, "/inicio"); return;
+                        }
+                        Set<Integer> permitidas = new HashSet<>();
+                        for (FiguraSugerida f : ensayos.figurasParaAutoevaluar(idEnsayo, yo)) permitidas.add(f.getIdFigura());
+                        colores.keySet().retainAll(permitidas);
+                    } else {
+                        if (!mensualAbierta(evaluaciones.ventanaPeriodo(evaluaciones.periodoActual())) && miembros.obtener(yo).getNivel() != null) {
+                            Sesion.error(req, "La autoevaluación mensual está cerrada. Se abre del 1 al 7 de cada mes.");
+                            ir(req, resp, "/inicio"); return;
+                        }
+                        Set<Integer> activas = new HashSet<>();
+                        for (pe.sdp.beans.Figura f : figuras.listarActivas()) activas.add(f.getIdFigura());
+                        colores.keySet().retainAll(activas);
+                    }
                     if (colores.isEmpty()) { Sesion.error(req, "No marcaste ninguna figura."); }
                     else if (idEnsayo != null) {
                         // en el ensayo uno se puede recalificar en las dos direcciones (si creía saberla y no)

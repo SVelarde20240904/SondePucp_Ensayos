@@ -44,8 +44,9 @@ public class Arranque implements ServletContextListener {
                 }
             }
             int prueba = dao.cuentasDePrueba();
-            if (prueba > 0 && Config.produccion())
-                LOG.warning("SDP · Hay " + prueba + " cuentas de prueba (@sdp.test) en la BD. En producción están bloqueadas, pero mejor bórralas.");
+            if (prueba > 0)
+                LOG.warning("SDP · Hay " + prueba + " cuentas de prueba (@sdp.test) en la BD. " + (Config.cuentasPrueba()
+                        ? "ESTÁN HABILITADAS (SDP_CUENTAS_PRUEBA=true): no publiques la web así." : "Están bloqueadas, pero mejor bórralas."));
         } catch (Exception ex) {
             LOG.warning("SDP · Revisión de arranque incompleta: " + ex.getMessage());
         }

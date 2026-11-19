@@ -103,13 +103,16 @@ src/main/webapp/
 - El texto que escriben los usuarios se muestra con `<c:out>`, que evita XSS. Además va una cabecera **Content-Security-Policy**.
 - **Tokens CSRF** en todos los formularios POST (campo oculto `_csrf`, que revisa `AuthFilter`). Otra web no puede mandar formularios con tu sesión. La cookie además va con `SameSite=Lax`.
 - **Cookie de sesión** `HttpOnly`, solo por cookie (nunca `;jsessionid` en la URL), y `Secure` cuando hay HTTPS. El id de sesión **cambia al iniciar sesión** (contra *session fixation*).
-- **Freno contra adivinar contraseñas:** 5 intentos fallidos con un mismo correo (o 20 desde una misma IP) bloquean el login 15 minutos.
+- **Freno contra adivinar contraseñas:** 5 intentos fallidos con un mismo correo desde una misma IP bloquean ese correo en esa IP 15 minutos; 20 fallos desde una IP o 50 contra un mismo correo (desde cualquier lado) también bloquean. Así nadie puede dejarte sin entrar tecleando mal tu correo, y el login demora lo mismo exista o no el correo.
 - **HTTPS obligatorio en producción** (http → https y cabecera HSTS), más las cabeceras `X-Frame-Options`, `X-Content-Type-Options` y `Referrer-Policy`.
 - **Sesión obligatoria** con el filtro `AuthFilter` y permisos por acción. Se revisa en la BD que la cuenta siga activa y con qué permisos: cada 2 minutos, y al instante cuando un admin cambia roles, permisos o estados (si inactiva a alguien, su sesión se cierra en su siguiente clic).
 - **Pool de conexiones** (`tomcat-jdbc`) en vez de abrir una conexión por consulta.
 - Los errores técnicos no se muestran al usuario: solo van al log. Las reglas de la BD (triggers) sí se muestran, porque están escritas para personas.
 - Reglas críticas protegidas en la BD con triggers: no quedarse sin admin, no quitar el rol Miembro, no borrar figuras ni miembros con historial.
-- En producción **las cuentas de prueba `@sdp.test` no pueden entrar**, aunque alguien las cargue por error.
+- **Las cuentas de prueba `@sdp.test` no pueden entrar**, aunque alguien las cargue por error, salvo que se encienda a propósito `SDP_CUENTAS_PRUEBA=true` (solo para probar en tu laptop, nunca con el túnel abierto).
+- **Cuentas Owner protegidas:** solo un Owner puede generarle clave temporal, cambiarle el correo, inactivar o eliminar a otro Owner. Cada clave temporal queda registrada (quién y cuándo) y la persona lo ve al entrar.
+- **Autoevaluación validada en el servidor:** solo se guardan las figuras que te tocan, en el ensayo al que fuiste (hasta 7 días después) o con la ventana mensual abierta.
+- **Capturas de Yape seguras:** solo JPG/PNG, se revisa el tamaño antes de abrirlas (máx. 10 000 px por lado) y se procesan máximo 2 a la vez.
 - **Las claves no van en el código:** en el hosting se configuran con variables de entorno. `db/seed.sql`, los Excel y `.env` están en `.gitignore`.
 
 ---
@@ -122,20 +125,16 @@ docker compose -f docker-compose.local.yml up -d --build      # la primera vez t
 docker compose -f docker-compose.local.yml exec -T db mysql -uroot -proot-local --default-character-set=utf8mb4 < db/seed.sql
 docker compose -f docker-compose.local.yml exec -T db mysql -uroot -proot-local --default-character-set=utf8mb4 < db/dev/usuarios_prueba.sql   # cuentas @sdp.test
 ```
-Entras a **http://localhost:8080** con `sergio.velarde@sdp.test` / `sdp12345`. Es la misma imagen que correría en el hosting.
+Las cuentas de prueba solo entran si levantas con `SDP_CUENTAS_PRUEBA=true` (PowerShell: `$env:SDP_CUENTAS_PRUEBA="true"`). Entonces entras a **http://localhost:8080** con `sergio.velarde@sdp.test` / `sdp12345`. Es la misma imagen que correría en el hosting.
 En PowerShell de Windows, `<` no funciona: usa `Get-Content db/seed.sql -Encoding UTF8 | docker compose -f docker-compose.local.yml exec -T db mysql -uroot -proot-local --default-character-set=utf8mb4`.
 
-**2. Desde tu celular:** conéctalo a la misma Wi-Fi que la laptop y entra a `http://IP-DE-TU-LAPTOP:8080`. La IP la ves con `ipconfig` (Windows) o `ifconfig` (Mac). Si no carga, dale permiso a Docker en el firewall.
+**2. Desde tu celular:** por defecto la web solo escucha en tu laptop. Levántala con `SDP_IP=0.0.0.0` (PowerShell: `$env:SDP_IP="0.0.0.0"`), conecta el celular a la misma Wi-Fi y entra a `http://IP-DE-TU-LAPTOP:8080`. La IP la ves con `ipconfig` (Windows) o `ifconfig` (Mac). Si no carga, dale permiso a Docker en el firewall.
 
 **3. Un mini piloto con gente de fuera, con HTTPS:** usa un túnel gratis de Cloudflare (no pide cuenta):
 ```bash
 cloudflared tunnel --url http://localhost:8080
 ```
-Te da un link `https://algo-random.trycloudflare.com` que cualquiera puede abrir desde su celular **mientras tu laptop esté prendida** (el link cambia cada vez). Para eso usa el modo producción:
-```bash
-SDP_ENTORNO=produccion SDP_ADMIN_CORREO=tu@pucp.edu.pe SDP_ADMIN_CLAVE=una-clave-larga docker compose -f docker-compose.local.yml up -d
-```
-En producción las cuentas `@sdp.test` quedan bloqueadas. El link es público, así que usa una clave fuerte.
+Te da un link `https://algo-random.trycloudflare.com` que cualquiera puede abrir desde su celular **mientras tu laptop esté prendida** (el link cambia cada vez). `docker-compose.local.yml` ya levanta en modo producción y con las cuentas `@sdp.test` bloqueadas; el link es público, así que usa claves fuertes y **no** actives `SDP_CUENTAS_PRUEBA` mientras el túnel esté abierto.
 
 **Probar sin ensuciar los datos reales:** saca un backup antes de las pruebas y restáuralo al terminar (PowerShell):
 ```powershell

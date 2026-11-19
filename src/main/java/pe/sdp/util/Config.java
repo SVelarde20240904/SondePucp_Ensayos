@@ -11,7 +11,8 @@ import java.util.Properties;
  * Variables de entorno:
  *   DB_URL, DB_USER, DB_PASSWORD           conexión completa
  *   MYSQLHOST, MYSQLPORT, MYSQLUSER, MYSQLPASSWORD   (las que crea Railway) + DB_NAME (por defecto sdp_ensayos)
- *   SDP_ENTORNO=produccion                 activa HTTPS obligatorio y bloquea las cuentas de prueba
+ *   SDP_ENTORNO=produccion                 activa HTTPS obligatorio
+ *   SDP_CUENTAS_PRUEBA=true                deja entrar a las cuentas @sdp.test (solo para probar; apagado por defecto)
  *   SDP_ADMIN_CORREO, SDP_ADMIN_CLAVE      admin inicial (solo se usan si ningún admin tiene contraseña)
  */
 public final class Config {
@@ -35,6 +36,14 @@ public final class Config {
 
     public static boolean produccion() {
         return "produccion".equalsIgnoreCase(get("SDP_ENTORNO", "app.entorno", "desarrollo"));
+    }
+
+    /**
+     * Cuentas de prueba (@sdp.test): bloqueadas SIEMPRE, salvo que se encienda a propósito con SDP_CUENTAS_PRUEBA=true
+     * (o app.cuentasPrueba=true en db.properties). Así no depende de acordarse de poner "produccion".
+     */
+    public static boolean cuentasPrueba() {
+        return Boolean.parseBoolean(get("SDP_CUENTAS_PRUEBA", "app.cuentasPrueba", "false"));
     }
 
     /** HTTPS obligatorio: por defecto sí en producción. Se puede apagar con SDP_FORZAR_HTTPS=false. */

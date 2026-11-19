@@ -72,6 +72,8 @@ public class AdminServlet extends BaseServlet {
                     if (entero(req, "id") != null) m = miembros.obtener(entero(req, "id"));
                     else { m = new Miembro(); m.setFrecuencia("REGULAR"); m.setFechaIngreso(LocalDate.now()); m.setEstado("ACTIVO"); }
                     req.setAttribute("m", m);
+                    req.setAttribute("soloOwner", m != null && m.getIdMiembro() != 0 && m.getIdMiembro() != Sesion.idUsuario(req)
+                            && !Sesion.tiene(req, "ASIGNAR_ROLES") && miembros.esOwner(m.getIdMiembro()));
                     datosFormulario(req);
                     req.setAttribute("passwordTemporal", Formato.passwordTemporal());
                     vista(req, resp, "admin/miembro-form");
@@ -251,6 +253,11 @@ public class AdminServlet extends BaseServlet {
         Integer id = entero(req, "idMiembro");
         String accion = accion(req, "guardar");
         String volver = id == null ? "/admin/miembros/nuevo" : "/admin/miembros/editar?id=" + id;
+        // una cuenta Owner solo la toca otro Owner (si no, quien gestiona miembros podría quedarse con ella)
+        if (id != null && id != yo && !Sesion.tiene(req, "ASIGNAR_ROLES") && miembros.esOwner(id)) {
+            Sesion.error(req, "Esa cuenta es de un Owner: solo otro Owner puede editarla, generarle clave, inactivarla o eliminarla.");
+            ir(req, resp, volver); return;
+        }
         switch (accion) {
             case "inactivar" -> {
                 if (id == yo) { Sesion.error(req, "No puedes inactivarte a ti mismo."); ir(req, resp, volver); return; }
@@ -315,7 +322,7 @@ public class AdminServlet extends BaseServlet {
                 if ("restablecer".equals(accion)) {
                     // "Generar contraseña temporal" guarda TODO el formulario y recién genera la clave
                     String temp = Formato.passwordTemporal();
-                    miembros.registrarPassword(id, Password.hash(temp), true);
+                    miembros.registrarClaveTemporal(id, Password.hash(temp), yo);
                     var s = req.getSession();
                     s.setAttribute("claveGenerada", temp);
                     s.setAttribute("claveCorreo", m.getCorreo().toLowerCase());
@@ -339,6 +346,7 @@ public class AdminServlet extends BaseServlet {
      */
     private void postActivarLote(HttpServletRequest req, HttpServletResponse resp) throws SQLException, IOException {
         if (!Sesion.requiere(req, resp, "GESTIONAR_MIEMBROS")) return;
+        int yo = Sesion.idUsuario(req);
         List<String[]> listos = new ArrayList<>();     // nombre, correo, clave
         List<String> errores = new ArrayList<>();
         Set<String> usados = new HashSet<>();
@@ -348,6 +356,7 @@ public class AdminServlet extends BaseServlet {
             if (id == null) continue;
             Miembro m = miembros.obtener(id);
             if (m == null || !m.isActivo()) continue;
+            if (id != yo && !Sesion.tiene(req, "ASIGNAR_ROLES") && miembros.esOwner(id)) { errores.add(m.getNombre() + ": es Owner, solo otro Owner puede activar su cuenta."); continue; }
             String correo = texto(req, "correo_" + id);
             correo = correo == null ? null : correo.trim().toLowerCase();
             if (correo == null) { errores.add(m.getNombre() + ": falta el correo."); continue; }
@@ -355,7 +364,7 @@ public class AdminServlet extends BaseServlet {
             if (!usados.add(correo) || miembros.existeCorreo(correo, id)) { errores.add(m.getNombre() + ": " + correo + " ya lo usa otra persona."); continue; }
             if (!correo.equalsIgnoreCase(String.valueOf(m.getCorreo()))) miembros.actualizarCorreo(id, correo);
             String temp = Formato.passwordTemporal();
-            miembros.registrarPassword(id, Password.hash(temp), true);
+            miembros.registrarClaveTemporal(id, Password.hash(temp), yo);
             listos.add(new String[]{m.getNombre(), correo, temp});
         }
         var s = req.getSession();

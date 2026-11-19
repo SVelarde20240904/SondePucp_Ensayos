@@ -4,14 +4,18 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Freno contra adivinar contraseñas: después de 5 intentos fallidos en 15 minutos
- * (por correo o por IP) el login queda bloqueado 15 minutos.
+ * Freno contra adivinar contraseñas (ventana de 15 minutos, bloqueo de 15 minutos):
+ *  - 5 fallos con un correo DESDE UNA MISMA IP bloquean ese correo solo en esa IP
+ *    (así nadie puede dejarte sin entrar tecleando mal tu correo desde su celular)
+ *  - 20 fallos desde una IP (con cualquier correo) bloquean esa IP
+ *  - 50 fallos contra un mismo correo desde cualquier lado bloquean ese correo (alguien probando desde muchas IPs)
  * Se guarda en memoria: si el servidor se reinicia, los contadores vuelven a cero.
  */
 public final class Intentos {
 
-    private static final int MAX_FALLOS_CORREO = 5;
+    private static final int MAX_FALLOS_CORREO_IP = 5;
     private static final int MAX_FALLOS_IP = 20;
+    private static final int MAX_FALLOS_CORREO = 50;
     private static final long VENTANA_MS = 15 * 60_000L;
     private static final long BLOQUEO_MS = 15 * 60_000L;
 
@@ -24,17 +28,18 @@ public final class Intentos {
     /** Minutos que faltan de bloqueo (0 si puede intentar). */
     public static long minutosBloqueado(String correo, String ip) {
         long ahora = System.currentTimeMillis();
-        long hasta = Math.max(hasta("c:" + clave(correo)), hasta("ip:" + ip));
+        long hasta = Math.max(Math.max(hasta("ci:" + clave(correo) + "|" + ip), hasta("ip:" + ip)), hasta("c:" + clave(correo)));
         return hasta > ahora ? (hasta - ahora + 59_999) / 60_000 : 0;
     }
 
     public static void fallo(String correo, String ip) {
-        sumar("c:" + clave(correo), MAX_FALLOS_CORREO);
+        sumar("ci:" + clave(correo) + "|" + ip, MAX_FALLOS_CORREO_IP);
         sumar("ip:" + ip, MAX_FALLOS_IP);
+        sumar("c:" + clave(correo), MAX_FALLOS_CORREO);
         if (MAPA.size() > 10_000) limpiar();
     }
 
-    public static void exito(String correo) { MAPA.remove("c:" + clave(correo)); }
+    public static void exito(String correo, String ip) { MAPA.remove("ci:" + clave(correo) + "|" + ip); }
 
     private static String clave(String correo) { return correo == null ? "" : correo.trim().toLowerCase(); }
 

@@ -20,6 +20,8 @@ import java.sql.SQLException;
 public class LoginServlet extends BaseServlet {
 
     private final MiembroDao dao = new MiembroDao();
+    /** Hash de una clave al azar: se usa para "verificar" cuando el correo no existe (mismo tiempo que uno real). */
+    private static final String HASH_FALSO = Password.hash(java.util.UUID.randomUUID().toString());
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -30,7 +32,14 @@ public class LoginServlet extends BaseServlet {
                 resp.setHeader("Clear-Site-Data", "\"cache\"");
                 ir(req, resp, "/login");
             }
-            case "/cambiar-password" -> vista(req, resp, "cambiar-password");
+            case "/cambiar-password" -> {
+                Miembro u = Sesion.usuario(req);
+                if (u != null && u.isDebeCambiarPassword()) {
+                    try { req.setAttribute("restablecida", dao.ultimaClaveTemporal(u.getIdMiembro())); }
+                    catch (SQLException e) { log("No se pudo leer quién generó la clave", e); }
+                }
+                vista(req, resp, "cambiar-password");
+            }
             case "/login" -> {
                 if (Sesion.usuario(req) != null) ir(req, resp, "/inicio"); else vista(req, resp, "login");
             }
@@ -50,8 +59,11 @@ public class LoginServlet extends BaseServlet {
                 return;
             }
             Miembro m = correo == null ? null : dao.buscarPorCorreo(correo);
-            boolean cuentaPrueba = Config.produccion() && correo != null && correo.toLowerCase().endsWith("@sdp.test");
-            if (m == null || cuentaPrueba || !Password.verifica(pass, m.getPasswordHash())) {
+            boolean cuentaPrueba = !Config.cuentasPrueba() && correo != null && correo.toLowerCase().endsWith("@sdp.test");
+            // siempre se verifica una clave (aunque el correo no exista) para que el tiempo de respuesta no delate qué correos existen
+            String hash = m == null || m.getPasswordHash() == null || m.getPasswordHash().isBlank() ? HASH_FALSO : m.getPasswordHash();
+            boolean claveOk = Password.verifica(pass, hash) && hash != HASH_FALSO;
+            if (m == null || cuentaPrueba || !claveOk) {
                 Intentos.fallo(correo, ip);
                 loginError(req, resp, correo, "Correo o contraseña incorrectos.");
                 return;
@@ -60,7 +72,7 @@ public class LoginServlet extends BaseServlet {
                 loginError(req, resp, correo, "Tu cuenta está inactiva. Habla con la Mesa Directiva.");
                 return;
             }
-            Intentos.exito(correo);
+            Intentos.exito(correo, ip);
             HttpSession s = req.getSession(true);
             req.changeSessionId();                 // evita "session fixation": el id de sesión cambia al entrar
             Sesion.renovarCsrf(s);

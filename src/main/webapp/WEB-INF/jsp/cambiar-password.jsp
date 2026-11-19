@@ -15,6 +15,7 @@
 <section class="login-side">
   <form class="login-form" method="post" action="${ctx}/cambiar-password"><input type="hidden" name="_csrf" value="${sessionScope.csrf}">
     <div><h2>Nueva contraseña</h2><p class="muted small">Mínimo 8 caracteres</p></div>
+    <c:if test="${not empty restablecida}"><div class="note warn">🔑 Tu contraseña temporal la generó <b><c:out value="${restablecida[0]}"/></b> el ${restablecida[1]}. Si no la pediste, avísale a la Mesa Directiva.</div></c:if>
     <c:if test="${not empty error}"><div class="flash bad">⚠ <c:out value="${error}"/></div></c:if>
     <div class="field"><label for="actual">Contraseña actual (o temporal)</label><input class="input" id="actual" name="actual" type="password" required autofocus></div>
     <div class="field"><label for="nueva">Nueva contraseña</label><input class="input" id="nueva" name="nueva" type="password" minlength="8" required></div>

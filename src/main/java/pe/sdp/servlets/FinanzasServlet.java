@@ -271,7 +271,8 @@ public class FinanzasServlet extends BaseServlet {
     }
 
     private static String jsTexto(String s) {
-        return s.replace("\\", "\\\\").replace("\"", "\\\"").replace("<", "\\u003c").replace(">", "\\u003e").replace("&", "\\u0026");
+        return s.replace("\\", "\\\\").replace("\"", "\\\"").replace("<", "\\u003c").replace(">", "\\u003e").replace("&", "\\u0026")
+                .replace("\n", "\\n").replace("\r", "\\r").replace("\t", "\\t").replace("\u2028", "\\u2028").replace("\u2029", "\\u2029");
     }
 
     private YearMonth mesPedido(HttpServletRequest req) {
@@ -517,16 +518,51 @@ public class FinanzasServlet extends BaseServlet {
         byte[] img;
         try (InputStream in = foto.getInputStream()) { img = comprimir(in.readAllBytes()); }
         if (img == null) { Sesion.error(req, "No pude leer la imagen. Sube una captura en JPG o PNG."); ir(req, resp, "/mi-cuota"); return; }
+        if (img == DEMASIADO_GRANDE) { Sesion.error(req, "Esa imagen es demasiado grande. Sube una captura normal de tu celular."); ir(req, resp, "/mi-cuota"); return; }
+        if (img == OCUPADO) { Sesion.error(req, "Hay varias capturas subiéndose a la vez. Vuelve a intentarlo en un momento."); ir(req, resp, "/mi-cuota"); return; }
         int n = dao.reportar(yo, ids, img, null, anual ? hoy().getYear() : null);
         if (n == 0) Sesion.error(req, anual ? "Ya tienes meses de este año pagados: paga los que faltan mes a mes." : "Esas cuotas ya estaban pagadas o en revisión.");
         else Sesion.ok(req, "¡Listo! Tu captura quedó en revisión. Cuando Finanzas la confirme, tu cuota sale como pagada.");
         ir(req, resp, "/mi-cuota");
     }
 
-    /** Lee la imagen (JPG/PNG/GIF/BMP), la achica a máx. 1400 px y la guarda como JPG liviano. null si no es una imagen. */
+    // Límites de la captura: una captura de celular tiene ~1080 × 2400 px. Más que esto no es una captura
+    // (y una imagen chica en MB pero gigante en píxeles podría dejar al servidor sin memoria).
+    static final int MAX_LADO = 10_000;
+    static final long MAX_PIXELES = 40_000_000L;
+    static final byte[] DEMASIADO_GRANDE = new byte[0], OCUPADO = new byte[0];
+    /** Máximo 2 capturas procesándose a la vez: si suben varias juntas, las demás esperan un momento. */
+    private static final java.util.concurrent.Semaphore PROCESANDO = new java.util.concurrent.Semaphore(2);
+
+    /**
+     * Lee la captura (solo JPG o PNG), la achica a máx. 1400 px y la guarda como JPG liviano.
+     * Primero mira el tamaño en la cabecera (sin abrir la imagen) y la abre ya reducida.
+     * Devuelve null si no es JPG/PNG, DEMASIADO_GRANDE u OCUPADO en esos casos.
+     */
     static byte[] comprimir(byte[] original) {
+        boolean turno = false;
         try {
-            BufferedImage src = ImageIO.read(new ByteArrayInputStream(original));
+            turno = PROCESANDO.tryAcquire(20, java.util.concurrent.TimeUnit.SECONDS);
+            if (!turno) return OCUPADO;
+            BufferedImage src;
+            try (javax.imageio.stream.ImageInputStream iis = ImageIO.createImageInputStream(new ByteArrayInputStream(original))) {
+                if (iis == null) return null;
+                Iterator<javax.imageio.ImageReader> lectores = ImageIO.getImageReaders(iis);
+                if (!lectores.hasNext()) return null;
+                javax.imageio.ImageReader lector = lectores.next();
+                try {
+                    String formato = lector.getFormatName().toLowerCase(Locale.ROOT);
+                    if (!formato.equals("jpeg") && !formato.equals("jpg") && !formato.equals("png")) return null;
+                    lector.setInput(iis, true, true);
+                    int ancho = lector.getWidth(0), alto = lector.getHeight(0);
+                    if (ancho <= 0 || alto <= 0) return null;
+                    if (ancho > MAX_LADO || alto > MAX_LADO || (long) ancho * alto > MAX_PIXELES) return DEMASIADO_GRANDE;
+                    int salto = Math.max(1, Math.max(ancho, alto) / 1400);     // se lee 1 de cada "salto" píxeles
+                    javax.imageio.ImageReadParam prm = lector.getDefaultReadParam();
+                    prm.setSourceSubsampling(salto, salto, 0, 0);
+                    src = lector.read(0, prm);
+                } finally { lector.dispose(); }
+            }
             if (src == null) return null;
             double k = Math.min(1.0, 1400.0 / Math.max(src.getWidth(), src.getHeight()));
             int w = Math.max(1, (int) Math.round(src.getWidth() * k)), h = Math.max(1, (int) Math.round(src.getHeight() * k));
@@ -542,9 +578,14 @@ public class FinanzasServlet extends BaseServlet {
             try (ImageOutputStream ios = ImageIO.createImageOutputStream(out)) { wr.setOutput(ios); wr.write(null, new IIOImage(dst, null, null), p); }
             wr.dispose();
             return out.toByteArray();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return OCUPADO;
         } catch (Exception | LinkageError e) {
             java.util.logging.Logger.getLogger("SDP").warning("SDP · no se pudo leer la captura: " + e);
             return null;
+        } finally {
+            if (turno) PROCESANDO.release();
         }
     }
 }

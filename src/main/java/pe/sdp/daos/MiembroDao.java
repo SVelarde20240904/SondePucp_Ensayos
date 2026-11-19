@@ -134,6 +134,36 @@ public class MiembroDao extends BaseDao {
         }
     }
 
+    /** Clave temporal generada por alguien (admin): queda registrado quién y cuándo, y la persona lo ve al entrar. */
+    public void registrarClaveTemporal(int idMiembro, String hash, int quien) throws SQLException {
+        try (Connection c = getConnection(); PreparedStatement ps = c.prepareStatement(
+                "UPDATE miembro SET password_hash=?, debe_cambiar_password=1, clave_restablecida_por=?, clave_restablecida_en=NOW() WHERE id_miembro=?")) {
+            ps.setString(1, hash); ps.setInt(2, quien); ps.setInt(3, idMiembro);
+            ps.executeUpdate();
+        }
+        java.util.logging.Logger.getLogger("SDP").info("SDP · clave temporal de id_miembro=" + idMiembro + " generada por id_miembro=" + quien);
+    }
+
+    /** {nombre de quien generó la última clave temporal, fecha "dd/MM HH:mm"} o null si nunca se generó (o la generó uno mismo). */
+    public String[] ultimaClaveTemporal(int idMiembro) throws SQLException {
+        try (Connection c = getConnection(); PreparedStatement ps = c.prepareStatement(
+                "SELECT q.nombre, DATE_FORMAT(m.clave_restablecida_en, '%d/%m a las %H:%i') FROM miembro m JOIN miembro q ON q.id_miembro=m.clave_restablecida_por " +
+                "WHERE m.id_miembro=? AND m.clave_restablecida_por<>m.id_miembro")) {
+            ps.setInt(1, idMiembro);
+            try (ResultSet rs = ps.executeQuery()) { return rs.next() ? new String[]{rs.getString(1), rs.getString(2)} : null; }
+        }
+    }
+
+    /** ¿Es Owner (o puede asignar roles)? Esas cuentas solo las toca otro Owner. */
+    public boolean esOwner(int idMiembro) throws SQLException {
+        if (permisos(idMiembro).contains("ASIGNAR_ROLES")) return true;
+        try (Connection c = getConnection(); PreparedStatement ps = c.prepareStatement(
+                "SELECT 1 FROM miembro_rol mr JOIN rol_sistema r ON r.id_rol=mr.id_rol WHERE mr.id_miembro=? AND r.codigo='ADMIN'")) {   // el rol Owner tiene código ADMIN
+            ps.setInt(1, idMiembro);
+            try (ResultSet rs = ps.executeQuery()) { return rs.next(); }
+        }
+    }
+
     /** El propio miembro edita su perfil: NO puede tocar rol de baile, frecuencia ni estado. */
     public void actualizarPerfil(Miembro m) throws SQLException {
         String sql = "UPDATE miembro SET nombre_completo=?, codigo_pucp=?, facultad=?, correo=?, celular=?, " +

@@ -13,8 +13,8 @@
     <c:forEach var="f" items="${figurasLista}"><option value="${f.idFigura}" ${param.fFigura == f.idFigura ? 'selected' : ''}><c:out value="${f.nombre}"/></option></c:forEach></select></div>
   <div class="field"><label>Fuente</label><select class="input" name="fFuente"><option value="">Todas</option>
     <c:forEach var="s" items="${['MENSUAL','ENSAYO','CORRECCION','CARGA_INICIAL','MATRIZ_EXCEL']}"><option value="${s}" ${param.fFuente == s ? 'selected' : ''}>${s == 'ENSAYO' ? 'Del ensayo' : (s == 'CORRECCION' ? 'Corrección' : (s == 'CARGA_INICIAL' ? 'Carga inicial' : (s == 'MATRIZ_EXCEL' ? 'Matriz del Excel' : 'Mensual')))}</option></c:forEach></select></div>
-  <div class="field"><label>Desde</label><input class="input" type="date" name="fDesde" value="${param.fDesde}"></div>
-  <div class="field"><label>Hasta</label><input class="input" type="date" name="fHasta" value="${param.fHasta}"></div>
+  <div class="field"><label>Desde</label><input class="input" type="date" name="fDesde" value="${fn:escapeXml(param.fDesde)}"></div>
+  <div class="field"><label>Hasta</label><input class="input" type="date" name="fHasta" value="${fn:escapeXml(param.fHasta)}"></div>
   <div class="field" style="flex:none"><button class="btn btn-secondary">Filtrar</button></div>
 </form>
 
@@ -32,7 +32,7 @@
     <td><c:choose><c:when test="${not h.aplicado}"><span class="tag neutral">No aplicado</span></c:when><c:otherwise><c:out value="${h.registradoPor}"/><c:if test="${not empty h.motivo}"><small><c:out value="${h.motivo}"/></small></c:if></c:otherwise></c:choose></td></tr></c:forEach>
   <c:if test="${empty lista}"><tr><td colspan="6" class="empty">No hay registros con esos filtros.</td></tr></c:if>
   </tbody></table>
-  <c:url var="base" value="/admin/historico"><c:param name="vista" value="cambios"/><c:param name="fMiembro" value="${param.fMiembro}"/><c:param name="fFigura" value="${param.fFigura}"/><c:param name="fFuente" value="${param.fFuente}"/><c:param name="fDesde" value="${param.fDesde}"/><c:param name="fHasta" value="${param.fHasta}"/></c:url>
+  <c:url var="base" value="/admin/historico"><c:param name="vista" value="cambios"/><c:param name="fMiembro" value="${param.fMiembro}"/><c:param name="fFigura" value="${param.fFigura}"/><c:param name="fFuente" value="${param.fFuente}"/><c:param name="fDesde" value="${fn:escapeXml(param.fDesde)}"/><c:param name="fHasta" value="${fn:escapeXml(param.fHasta)}"/></c:url>
   <div class="inline"><span class="muted small">Mostrando ${desdeFila}–${hastaFila} de ${cuentas[0]}</span><span class="spacer"></span>
     <c:if test="${pagina > 1}"><a class="pill-link" href="${base}&p=${pagina - 1}">← Anterior</a></c:if>
     <span class="pill-link on">${pagina} / ${paginas}</span>
