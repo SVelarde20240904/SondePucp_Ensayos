@@ -29,4 +29,13 @@
       <a class="pill-link${sub == 'caja' ? ' on' : ''}" href="${ctx}/finanzas/caja">Caja</a>
     </nav>
   </c:when>
+  <c:when test="${grupo == 'comunica'}">
+    <nav class="inline subtabs" aria-label="Secciones de Comunica">
+      <a class="pill-link${sub == 'tablero' ? ' on' : ''}" href="${ctx}/comunica">Tablero</a>
+      <a class="pill-link${sub == 'cumpleanos' ? ' on' : ''}" href="${ctx}/comunica/cumpleanos">Cumpleaños</a>
+      <a class="pill-link${sub == 'ideas' ? ' on' : ''}" href="${ctx}/comunica/ideas">Ideas</a>
+      <a class="pill-link${sub == 'plantillas' ? ' on' : ''}" href="${ctx}/comunica/plantillas">Plantillas</a>
+      <a class="pill-link${sub == 'archivo' ? ' on' : ''}" href="${ctx}/comunica/archivo">Archivo</a>
+    </nav>
+  </c:when>
 </c:choose>

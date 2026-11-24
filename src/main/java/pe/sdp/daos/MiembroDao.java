@@ -245,7 +245,7 @@ public class MiembroDao extends BaseDao {
     }
 
     /** Roles que se pueden poner o quitar (el 1, Miembro, lo tienen todos). El trigger impide quedarse sin Owner. */
-    public static final List<Integer> ROLES_EXTRA = List.of(2, 4, 5, 6, 7, 8, 9, 10, 11, 3);
+    public static final List<Integer> ROLES_EXTRA = List.of(2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 3);
 
     private void guardarRoles(Connection c, int id, Set<Integer> roles, int idAdmin) throws SQLException {
         if (roles == null) return;
@@ -268,6 +268,13 @@ public class MiembroDao extends BaseDao {
         try (PreparedStatement ps = c.prepareStatement("INSERT IGNORE INTO miembro_team (id_miembro, id_team, asignado_por) VALUES (?,?,?)")) {
             for (int t : teams) { ps.setInt(1, id); ps.setInt(2, t); ps.setInt(3, idAdmin); ps.addBatch(); }
             ps.executeBatch();
+        }
+        // estar en el team Comunica basta para entrar a su sección: si no tiene ningún rol de Comunica, recibe "Equipo de comunica"
+        try (PreparedStatement ps = c.prepareStatement(
+                "INSERT IGNORE INTO miembro_rol (id_miembro, id_rol, asignado_por) SELECT mt.id_miembro, 12, ? FROM miembro_team mt " +
+                "JOIN team t ON t.id_team=mt.id_team WHERE mt.id_miembro=? AND t.codigo='COMUNICA' " +
+                "AND NOT EXISTS (SELECT 1 FROM miembro_rol r WHERE r.id_miembro=mt.id_miembro AND r.id_rol IN (12,13,14))")) {
+            ps.setInt(1, idAdmin); ps.setInt(2, id); ps.executeUpdate();
         }
     }
 

@@ -1,0 +1,31 @@
+<%-- Tarjeta de un proyecto o idea (variable p). La usan el tablero, las ideas y el archivo. --%>
+<article class="ktarjeta${p.vencido ? ' vencido' : ''}">
+  <div class="kmeta"><span class="tag info">${p.tipoIcono} ${p.tipoTexto}</span><span class="tag neutral">${p.redTexto}</span>
+    <c:if test="${p.estado == 'ARCHIVADO'}"><span class="tag neutral">Archivado</span></c:if></div>
+  <a class="ktitulo" href="${ctx}/comunica/proyecto?id=${p.id}"><c:out value="${p.titulo}"/></a>
+  <c:if test="${not empty p.descripcion and p.estado == 'IDEA'}"><p class="kdesc"><c:out value="${fn:length(p.descripcion) gt 140 ? fn:substring(p.descripcion, 0, 140).concat('…') : p.descripcion}"/></p></c:if>
+  <div class="kinfo">
+    <c:if test="${not empty p.responsable}"><span>👤 <c:out value="${p.responsable}"/></span></c:if>
+    <c:if test="${p.estado == 'EN_DESARROLLO' and not empty p.fechaObjetivoTexto}"><span class="${p.vencido ? 'c-rojo' : ''}">📅 ${p.vencido ? 'Era para el ' : ''}${p.fechaObjetivoTexto}</span></c:if>
+    <c:if test="${p.estado == 'PUBLICADO' or p.estado == 'ARCHIVADO'}"><c:if test="${not empty p.fechaPublicacionTexto}"><span>✅ ${p.fechaPublicacionTexto}</span></c:if></c:if>
+    <c:if test="${p.tareas gt 0}"><span>☑ ${p.tareasHechas}/${p.tareas}</span></c:if>
+    <c:if test="${p.estado == 'IDEA' and not empty p.propuestoPor}"><span>💡 <c:out value="${p.propuestoPor}"/></span></c:if>
+  </div>
+  <c:if test="${not empty p.tags}"><div class="ktags"><c:forEach var="t" items="${p.tags}"><a class="ktag" href="${ctx}/comunica/${p.estado == 'IDEA' ? 'ideas' : 'archivo'}?tag=${fn:escapeXml(t)}">#<c:out value="${t}"/></a></c:forEach></div></c:if>
+  <div class="kacciones">
+    <c:if test="${not empty p.linkReferencia}"><a class="btn btn-ghost btn-sm" href="${fn:escapeXml(p.linkReferencia)}" target="_blank" rel="noopener noreferrer">Referencia ↗</a></c:if>
+    <c:if test="${not empty p.linkPublicacion}"><a class="btn btn-ghost btn-sm" href="${fn:escapeXml(p.linkPublicacion)}" target="_blank" rel="noopener noreferrer">Ver publicación ↗</a></c:if>
+    <c:choose>
+      <c:when test="${p.estado == 'IDEA'}">
+        <form method="post" action="${ctx}/comunica/ideas" class="inline-form"><input type="hidden" name="_csrf" value="${sessionScope.csrf}"><input type="hidden" name="id" value="${p.id}">
+          <c:if test="${not empty tag}"><input type="hidden" name="tag" value="${fn:escapeXml(tag)}"></c:if>
+          <button class="btn btn-sm ${p.miVoto ? 'btn-primary' : 'btn-secondary'}" name="action" value="votar" title="${p.miVoto ? 'Quitar mi voto' : 'Votar esta idea'}">👍 ${p.votos}</button>
+          <button class="btn btn-sm btn-secondary" name="action" value="desarrollar">Desarrollar →</button></form>
+      </c:when>
+      <c:when test="${p.estado == 'EN_DESARROLLO'}">
+        <form method="post" action="${ctx}/comunica/proyecto" class="inline-form"><input type="hidden" name="_csrf" value="${sessionScope.csrf}"><input type="hidden" name="id" value="${p.id}"><input type="hidden" name="volver" value="tablero"><input type="hidden" name="estado" value="PUBLICADO">
+          <button class="btn btn-sm btn-secondary" name="action" value="estado">Marcar publicado ✓</button></form>
+      </c:when>
+    </c:choose>
+  </div>
+</article>

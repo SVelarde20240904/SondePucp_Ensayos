@@ -235,6 +235,11 @@ public class ArranqueDao extends BaseDao {
                 }
                 hecho.add("histórico: matrices del Excel (evolución de antes de la web)");
             }
+            // va después de config y de los teams (usa ambos)
+            if (!existeTabla(c, "com_proyecto")) {
+                migrarComunica(c);
+                hecho.add("módulo Comunica (roles, permisos, saludos de cumpleaños, proyectos e ideas, plantillas de flyers)");
+            }
             // Nadie puede figurar dos veces con la misma función en un taller (pasaba al sumarse como "adicional" siendo del plan).
             // Se queda la fila del plan (o la más antigua) y hereda la asistencia/nivel de la repetida si le faltaba.
             try (Statement st = c.createStatement()) {
@@ -375,6 +380,66 @@ public class ArranqueDao extends BaseDao {
                              "CONSTRAINT fk_cu_miembro FOREIGN KEY (id_miembro) REFERENCES miembro(id_miembro), " +
                              "CONSTRAINT fk_cu_pago FOREIGN KEY (id_pago) REFERENCES pago_cuota(id_pago) ON DELETE SET NULL, " +
                              "CONSTRAINT fk_cu_act FOREIGN KEY (actualizado_por) REFERENCES miembro(id_miembro)) ENGINE=InnoDB");
+        }
+    }
+
+    /** Módulo Comunica: roles 12-14, permisos, saludos de cumpleaños, proyectos/ideas y plantillas de flyers. */
+    private static void migrarComunica(Connection c) throws SQLException {
+        try (Statement st = c.createStatement()) {
+            st.executeUpdate("INSERT IGNORE INTO rol_sistema (id_rol, codigo, nombre) VALUES (12,'EQUIPO_COMUNICA','Equipo de comunica')," +
+                             "(13,'MODERADOR_COMUNICA','Moderador de comunica'),(14,'ADMIN_COMUNICA','Admin de comunica')");
+            st.executeUpdate("ALTER TABLE permiso MODIFY seccion ENUM('MI_ESPACIO','ENSAYOS','TALLERES','FINANZAS','COMUNICA','ADMINISTRACION') NOT NULL");
+            st.executeUpdate("INSERT IGNORE INTO permiso (id_permiso, codigo, descripcion, seccion) SELECT COALESCE(MAX(id_permiso),0)+1, " +
+                             "'GESTIONAR_COMUNICA', 'Entrar a Comunica: saludos de cumpleaños, proyectos, ideas y plantillas', 'COMUNICA' FROM permiso");
+            st.executeUpdate("INSERT IGNORE INTO permiso (id_permiso, codigo, descripcion, seccion) SELECT COALESCE(MAX(id_permiso),0)+1, " +
+                             "'MODERAR_COMUNICA', 'Reasignar saludos, editar la plantilla del saludo y borrar proyectos, ideas o plantillas', 'COMUNICA' FROM permiso");
+            // los roles de Comunica tienen lo básico de cualquier miembro (Mi espacio)
+            st.executeUpdate("INSERT IGNORE INTO rol_permiso (id_rol, id_permiso) SELECT r.id_rol, rp.id_permiso FROM rol_permiso rp " +
+                             "JOIN (SELECT 12 AS id_rol UNION SELECT 13 UNION SELECT 14) r WHERE rp.id_rol=1");
+            st.executeUpdate("INSERT IGNORE INTO rol_permiso (id_rol, id_permiso) SELECT r.id_rol, p.id_permiso FROM permiso p " +
+                             "JOIN (SELECT 3 AS id_rol UNION SELECT 12 UNION SELECT 13 UNION SELECT 14) r WHERE p.codigo='GESTIONAR_COMUNICA'");
+            st.executeUpdate("INSERT IGNORE INTO rol_permiso (id_rol, id_permiso) SELECT r.id_rol, p.id_permiso FROM permiso p " +
+                             "JOIN (SELECT 3 AS id_rol UNION SELECT 13 UNION SELECT 14) r WHERE p.codigo='MODERAR_COMUNICA'");
+            // quien está en el team Comunica queda con el rol Equipo de comunica
+            st.executeUpdate("INSERT IGNORE INTO miembro_rol (id_miembro, id_rol) SELECT mt.id_miembro, 12 FROM miembro_team mt " +
+                             "JOIN team t ON t.id_team=mt.id_team WHERE t.codigo='COMUNICA'");
+            String UTF = " ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
+            // un saludo por cumpleañero y año: quién lo redacta y en qué va
+            st.executeUpdate("CREATE TABLE IF NOT EXISTS com_saludo (id INT AUTO_INCREMENT PRIMARY KEY, id_miembro INT NOT NULL, anio SMALLINT NOT NULL, " +
+                             "fecha DATE NOT NULL, id_responsable INT NULL, " +
+                             "estado ENUM('PENDIENTE','REDACTADO','VIDEO_LISTO','PUBLICADO','OMITIDO') NOT NULL DEFAULT 'PENDIENTE', " +
+                             "texto TEXT NULL, link_video VARCHAR(500) NULL, publicado_en VARCHAR(60) NULL, " +
+                             "actualizado_por INT NULL, fecha_actualizacion DATETIME NULL, " +
+                             "CONSTRAINT uq_saludo UNIQUE (id_miembro, anio), KEY ix_saludo_fecha (fecha), " +
+                             "CONSTRAINT fk_sal_miembro FOREIGN KEY (id_miembro) REFERENCES miembro(id_miembro) ON DELETE CASCADE, " +
+                             "CONSTRAINT fk_sal_resp FOREIGN KEY (id_responsable) REFERENCES miembro(id_miembro) ON DELETE SET NULL, " +
+                             "CONSTRAINT fk_sal_act FOREIGN KEY (actualizado_por) REFERENCES miembro(id_miembro) ON DELETE SET NULL)" + UTF);
+            // proyectos de contenido; las ideas son proyectos en estado IDEA (cualquier miembro puede proponer)
+            st.executeUpdate("CREATE TABLE IF NOT EXISTS com_proyecto (id INT AUTO_INCREMENT PRIMARY KEY, titulo VARCHAR(120) NOT NULL, " +
+                             "tipo ENUM('TIKTOK','REEL','POST','HISTORIA','DESTACADA','FLYER','MEME','TUTORIAL','COMUNICADO','OTRO') NOT NULL DEFAULT 'OTRO', " +
+                             "red ENUM('INSTAGRAM','TIKTOK','TELEGRAM','VARIAS') NOT NULL DEFAULT 'INSTAGRAM', " +
+                             "estado ENUM('IDEA','EN_DESARROLLO','PUBLICADO','ARCHIVADO') NOT NULL DEFAULT 'IDEA', " +
+                             "descripcion TEXT NULL, etiquetas VARCHAR(200) NULL, id_responsable INT NULL, fecha_objetivo DATE NULL, " +
+                             "link_referencia VARCHAR(500) NULL, link_drive VARCHAR(500) NULL, link_publicacion VARCHAR(500) NULL, " +
+                             "propuesto_por INT NULL, fecha_creacion DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, fecha_publicacion DATE NULL, " +
+                             "actualizado_por INT NULL, fecha_actualizacion DATETIME NULL, KEY ix_proy_estado (estado), " +
+                             "CONSTRAINT fk_proy_resp FOREIGN KEY (id_responsable) REFERENCES miembro(id_miembro) ON DELETE SET NULL, " +
+                             "CONSTRAINT fk_proy_prop FOREIGN KEY (propuesto_por) REFERENCES miembro(id_miembro) ON DELETE SET NULL, " +
+                             "CONSTRAINT fk_proy_act FOREIGN KEY (actualizado_por) REFERENCES miembro(id_miembro) ON DELETE SET NULL)" + UTF);
+            st.executeUpdate("CREATE TABLE IF NOT EXISTS com_tarea (id INT AUTO_INCREMENT PRIMARY KEY, id_proyecto INT NOT NULL, texto VARCHAR(200) NOT NULL, " +
+                             "hecha TINYINT(1) NOT NULL DEFAULT 0, " +
+                             "CONSTRAINT fk_tarea_proy FOREIGN KEY (id_proyecto) REFERENCES com_proyecto(id) ON DELETE CASCADE)" + UTF);
+            st.executeUpdate("CREATE TABLE IF NOT EXISTS com_voto (id_proyecto INT NOT NULL, id_miembro INT NOT NULL, PRIMARY KEY (id_proyecto, id_miembro), " +
+                             "CONSTRAINT fk_voto_proy FOREIGN KEY (id_proyecto) REFERENCES com_proyecto(id) ON DELETE CASCADE, " +
+                             "CONSTRAINT fk_voto_miembro FOREIGN KEY (id_miembro) REFERENCES miembro(id_miembro) ON DELETE CASCADE)" + UTF);
+            // plantillas de flyers: vista previa (imagen liviana) + link de Canva para adaptarla rápido
+            st.executeUpdate("CREATE TABLE IF NOT EXISTS com_plantilla (id INT AUTO_INCREMENT PRIMARY KEY, nombre VARCHAR(100) NOT NULL, " +
+                             "tipo VARCHAR(40) NOT NULL, ciclo VARCHAR(10) NULL, link_canva VARCHAR(500) NULL, notas VARCHAR(300) NULL, " +
+                             "imagen MEDIUMBLOB NULL, activa TINYINT(1) NOT NULL DEFAULT 1, subido_por INT NULL, " +
+                             "fecha DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, " +
+                             "CONSTRAINT fk_plant_sub FOREIGN KEY (subido_por) REFERENCES miembro(id_miembro) ON DELETE SET NULL)" + UTF);
+            st.executeUpdate("INSERT IGNORE INTO config (clave, valor) VALUES ('comunica.plantilla_saludo', " +
+                             "'¡Feliz cumpleaños, {apodo}! 🎉 Todo Son de PUCP te desea un día lleno de son, casino y mucha cubanía. ¡Que lo bailes con todo! 💃🕺')");
         }
     }
 

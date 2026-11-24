@@ -57,6 +57,11 @@
       <a class="${menu == 'Caja' ? 'active' : ''}" href="${ctx}/finanzas/caja">Caja</a>
     </nav>
   </c:if>
+  <div class="nav-title">Comunica</div>
+  <nav class="nav">
+    <c:if test="${perm.contains('GESTIONAR_COMUNICA')}"><a class="${menu == 'Comunica' ? 'active' : ''}" href="${ctx}/comunica">Comunica</a></c:if>
+    <a class="${menu == 'Proponer idea' ? 'active' : ''}" href="${ctx}/proponer-idea">Proponer una idea</a>
+  </nav>
   <c:set var="puedeResp" value="${perm.contains('ASIGNAR_RESPONSABILIDADES') or perm.contains('ASIGNAR_RESPONSABILIDADES_TALLERES')}"/>
   <c:if test="${puedeResp or perm.contains('GESTIONAR_MIEMBROS') or perm.contains('ASIGNAR_ROLES') or perm.contains('GESTIONAR_FIGURAS') or perm.contains('GESTIONAR_HISTORICO')}">
     <div class="nav-title">Administración</div>
@@ -78,9 +83,12 @@
       <c:when test="${u.tieneRol(7)}"><c:set var="rolTop" value="Moderador de talleres"/></c:when>
       <c:when test="${u.tieneRol(11)}"><c:set var="rolTop" value="Admin de finanzas"/></c:when>
       <c:when test="${u.tieneRol(10)}"><c:set var="rolTop" value="Moderador de finanzas"/></c:when>
+      <c:when test="${u.tieneRol(14)}"><c:set var="rolTop" value="Admin de comunica"/></c:when>
+      <c:when test="${u.tieneRol(13)}"><c:set var="rolTop" value="Moderador de comunica"/></c:when>
       <c:when test="${u.tieneRol(2)}"><c:set var="rolTop" value="Equipo de ensayos"/></c:when>
       <c:when test="${u.tieneRol(6)}"><c:set var="rolTop" value="Equipo de talleres"/></c:when>
       <c:when test="${u.tieneRol(9)}"><c:set var="rolTop" value="Equipo de finanzas"/></c:when>
+      <c:when test="${u.tieneRol(12)}"><c:set var="rolTop" value="Equipo de comunica"/></c:when>
       <c:otherwise><c:set var="rolTop" value=""/></c:otherwise>
     </c:choose>
     <span><c:out value="${u.nombre}"/><small>${u.rolBaileTexto}${empty rolTop ? ' · '.concat(u.frecuenciaTexto) : ' · '.concat(rolTop)}</small></span></a>

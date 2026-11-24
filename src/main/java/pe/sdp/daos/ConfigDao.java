@@ -7,7 +7,7 @@ import java.util.*;
 public class ConfigDao extends BaseDao {
 
     /** Secciones con su barra de emojis: INICIO = los admins, y un team por sección. */
-    public static final List<String> SECCIONES_PIE = List.of("INICIO", "ENSAYOS", "TALLERES", "FINANZAS");
+    public static final List<String> SECCIONES_PIE = List.of("INICIO", "ENSAYOS", "TALLERES", "FINANZAS", "COMUNICA");
 
     public Map<String, String> emojis() throws SQLException {
         Map<String, String> m = new LinkedHashMap<>();

@@ -73,6 +73,18 @@ public final class Pendientes {
                 l.add(item("🎓", "¿Vas al " + t.getTitulo() + " del " + t.getFechaCorta() + "?", (t.getMiPapel() == null ? "" : t.getMiPapel() + " · ") + t.getHorario(),
                         "/confirmar-asistencia", "Responder", "info"));
 
+        // Comunica: saludos de cumpleaños que me tocan (atrasados o de los próximos días) y proyectos por vencer
+        ComunicaDao comunica = new ComunicaDao();
+        comunica.generarSiHaceFalta();
+        for (Map<String, Object> s : comunica.misSaludosPendientes(yo, 3))
+            l.add(item("🎂", "Saludo de cumpleaños: " + s.get("comoLlamarlo") + " (" + s.get("fechaTexto") + ")",
+                    s.get("cuando") + " · " + s.get("estadoTexto"), "/comunica/saludo?id=" + s.get("id"), "Abrir",
+                    Boolean.TRUE.equals(s.get("atrasado")) || Boolean.TRUE.equals(s.get("urgente")) ? "warn" : "info"));
+        for (Map<String, Object> p : comunica.misProyectosPorVencer(yo, 2))
+            l.add(item(String.valueOf(p.get("tipoIcono")), String.valueOf(p.get("titulo")),
+                    (Boolean.TRUE.equals(p.get("vencido")) ? "Se pasó la fecha: " : "Para el ") + p.get("fechaObjetivoTexto") + " · " + p.get("tipoTexto") + " en " + p.get("redTexto"),
+                    "/comunica/proyecto?id=" + p.get("id"), "Abrir", Boolean.TRUE.equals(p.get("vencido")) ? "warn" : "info"));
+
         int resp = new EncargoDao().pendientesDe(yo);
         if (resp > 0)
             l.add(item("✅", resp + (resp == 1 ? " responsabilidad pendiente" : " responsabilidades pendientes"), "Lo que te toca esta semana",
