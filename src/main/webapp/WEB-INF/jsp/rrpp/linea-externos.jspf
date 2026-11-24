@@ -1,0 +1,15 @@
+<%-- Línea de tiempo del ciclo de externos (variable sem) --%>
+<c:choose>
+  <c:when test="${sem.sinTaller}"><p class="note info">Esta semana no hay taller: no se piden externos.</p></c:when>
+  <c:otherwise>
+    <ol class="linea-ext">
+      <li class="${sem.hayLink ? 'hecho' : (sem.linkAtrasado ? 'tarde' : '')}"><b>Publicar el link</b><small>${sem.publicarTexto}</small>
+        <c:if test="${not empty sem.publicadoEn}"><small class="c-verde">✓ <c:out value="${sem.publicadoPor}"/> · ${sem.publicadoEn}</small></c:if></li>
+      <li class="${sem.cerrado and sem.hayLink ? 'hecho' : (sem.abierto ? 'ahora' : '')}"><b>${sem.abierto ? 'Abierto: la gente registra' : 'Cierra el Form'}</b><small>${sem.cierreTexto}</small></li>
+      <li class="${sem.enviado ? 'hecho' : (sem.envioAtrasado ? 'tarde' : '')}"><b>Enviar a la DAES</b><small>${sem.envioTexto}</small>
+        <c:if test="${sem.enviado}"><small class="c-verde">✓ <c:out value="${sem.enviadoPor}"/> · ${sem.enviadoEn}</small></c:if></li>
+      <li class="${sem.enviado ? 'hecho' : ''}"><b>Taller</b><small>${sem.juevesTexto}</small></li>
+    </ol>
+    <p class="muted small">Encargado(a) de la semana: <b><c:out value="${empty sem.encargado ? 'nadie (agrega gente al team RRPP)' : sem.encargado}"/></b></p>
+  </c:otherwise>
+</c:choose>

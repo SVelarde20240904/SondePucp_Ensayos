@@ -73,6 +73,34 @@ public final class Pendientes {
                 l.add(item("🎓", "¿Vas al " + t.getTitulo() + " del " + t.getFechaCorta() + "?", (t.getMiPapel() == null ? "" : t.getMiPapel() + " · ") + t.getHorario(),
                         "/confirmar-asistencia", "Responder", "info"));
 
+        // Externos del taller del jueves: a todos mientras el Form está abierto; al encargado (y a mod/admin de RRPP si se atrasa), publicar y enviar
+        RrppDao rrpp = new RrppDao();
+        Map<String, Object> sem = rrpp.semana(RrppDao.juevesActual());
+        if (Boolean.TRUE.equals(sem.get("abierto")))
+            l.add(0, item("🎟️", "¿Traes a alguien al taller del jueves " + sem.get("juevesCorto") + "?", "Regístralo en el Form de externos antes del " + sem.get("cierreCorto"),
+                    "/externos", "Registrar", "info"));
+        boolean encargado = Objects.equals(sem.get("idEncargado"), yo);
+        boolean modRrpp = !encargado && (Boolean.TRUE.equals(sem.get("linkAtrasado")) || Boolean.TRUE.equals(sem.get("envioAtrasado"))) && rrpp.esModerador(yo);
+        if (encargado || modRrpp) {
+            if (Boolean.TRUE.equals(sem.get("faltaLink")))
+                l.add(0, item("📣", "Publica el link de externos del jueves " + sem.get("juevesCorto"),
+                        (Boolean.TRUE.equals(sem.get("linkAtrasado")) ? "¡Atrasado! Tocaba el " : "Toca hoy · ") + sem.get("publicarTexto") + (modRrpp ? " · encargado: " + sem.get("encargado") : ""),
+                        "/rrpp/externos", "Publicar", Boolean.TRUE.equals(sem.get("linkAtrasado")) ? "bad" : "warn"));
+            if (Boolean.TRUE.equals(sem.get("faltaEnvio")))
+                l.add(0, item("📨", "Envía la lista de externos a la DAES", (Boolean.TRUE.equals(sem.get("envioAtrasado")) ? "¡Atrasado! Tocaba el " : "Toca hoy · ") + sem.get("envioTexto")
+                        + (modRrpp ? " · encargado: " + sem.get("encargado") : ""), "/rrpp/externos", "Ya la envié", Boolean.TRUE.equals(sem.get("envioAtrasado")) ? "bad" : "warn"));
+        }
+        // Visitas formales: responder la convocatoria, y recordatorio si voy y es hoy o mañana
+        for (Map<String, Object> vv : rrpp.visitasPendientes(yo)) {
+            boolean voy = "VOY".equals(vv.get("miRespuesta"));
+            l.add(item("🚌", (voy ? vv.get("cuando") + ": visita " : "¿Vas a la visita? ") + vv.get("titulo"),
+                    vv.get("fechaTexto") + (vv.get("puntoEncuentro") == null ? "" : " · encuentro: " + vv.get("puntoEncuentro") + (vv.get("horaEncuentroTexto").toString().isEmpty() ? "" : " " + vv.get("horaEncuentroTexto"))),
+                    "/visitas#v" + vv.get("id"), voy ? "Ver" : "Responder", voy ? "warn" : "info"));
+        }
+        // Encuestas abiertas donde no voté
+        for (Map<String, Object> e : new EncuestaDao().sinVotar(yo))
+            l.add(item("📊", "Encuesta: " + e.get("pregunta"), "Cierra el " + e.get("cierreTexto"), "/encuestas/ver?id=" + e.get("id"), "Votar", "info"));
+
         // Comunica: saludos de cumpleaños que me tocan (atrasados o de los próximos días) y proyectos por vencer
         ComunicaDao comunica = new ComunicaDao();
         comunica.generarSiHaceFalta();

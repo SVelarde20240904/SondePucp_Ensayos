@@ -738,3 +738,33 @@ table.saludos tr.atrasado td:first-child b { color: var(--rojo); }
 .gtxt { padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 6px; }
 .gtxt small { color: var(--text-2); font-size: 12px; }
 .preview-plantilla { width: 100%; border-radius: 10px; display: block; }
+
+/* ---------- Encuestas ---------- */
+.h1-pregunta { font-size: 22px !important; text-transform: none !important; }
+.mt { margin-top: 14px; }
+.resultados { display: flex; flex-direction: column; gap: 12px; }
+.res-top { display: flex; justify-content: space-between; gap: 10px; font-size: 14px; font-weight: 500; }
+.res-barra { height: 10px; border-radius: 99px; background: var(--neutral-soft); overflow: hidden; margin: 5px 0 3px; }
+.res-barra i { display: block; height: 100%; background: var(--primary); border-radius: 99px; }
+.res.gana .res-barra i { background: var(--verde); }
+.res small { display: block; font-size: 12px; }
+.pend.ok { border-left-color: var(--verde); }
+.pend.neutral { border-left-color: var(--border); }
+
+/* ---------- RRPP ---------- */
+.linea-ext { list-style: none; display: flex; flex-direction: column; gap: 0; margin: 6px 0 10px; padding-left: 4px; }
+.linea-ext li { position: relative; padding: 0 0 12px 22px; display: flex; flex-direction: column; gap: 1px; border-left: 2px solid var(--border); }
+.linea-ext li:last-child { border-left-color: transparent; padding-bottom: 0; }
+.linea-ext li::before { content: ""; position: absolute; left: -7px; top: 2px; width: 12px; height: 12px; border-radius: 50%; background: var(--surface); border: 2px solid var(--border); }
+.linea-ext li b { font-size: 14px; } .linea-ext li small { font-size: 12px; color: var(--text-2); }
+.linea-ext li.hecho::before { background: var(--verde); border-color: var(--verde); }
+.linea-ext li.hecho { border-left-color: var(--verde); }
+.linea-ext li.ahora::before { background: var(--accent); border-color: var(--accent); }
+.linea-ext li.tarde::before { background: var(--rojo); border-color: var(--rojo); }
+.linea-ext li.tarde b { color: var(--rojo); }
+.contacto-links { white-space: nowrap; }
+.contacto-links .btn { margin-right: 4px; }
+.visita-card h2 { font-size: 17px; }
+.timeline-simple { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+.timeline-simple li { border-left: 3px solid var(--primary-soft); padding-left: 10px; }
+table.table td small { display: block; font-size: 12px; color: var(--text-2); }

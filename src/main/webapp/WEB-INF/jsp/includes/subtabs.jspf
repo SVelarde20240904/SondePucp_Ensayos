@@ -38,4 +38,12 @@
       <a class="pill-link${sub == 'archivo' ? ' on' : ''}" href="${ctx}/comunica/archivo">Archivo</a>
     </nav>
   </c:when>
+  <c:when test="${grupo == 'rrpp'}">
+    <nav class="inline subtabs" aria-label="Secciones de RRPP">
+      <a class="pill-link${sub == 'resumen' ? ' on' : ''}" href="${ctx}/rrpp">Resumen</a>
+      <a class="pill-link${sub == 'externos' ? ' on' : ''}" href="${ctx}/rrpp/externos">Externos del jueves</a>
+      <a class="pill-link${sub == 'visitas' ? ' on' : ''}" href="${ctx}/rrpp/visitas">Visitas formales</a>
+      <a class="pill-link${sub == 'directorio' ? ' on' : ''}" href="${ctx}/rrpp/directorio">Directorio</a>
+    </nav>
+  </c:when>
 </c:choose>

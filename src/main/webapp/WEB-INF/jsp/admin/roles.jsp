@@ -11,7 +11,7 @@
       <c:set var="sec" value=""/>
       <c:forEach var="p" items="${permisos}">
         <c:if test="${p.seccion != sec}"><c:set var="sec" value="${p.seccion}"/>
-          <tr class="section"><td colspan="${fn:length(roles) + 2}">${sec == 'MI_ESPACIO' ? 'MI ESPACIO' : (sec == 'ENSAYOS' ? 'ENSAYOS' : (sec == 'TALLERES' ? 'TALLERES' : (sec == 'FINANZAS' ? 'FINANZAS' : (sec == 'COMUNICA' ? 'COMUNICA' : 'ADMINISTRACIÓN'))))}</td></tr></c:if>
+          <tr class="section"><td colspan="${fn:length(roles) + 2}">${sec == 'MI_ESPACIO' ? 'MI ESPACIO' : (sec == 'ENSAYOS' ? 'ENSAYOS' : (sec == 'TALLERES' ? 'TALLERES' : (sec == 'FINANZAS' ? 'FINANZAS' : (sec == 'COMUNICA' ? 'COMUNICA' : (sec == 'RRPP' ? 'RRPP' : 'ADMINISTRACIÓN')))))}</td></tr></c:if>
         <tr><td><c:out value="${p.descripcion}"/></td>
           <td><input type="checkbox" ${p.tiene(1) ? 'checked' : ''} disabled aria-label="Miembro"></td>
           <c:forEach var="r" items="${roles}">
@@ -43,7 +43,7 @@
     <form class="card" method="post" action="${ctx}/admin/roles"><input type="hidden" name="_csrf" value="${sessionScope.csrf}"><h2>Emojis del pie</h2>
       <p class="muted small">La barra de abajo muestra los emojis del team de cada sección. En Inicio y Mi perfil salen los de los admins.</p>
       <c:forEach var="e" items="${emojisPie}">
-        <div class="field"><label for="em_${e.key}">${e.key == 'INICIO' ? 'Inicio (admins)' : (e.key == 'ENSAYOS' ? 'Ensayos' : (e.key == 'TALLERES' ? 'Talleres' : (e.key == 'FINANZAS' ? 'Finanzas' : 'Comunica')))}</label>
+        <div class="field"><label for="em_${e.key}">${e.key == 'INICIO' ? 'Inicio (admins)' : (e.key == 'ENSAYOS' ? 'Ensayos' : (e.key == 'TALLERES' ? 'Talleres' : (e.key == 'FINANZAS' ? 'Finanzas' : (e.key == 'COMUNICA' ? 'Comunica' : 'RRPP'))))}</label>
           <input class="input" id="em_${e.key}" name="emojis_${e.key}" value="<c:out value='${e.value}'/>" maxlength="120" placeholder="Ej. 🦉🐥🌈"></div>
       </c:forEach>
       <div><button class="btn btn-secondary" name="action" value="emojis">Guardar emojis</button></div>

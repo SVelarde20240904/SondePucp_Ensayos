@@ -9,6 +9,7 @@
                  or menu == 'Mi historial' or menu == 'Formulario de taller'}"><c:set var="seccionPie" value="TALLERES"/></c:when>
   <c:when test="${menu == 'Cuotas' or menu == 'Mi cuota' or menu == 'Caja'}"><c:set var="seccionPie" value="FINANZAS"/></c:when>
   <c:when test="${menu == 'Comunica' or menu == 'Proponer idea'}"><c:set var="seccionPie" value="COMUNICA"/></c:when>
+  <c:when test="${menu == 'RRPP' or menu == 'Visitas'}"><c:set var="seccionPie" value="RRPP"/></c:when>
   <c:otherwise><c:set var="seccionPie" value="INICIO"/></c:otherwise>
 </c:choose>
 <footer class="team-bar"><strong>SON DE PUCP</strong><span class="emojis"><c:out value="${applicationScope.emojis[seccionPie]}"/></span></footer>

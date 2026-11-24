@@ -240,6 +240,10 @@ public class ArranqueDao extends BaseDao {
                 migrarComunica(c);
                 hecho.add("módulo Comunica (roles, permisos, saludos de cumpleaños, proyectos e ideas, plantillas de flyers)");
             }
+            if (!existeTabla(c, "encuesta")) {
+                migrarRrpp(c);
+                hecho.add("módulo RRPP (roles, externos del jueves, visitas formales, directorio) y encuestas");
+            }
             // Nadie puede figurar dos veces con la misma función en un taller (pasaba al sumarse como "adicional" siendo del plan).
             // Se queda la fila del plan (o la más antigua) y hereda la asistencia/nivel de la repetida si le faltaba.
             try (Statement st = c.createStatement()) {
@@ -440,6 +444,93 @@ public class ArranqueDao extends BaseDao {
                              "CONSTRAINT fk_plant_sub FOREIGN KEY (subido_por) REFERENCES miembro(id_miembro) ON DELETE SET NULL)" + UTF);
             st.executeUpdate("INSERT IGNORE INTO config (clave, valor) VALUES ('comunica.plantilla_saludo', " +
                              "'¡Feliz cumpleaños, {apodo}! 🎉 Todo Son de PUCP te desea un día lleno de son, casino y mucha cubanía. ¡Que lo bailes con todo! 💃🕺')");
+        }
+    }
+
+    /** Módulo RRPP (roles 15-17): externos del taller del jueves, visitas formales y directorio. Encuestas para los admins de todos los teams. */
+    private static void migrarRrpp(Connection c) throws SQLException {
+        try (Statement st = c.createStatement()) {
+            st.executeUpdate("INSERT IGNORE INTO rol_sistema (id_rol, codigo, nombre) VALUES (15,'EQUIPO_RRPP','Equipo de RRPP')," +
+                             "(16,'MODERADOR_RRPP','Moderador de RRPP'),(17,'ADMIN_RRPP','Admin de RRPP')");
+            st.executeUpdate("ALTER TABLE permiso MODIFY seccion ENUM('MI_ESPACIO','ENSAYOS','TALLERES','FINANZAS','COMUNICA','RRPP','ADMINISTRACION') NOT NULL");
+            st.executeUpdate("INSERT IGNORE INTO permiso (id_permiso, codigo, descripcion, seccion) SELECT COALESCE(MAX(id_permiso),0)+1, " +
+                             "'GESTIONAR_RRPP', 'Entrar a RRPP: externos del jueves, visitas formales y directorio de contactos', 'RRPP' FROM permiso");
+            st.executeUpdate("INSERT IGNORE INTO permiso (id_permiso, codigo, descripcion, seccion) SELECT COALESCE(MAX(id_permiso),0)+1, " +
+                             "'MODERAR_RRPP', 'Configurar el ciclo de externos, cambiar el encargado y borrar contactos o visitas', 'RRPP' FROM permiso");
+            st.executeUpdate("INSERT IGNORE INTO permiso (id_permiso, codigo, descripcion, seccion) SELECT COALESCE(MAX(id_permiso),0)+1, " +
+                             "'CREAR_ENCUESTAS', 'Crear encuestas para todo el grupo o para un team', 'ADMINISTRACION' FROM permiso");
+            st.executeUpdate("INSERT IGNORE INTO rol_permiso (id_rol, id_permiso) SELECT r.id_rol, rp.id_permiso FROM rol_permiso rp " +
+                             "JOIN (SELECT 15 AS id_rol UNION SELECT 16 UNION SELECT 17) r WHERE rp.id_rol=1");
+            st.executeUpdate("INSERT IGNORE INTO rol_permiso (id_rol, id_permiso) SELECT r.id_rol, p.id_permiso FROM permiso p " +
+                             "JOIN (SELECT 3 AS id_rol UNION SELECT 15 UNION SELECT 16 UNION SELECT 17) r WHERE p.codigo='GESTIONAR_RRPP'");
+            st.executeUpdate("INSERT IGNORE INTO rol_permiso (id_rol, id_permiso) SELECT r.id_rol, p.id_permiso FROM permiso p " +
+                             "JOIN (SELECT 3 AS id_rol UNION SELECT 16 UNION SELECT 17) r WHERE p.codigo='MODERAR_RRPP'");
+            // encuestas: Owner y los moderadores/admins de todos los teams
+            st.executeUpdate("INSERT IGNORE INTO rol_permiso (id_rol, id_permiso) SELECT r.id_rol, p.id_permiso FROM permiso p JOIN (SELECT 3 AS id_rol " +
+                             "UNION SELECT 4 UNION SELECT 5 UNION SELECT 7 UNION SELECT 8 UNION SELECT 10 UNION SELECT 11 UNION SELECT 13 UNION SELECT 14 " +
+                             "UNION SELECT 16 UNION SELECT 17) r WHERE p.codigo='CREAR_ENCUESTAS'");
+            st.executeUpdate("INSERT IGNORE INTO miembro_rol (id_miembro, id_rol) SELECT mt.id_miembro, 15 FROM miembro_team mt " +
+                             "JOIN team t ON t.id_team=mt.id_team WHERE t.codigo='RRPP'");
+            String UTF = " ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
+
+            // ---------- encuestas ----------
+            st.executeUpdate("CREATE TABLE IF NOT EXISTS encuesta (id INT AUTO_INCREMENT PRIMARY KEY, pregunta VARCHAR(200) NOT NULL, descripcion VARCHAR(1000) NULL, " +
+                             "tipo ENUM('SI_NO','UNA','VARIAS','FECHAS') NOT NULL DEFAULT 'UNA', anonima TINYINT(1) NOT NULL DEFAULT 0, " +
+                             "ver_antes TINYINT(1) NOT NULL DEFAULT 0, id_team SMALLINT NULL, cierre DATETIME NOT NULL, " +
+                             "creada_por INT NULL, fecha DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, KEY ix_enc_cierre (cierre), " +
+                             "CONSTRAINT fk_enc_team FOREIGN KEY (id_team) REFERENCES team(id_team), " +
+                             "CONSTRAINT fk_enc_crea FOREIGN KEY (creada_por) REFERENCES miembro(id_miembro) ON DELETE SET NULL)" + UTF);
+            st.executeUpdate("CREATE TABLE IF NOT EXISTS encuesta_opcion (id INT AUTO_INCREMENT PRIMARY KEY, id_encuesta INT NOT NULL, texto VARCHAR(120) NOT NULL, " +
+                             "orden SMALLINT NOT NULL DEFAULT 0, CONSTRAINT fk_eo_enc FOREIGN KEY (id_encuesta) REFERENCES encuesta(id) ON DELETE CASCADE)" + UTF);
+            st.executeUpdate("CREATE TABLE IF NOT EXISTS encuesta_voto (id_opcion INT NOT NULL, id_miembro INT NOT NULL, id_encuesta INT NOT NULL, " +
+                             "fecha DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY (id_opcion, id_miembro), KEY ix_ev_enc (id_encuesta, id_miembro), " +
+                             "CONSTRAINT fk_ev_op FOREIGN KEY (id_opcion) REFERENCES encuesta_opcion(id) ON DELETE CASCADE, " +
+                             "CONSTRAINT fk_ev_enc FOREIGN KEY (id_encuesta) REFERENCES encuesta(id) ON DELETE CASCADE, " +
+                             "CONSTRAINT fk_ev_m FOREIGN KEY (id_miembro) REFERENCES miembro(id_miembro) ON DELETE CASCADE)" + UTF);
+
+            // ---------- directorio de contactos (privado: solo RRPP) ----------
+            st.executeUpdate("CREATE TABLE IF NOT EXISTS rrpp_contacto (id INT AUTO_INCREMENT PRIMARY KEY, " +
+                             "categoria ENUM('RUEDA','ACADEMIA','CENTRO_FEDERADO','H_T','AUTORIDAD','OTRO') NOT NULL, nombre VARCHAR(120) NOT NULL, " +
+                             "persona VARCHAR(120) NULL, cargo VARCHAR(80) NULL, telefono VARCHAR(30) NULL, correo VARCHAR(120) NULL, instagram VARCHAR(60) NULL, " +
+                             "ubicacion VARCHAR(200) NULL, link_mapa VARCHAR(500) NULL, horario VARCHAR(200) NULL, ciclo VARCHAR(10) NULL, " +
+                             "estado ENUM('SIN_CONTACTAR','CONTACTADO','RESPONDIO','ALIADO') NOT NULL DEFAULT 'SIN_CONTACTAR', notas VARCHAR(1000) NULL, " +
+                             "ultimo_contacto DATE NULL, id_responsable INT NULL, creado_por INT NULL, fecha_creacion DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, " +
+                             "KEY ix_cont_cat (categoria), " +
+                             "CONSTRAINT fk_cont_resp FOREIGN KEY (id_responsable) REFERENCES miembro(id_miembro) ON DELETE SET NULL, " +
+                             "CONSTRAINT fk_cont_crea FOREIGN KEY (creado_por) REFERENCES miembro(id_miembro) ON DELETE SET NULL)" + UTF);
+            st.executeUpdate("CREATE TABLE IF NOT EXISTS rrpp_interaccion (id INT AUTO_INCREMENT PRIMARY KEY, id_contacto INT NOT NULL, fecha DATE NOT NULL, " +
+                             "nota VARCHAR(500) NOT NULL, registrado_por INT NULL, " +
+                             "CONSTRAINT fk_int_cont FOREIGN KEY (id_contacto) REFERENCES rrpp_contacto(id) ON DELETE CASCADE, " +
+                             "CONSTRAINT fk_int_reg FOREIGN KEY (registrado_por) REFERENCES miembro(id_miembro) ON DELETE SET NULL)" + UTF);
+
+            // ---------- visitas formales (vamos todos) ----------
+            st.executeUpdate("CREATE TABLE IF NOT EXISTS rrpp_visita (id INT AUTO_INCREMENT PRIMARY KEY, titulo VARCHAR(120) NOT NULL, id_contacto INT NULL, " +
+                             "lugar VARCHAR(200) NULL, link_mapa VARCHAR(500) NULL, fecha DATE NOT NULL, hora TIME NULL, punto_encuentro VARCHAR(200) NULL, " +
+                             "hora_encuentro TIME NULL, como_llegar VARCHAR(500) NULL, costo VARCHAR(80) NULL, dress_code VARCHAR(120) NULL, notas VARCHAR(1000) NULL, " +
+                             "estado ENUM('BORRADOR','CONVOCADA','REALIZADA','CANCELADA') NOT NULL DEFAULT 'BORRADOR', " +
+                             "checklist SET('AVISAR','PUBLICAR','RECORDAR','FOTO','AGRADECER') NOT NULL DEFAULT '', " +
+                             "id_coordinador INT NULL, link_foto VARCHAR(500) NULL, id_encuesta INT NULL, id_proyecto INT NULL, " +
+                             "creado_por INT NULL, fecha_creacion DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, KEY ix_vis_fecha (fecha), " +
+                             "CONSTRAINT fk_vis_cont FOREIGN KEY (id_contacto) REFERENCES rrpp_contacto(id) ON DELETE SET NULL, " +
+                             "CONSTRAINT fk_vis_coord FOREIGN KEY (id_coordinador) REFERENCES miembro(id_miembro) ON DELETE SET NULL, " +
+                             "CONSTRAINT fk_vis_enc FOREIGN KEY (id_encuesta) REFERENCES encuesta(id) ON DELETE SET NULL, " +
+                             "CONSTRAINT fk_vis_proy FOREIGN KEY (id_proyecto) REFERENCES com_proyecto(id) ON DELETE SET NULL, " +
+                             "CONSTRAINT fk_vis_crea FOREIGN KEY (creado_por) REFERENCES miembro(id_miembro) ON DELETE SET NULL)" + UTF);
+            st.executeUpdate("CREATE TABLE IF NOT EXISTS rrpp_visita_resp (id_visita INT NOT NULL, id_miembro INT NOT NULL, respuesta ENUM('VOY','NO_PUEDO') NOT NULL, " +
+                             "fecha DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY (id_visita, id_miembro), " +
+                             "CONSTRAINT fk_vr_vis FOREIGN KEY (id_visita) REFERENCES rrpp_visita(id) ON DELETE CASCADE, " +
+                             "CONSTRAINT fk_vr_m FOREIGN KEY (id_miembro) REFERENCES miembro(id_miembro) ON DELETE CASCADE)" + UTF);
+
+            // ---------- externos del taller del jueves: una fila por semana ----------
+            st.executeUpdate("CREATE TABLE IF NOT EXISTS rrpp_externos (id INT AUTO_INCREMENT PRIMARY KEY, jueves DATE NOT NULL UNIQUE, link_form VARCHAR(500) NULL, " +
+                             "id_encargado INT NULL, publicado_por INT NULL, publicado_en DATETIME NULL, enviado_por INT NULL, enviado_en DATETIME NULL, " +
+                             "sin_taller TINYINT(1) NOT NULL DEFAULT 0, nota VARCHAR(200) NULL, " +
+                             "CONSTRAINT fk_ext_enc FOREIGN KEY (id_encargado) REFERENCES miembro(id_miembro) ON DELETE SET NULL, " +
+                             "CONSTRAINT fk_ext_pub FOREIGN KEY (publicado_por) REFERENCES miembro(id_miembro) ON DELETE SET NULL, " +
+                             "CONSTRAINT fk_ext_env FOREIGN KEY (enviado_por) REFERENCES miembro(id_miembro) ON DELETE SET NULL)" + UTF);
+            // ciclo por defecto (se cambia en RRPP → Externos): publicar el sábado, cerrar el lunes 23:59, enviar a la DAES el martes
+            st.executeUpdate("INSERT IGNORE INTO config (clave, valor) VALUES ('rrpp.ext.dia_publicar','6'),('rrpp.ext.dia_cierre','1')," +
+                             "('rrpp.ext.hora_cierre','23:59'),('rrpp.ext.dia_envio','2'),('rrpp.ext.encargado',''),('rrpp.meta_visitas','1')");
         }
     }
 

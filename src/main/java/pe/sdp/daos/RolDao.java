@@ -29,7 +29,7 @@ public class RolDao extends BaseDao {
 
     public List<Permiso> matriz() throws SQLException {
         String sql = "SELECT p.*, (SELECT GROUP_CONCAT(rp.id_rol) FROM rol_permiso rp WHERE rp.id_permiso=p.id_permiso) AS roles " +
-                     "FROM permiso p ORDER BY FIELD(p.seccion,'MI_ESPACIO','ENSAYOS','TALLERES','FINANZAS','COMUNICA','ADMINISTRACION'), p.id_permiso";
+                     "FROM permiso p ORDER BY FIELD(p.seccion,'MI_ESPACIO','ENSAYOS','TALLERES','FINANZAS','COMUNICA','RRPP','ADMINISTRACION'), p.id_permiso";
         try (Connection c = getConnection(); Statement st = c.createStatement(); ResultSet rs = st.executeQuery(sql)) {
             List<Permiso> l = new ArrayList<>();
             while (rs.next()) {
