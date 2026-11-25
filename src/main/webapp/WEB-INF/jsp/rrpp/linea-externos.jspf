@@ -5,9 +5,10 @@
     <ol class="linea-ext">
       <li class="${sem.hayLink ? 'hecho' : (sem.linkAtrasado ? 'tarde' : '')}"><b>Publicar el link</b><small>${sem.publicarTexto}</small>
         <c:if test="${not empty sem.publicadoEn}"><small class="c-verde">✓ <c:out value="${sem.publicadoPor}"/> · ${sem.publicadoEn}</small></c:if></li>
-      <li class="${sem.cerrado and sem.hayLink ? 'hecho' : (sem.abierto ? 'ahora' : '')}"><b>${sem.abierto ? 'Abierto: la gente registra' : 'Cierra el Form'}</b><small>${sem.cierreTexto}</small></li>
-      <li class="${sem.enviado ? 'hecho' : (sem.envioAtrasado ? 'tarde' : '')}"><b>Enviar a la DAES</b><small>${sem.envioTexto}</small>
-        <c:if test="${sem.enviado}"><small class="c-verde">✓ <c:out value="${sem.enviadoPor}"/> · ${sem.enviadoEn}</small></c:if></li>
+      <li class="${sem.abierto ? 'ahora' : (sem.cerrado and sem.hayLink ? 'hecho' : '')}"><b>${sem.abierto ? 'Abierto: la gente registra' : 'La gente registra'}</b><small>hasta que se envíe la lista</small></li>
+      <li class="${sem.enviado and not sem.falta ? 'hecho' : (sem.falta ? 'tarde' : '')}"><b>Enviar a la DAES y cerrar</b><small>a más tardar el ${sem.envioTexto}</small>
+        <c:if test="${sem.enviado}"><small class="${sem.falta ? 'c-rojo' : 'c-verde'}">✓ <c:out value="${sem.enviadoPor}"/> · ${sem.enviadoEn}${sem.falta ? ' (tarde)' : ''}</small></c:if>
+        <c:if test="${sem.falta and not sem.enviado}"><small class="c-rojo">F: no se envió a tiempo</small></c:if></li>
       <li class="${sem.enviado ? 'hecho' : ''}"><b>Taller</b><small>${sem.juevesTexto}</small></li>
     </ol>
     <p class="muted small">Encargado(a) de la semana: <b><c:out value="${empty sem.encargado ? 'nadie (agrega gente al team RRPP)' : sem.encargado}"/></b></p>

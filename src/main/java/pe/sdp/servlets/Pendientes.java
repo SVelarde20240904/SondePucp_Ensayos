@@ -77,7 +77,7 @@ public final class Pendientes {
         RrppDao rrpp = new RrppDao();
         Map<String, Object> sem = rrpp.semana(RrppDao.juevesActual());
         if (Boolean.TRUE.equals(sem.get("abierto")))
-            l.add(0, item("🎟️", "¿Traes a alguien al taller del jueves " + sem.get("juevesCorto") + "?", "Regístralo en el Form de externos antes del " + sem.get("cierreCorto"),
+            l.add(0, item("🎟️", "¿Traes a alguien al taller del jueves " + sem.get("juevesCorto") + "?", "Regístralo en el Form antes de que RRPP envíe la lista a la DAES (a más tardar el " + sem.get("envioCorto") + ")",
                     "/externos", "Registrar", "info"));
         boolean encargado = Objects.equals(sem.get("idEncargado"), yo);
         boolean modRrpp = !encargado && (Boolean.TRUE.equals(sem.get("linkAtrasado")) || Boolean.TRUE.equals(sem.get("envioAtrasado"))) && rrpp.esModerador(yo);
@@ -87,7 +87,7 @@ public final class Pendientes {
                         (Boolean.TRUE.equals(sem.get("linkAtrasado")) ? "¡Atrasado! Tocaba el " : "Toca hoy · ") + sem.get("publicarTexto") + (modRrpp ? " · encargado: " + sem.get("encargado") : ""),
                         "/rrpp/externos", "Publicar", Boolean.TRUE.equals(sem.get("linkAtrasado")) ? "bad" : "warn"));
             if (Boolean.TRUE.equals(sem.get("faltaEnvio")))
-                l.add(0, item("📨", "Envía la lista de externos a la DAES", (Boolean.TRUE.equals(sem.get("envioAtrasado")) ? "¡Atrasado! Tocaba el " : "Toca hoy · ") + sem.get("envioTexto")
+                l.add(0, item("📨", "Envía la lista de externos a la DAES", (Boolean.TRUE.equals(sem.get("envioAtrasado")) ? "¡No se envió! Era hasta el " : "Hoy, sin falta · al marcarla como enviada se cierra el Form · ") + sem.get("envioTexto")
                         + (modRrpp ? " · encargado: " + sem.get("encargado") : ""), "/rrpp/externos", "Ya la envié", Boolean.TRUE.equals(sem.get("envioAtrasado")) ? "bad" : "warn"));
         }
         // Visitas formales: responder la convocatoria, y recordatorio si voy y es hoy o mañana

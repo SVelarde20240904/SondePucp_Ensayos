@@ -13,11 +13,11 @@
         <div class="field"><label for="link">Link del Form de esta semana</label>
           <div class="inline"><input class="input" type="url" id="link" name="link" maxlength="500" placeholder="https://forms.gle/…" value="${fn:escapeXml(sem.link)}">
             <button class="btn btn-primary btn-sm" name="action" value="publicar">${empty sem.link ? 'Publicar' : 'Actualizar'}</button></div>
-          <small class="muted">Mientras esté abierto, a todos les sale en Inicio «¿Traes a alguien al taller?» con este link.</small></div>
+          <small class="muted">Hasta que envíes la lista, a todos les sale en Inicio «¿Traes a alguien al taller?» con este link.</small></div>
         <div class="inline">
           <c:choose>
             <c:when test="${sem.enviado}"><button class="btn btn-ghost btn-sm" name="action" value="deshacer">Desmarcar envío</button></c:when>
-            <c:otherwise><button class="btn btn-secondary btn-sm" name="action" value="enviado">✓ Ya envié la lista a la DAES</button></c:otherwise>
+            <c:otherwise><button class="btn btn-secondary btn-sm" name="action" value="enviado" onclick="return confirm('¿Ya enviaste la lista? Se cierra el Form para todos.')">✓ Ya envié la lista (cierra el Form)</button></c:otherwise>
           </c:choose>
           <button class="btn btn-ghost btn-sm" name="action" value="sinTaller" onclick="return confirm('¿Esta semana no hay taller?')">No hay taller esta semana</button>
         </div>
@@ -38,25 +38,21 @@
     <c:choose>
       <c:when test="${puedeModerar}">
         <form class="card" method="post" action="${ctx}/rrpp/externos"><input type="hidden" name="_csrf" value="${sessionScope.csrf}">
-          <h2>Ciclo semanal</h2><p class="muted small">Se calcula hacia atrás desde cada jueves. Cámbialo cuando confirmen las fechas con la DAES.</p>
+          <h2>Ciclo semanal</h2><p class="muted small">Se calcula hacia atrás desde cada jueves.</p>
           <div class="form-row">
             <div class="field"><label for="diaPublicar">Se publica el</label><select class="input" id="diaPublicar" name="diaPublicar">
               <c:forEach var="d" items="${dias}"><option value="${d[0]}" ${d[0] == cfg.diaPublicar ? 'selected' : ''}>${d[1]}</option></c:forEach></select></div>
-            <div class="field"><label for="diaCierre">Cierra el</label><select class="input" id="diaCierre" name="diaCierre">
-              <c:forEach var="d" items="${dias}"><option value="${d[0]}" ${d[0] == cfg.diaCierre ? 'selected' : ''}>${d[1]}</option></c:forEach></select></div>
+            <div class="field"><label for="diaLimite">Se envía a la DAES a más tardar el</label><select class="input" id="diaLimite" name="diaLimite">
+              <c:forEach var="d" items="${dias}"><option value="${d[0]}" ${d[0] == cfg.diaLimite ? 'selected' : ''}>${d[1]}</option></c:forEach></select></div>
           </div>
-          <div class="form-row">
-            <div class="field"><label for="horaCierre">a las</label><input class="input" type="time" id="horaCierre" name="horaCierre" value="${cfg.horaCierre}"></div>
-            <div class="field"><label for="diaEnvio">Se envía a la DAES el</label><select class="input" id="diaEnvio" name="diaEnvio">
-              <c:forEach var="d" items="${dias}"><option value="${d[0]}" ${d[0] == cfg.diaEnvio ? 'selected' : ''}>${d[1]}</option></c:forEach></select></div>
-          </div>
+          <p class="muted small">El Form se cierra cuando el encargado marca «Ya envié la lista». Si termina ese día sin envío, queda como falta (F).</p>
           <div class="field"><label for="encargado">Encargado</label><select class="input" id="encargado" name="encargado"><option value="">Rota cada semana (al que menos le tocó)</option>
             <c:forEach var="e" items="${equipo}"><option value="${e.id}" ${e.id == cfg.encargado ? 'selected' : ''}>Siempre <c:out value="${e.nombre}"/></option></c:forEach></select></div>
           <div class="field"><label for="meta">Meta de visitas formales al mes</label><input class="input" type="number" id="meta" name="meta" min="0" max="10" value="${cfg.metaVisitas}"></div>
           <div><button class="btn btn-secondary" name="action" value="config">Guardar ciclo</button></div>
         </form>
       </c:when>
-      <c:otherwise><div class="card"><h2>Cómo funciona</h2><p class="small">El encargado de la semana recibe en Pendientes «Publica el link» y luego «Envía la lista a la DAES». Si se atrasa, también le llega al admin de RRPP.</p></div></c:otherwise>
+      <c:otherwise><div class="card"><h2>Cómo funciona</h2><p class="small">El encargado de la semana recibe en Pendientes «Publica el link» y luego «Envía la lista a la DAES». El Form se cierra cuando se envía la lista, a más tardar el lunes; si no, es falta y también le llega al admin de RRPP.</p></div></c:otherwise>
     </c:choose>
   </div>
 </div>
@@ -69,7 +65,7 @@
           <c:when test="${h.sinTaller}"><td colspan="2"><span class="tag neutral">Sin taller</span></td></c:when>
           <c:otherwise>
             <td>${empty h.publicadoEn ? '<span class="tag bad">No</span>' : '<span class="tag ok">'.concat(h.publicadoEn).concat('</span>')}</td>
-            <td>${h.enviado ? '<span class="tag ok">'.concat(h.enviadoEn).concat('</span>') : (h.faltaEnvio or h.cerrado ? '<span class="tag bad">No</span>' : '<span class="tag neutral">Pendiente</span>')}</td>
+            <td>${h.enviado ? (h.falta ? '<span class="tag bad">F · tarde '.concat(h.enviadoEn).concat('</span>') : '<span class="tag ok">'.concat(h.enviadoEn).concat('</span>')) : (h.falta ? '<span class="tag bad">F · no se envió</span>' : '<span class="tag neutral">Pendiente</span>')}</td>
           </c:otherwise>
         </c:choose></tr>
     </c:forEach>

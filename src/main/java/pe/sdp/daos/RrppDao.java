@@ -11,7 +11,8 @@ import java.util.*;
 /**
  * Módulo RRPP:
  *  - Externos del taller del jueves: una fila por semana con el link del Form, quién lo publicó y cuándo se envió a la DAES.
- *    Las fechas del ciclo (publicar / cierre / envío) salen de config y se calculan hacia atrás desde el jueves.
+ *    Ciclo: se publica el link (sábado) y el Form queda abierto hasta que el encargado envía la lista a la DAES,
+ *    lo que tiene que pasar a más tardar el día límite (lunes). Si ese día termina sin envío, es falta.
  *  - Visitas formales (vamos todos): convocatoria, "Voy / No puedo", checklist de RRPP.
  *  - Directorio de contactos (ruedas, academias, centros federados, H's y T's, autoridades) con historial.
  */
@@ -82,19 +83,15 @@ public class RrppDao extends BaseDao {
     public Map<String, String> configExternos() throws SQLException {
         Map<String, String> m = new LinkedHashMap<>();
         m.put("diaPublicar", config.valor("rrpp.ext.dia_publicar", "6"));
-        m.put("diaCierre", config.valor("rrpp.ext.dia_cierre", "1"));
-        m.put("horaCierre", config.valor("rrpp.ext.hora_cierre", "23:59"));
-        m.put("diaEnvio", config.valor("rrpp.ext.dia_envio", "2"));
+        m.put("diaLimite", config.valor("rrpp.ext.dia_limite", "1"));
         m.put("encargado", config.valor("rrpp.ext.encargado", ""));
         m.put("metaVisitas", config.valor("rrpp.meta_visitas", "1"));
         return m;
     }
 
-    public void guardarConfigExternos(int pub, int cierre, LocalTime horaCierre, int envio, Integer encargado, int meta) throws SQLException {
+    public void guardarConfigExternos(int pub, int limite, Integer encargado, int meta) throws SQLException {
         config.guardar("rrpp.ext.dia_publicar", String.valueOf(pub));
-        config.guardar("rrpp.ext.dia_cierre", String.valueOf(cierre));
-        config.guardar("rrpp.ext.hora_cierre", horaCierre.toString());
-        config.guardar("rrpp.ext.dia_envio", String.valueOf(envio));
+        config.guardar("rrpp.ext.dia_limite", String.valueOf(limite));
         config.guardar("rrpp.ext.encargado", encargado == null ? "" : String.valueOf(encargado));
         config.guardar("rrpp.meta_visitas", String.valueOf(meta));
     }
@@ -111,21 +108,17 @@ public class RrppDao extends BaseDao {
     /** El jueves de "esta semana": hoy si es jueves, si no el próximo. */
     public static LocalDate juevesActual() { return hoy().with(TemporalAdjusters.nextOrSame(DayOfWeek.THURSDAY)); }
 
-    /** Fechas del ciclo de un jueves: envío antes del jueves, cierre <= envío, publicar <= cierre. */
+    /** Fechas del ciclo de un jueves: día límite de envío (antes del jueves) y publicar <= límite. El Form cierra al enviar. */
     public Map<String, Object> ciclo(LocalDate jueves) throws SQLException {
         Map<String, String> cf = configExternos();
-        int dPub = dia(cf.get("diaPublicar"), 6), dCierre = dia(cf.get("diaCierre"), 1), dEnvio = dia(cf.get("diaEnvio"), 2);
-        LocalTime hCierre;
-        try { hCierre = LocalTime.parse(cf.get("horaCierre")); } catch (Exception e) { hCierre = LocalTime.of(23, 59); }
-        LocalDate envio = ultimo(jueves.minusDays(1), dEnvio);
-        LocalDate cierre = ultimo(envio, dCierre);
-        LocalDate publicar = ultimo(cierre, dPub);
+        int dPub = dia(cf.get("diaPublicar"), 6), dLim = dia(cf.get("diaLimite"), 1);
+        LocalDate limite = ultimo(jueves.minusDays(1), dLim);
+        LocalDate publicar = ultimo(limite, dPub);
         Map<String, Object> m = new LinkedHashMap<>();
-        m.put("publicar", publicar); m.put("cierre", cierre.atTime(hCierre)); m.put("envio", envio);
+        m.put("publicar", publicar); m.put("envio", limite);
         m.put("publicarTexto", Formato.fechaLarga(publicar));
-        m.put("cierreTexto", Formato.fechaLarga(cierre) + " " + Formato.hora(hCierre));
-        m.put("cierreCorto", Formato.diaLargo(cierre).toLowerCase() + " " + Formato.hora(hCierre));
-        m.put("envioTexto", Formato.fechaLarga(envio));
+        m.put("envioTexto", Formato.fechaLarga(limite));
+        m.put("envioCorto", Formato.diaLargo(limite).toLowerCase() + " " + Formato.ddmm(limite));
         return m;
     }
 
@@ -154,6 +147,7 @@ public class RrppDao extends BaseDao {
         m.put("idEncargado", entero(rs, "id_encargado"));
         m.put("encargado", rs.getString("encargado"));
         LocalDateTime pub = fechaHora(rs, "publicado_en"), env = fechaHora(rs, "enviado_en");
+        m.put("enviadoFecha", env == null ? null : env.toLocalDate());
         m.put("publicadoPor", rs.getString("publicador"));
         m.put("publicadoEn", pub == null ? null : Formato.ddmmHora(pub));
         m.put("enviadoPor", rs.getString("enviador"));
@@ -168,17 +162,21 @@ public class RrppDao extends BaseDao {
         Map<String, Object> cy = ciclo(j);
         m.putAll(cy);
         LocalDate h = hoy(); LocalDateTime now = ahora();
-        LocalDate publicar = (LocalDate) cy.get("publicar"), envio = (LocalDate) cy.get("envio");
-        LocalDateTime cierre = (LocalDateTime) cy.get("cierre");
+        LocalDate publicar = (LocalDate) cy.get("publicar"), limite = (LocalDate) cy.get("envio");
         boolean sinTaller = Boolean.TRUE.equals(m.get("sinTaller"));
         boolean hayLink = m.get("link") != null, enviado = Boolean.TRUE.equals(m.get("enviado"));
         boolean activa = !sinTaller && !h.isAfter(j);
-        m.put("abierto", activa && hayLink && !h.isBefore(publicar) && now.isBefore(cierre));
-        m.put("cerrado", !now.isBefore(cierre));
-        m.put("faltaLink", activa && !hayLink && !h.isBefore(publicar) && now.isBefore(cierre));
-        m.put("linkAtrasado", activa && !hayLink && h.isAfter(publicar));
-        m.put("faltaEnvio", activa && !enviado && !h.isBefore(envio));
-        m.put("envioAtrasado", activa && !enviado && h.isAfter(envio));
+        boolean enPlazo = !h.isBefore(publicar) && !h.isAfter(limite);
+        // el Form está abierto desde que se publica hasta que se envía la lista (o termina el día límite)
+        m.put("abierto", activa && hayLink && !enviado && enPlazo);
+        m.put("cerrado", enviado || h.isAfter(limite));
+        m.put("faltaLink", activa && !hayLink && !enviado && enPlazo);
+        m.put("linkAtrasado", activa && !hayLink && !enviado && h.isAfter(publicar));
+        m.put("faltaEnvio", activa && !enviado && !h.isBefore(limite));
+        m.put("envioAtrasado", activa && !enviado && h.isAfter(limite));
+        // falta: terminó el día límite sin envío (aunque se haya enviado después)
+        LocalDate ef = (LocalDate) m.get("enviadoFecha");
+        m.put("falta", !sinTaller && (ef == null ? h.isAfter(limite) : ef.isAfter(limite)));
         m.put("hayLink", hayLink);
     }
 

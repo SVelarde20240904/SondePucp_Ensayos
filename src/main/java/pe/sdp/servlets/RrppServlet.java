@@ -204,15 +204,14 @@ public class RrppServlet extends BaseServlet {
         if ("config".equals(a)) {
             if (!mod) Sesion.error(req, "Solo el admin o moderador de RRPP cambia el ciclo.");
             else {
-                Integer pub = entero(req, "diaPublicar"), cie = entero(req, "diaCierre"), env = entero(req, "diaEnvio"), meta = entero(req, "meta");
-                LocalTime hc = hora(req, "horaCierre");
+                Integer pub = entero(req, "diaPublicar"), lim = entero(req, "diaLimite"), meta = entero(req, "meta");
                 Integer enc = entero(req, "encargado");
                 List<Integer> validos = List.of(1, 2, 3, 5, 6, 7);
-                if (pub == null || cie == null || env == null || !validos.contains(pub) || !validos.contains(cie) || !validos.contains(env) || hc == null)
-                    Sesion.error(req, "Revisa los días y la hora del ciclo.");
+                if (pub == null || lim == null || !validos.contains(pub) || !validos.contains(lim))
+                    Sesion.error(req, "Revisa los días del ciclo.");
                 else if (enc != null && !dao.esDelEquipo(enc)) Sesion.error(req, "El encargado fijo tiene que ser del team RRPP.");
                 else {
-                    dao.guardarConfigExternos(pub, cie, hc, env, enc, meta == null || meta < 0 || meta > 10 ? 1 : meta);
+                    dao.guardarConfigExternos(pub, lim, enc, meta == null || meta < 0 || meta > 10 ? 1 : meta);
                     Sesion.ok(req, "Ciclo de externos guardado. Las fechas de esta semana ya se calculan así.");
                 }
             }

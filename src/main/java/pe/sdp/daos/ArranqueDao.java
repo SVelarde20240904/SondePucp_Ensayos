@@ -244,6 +244,14 @@ public class ArranqueDao extends BaseDao {
                 migrarRrpp(c);
                 hecho.add("módulo RRPP (roles, externos del jueves, visitas formales, directorio) y encuestas");
             }
+            // Externos: el Form cierra al enviar a la DAES, a más tardar el lunes (antes había cierre y envío separados)
+            if (existeFila(c, "SELECT 1 FROM config WHERE clave='rrpp.ext.dia_envio'")) {
+                try (Statement st = c.createStatement()) {
+                    st.executeUpdate("INSERT IGNORE INTO config (clave, valor) VALUES ('rrpp.ext.dia_limite','1')");
+                    st.executeUpdate("DELETE FROM config WHERE clave IN ('rrpp.ext.dia_cierre','rrpp.ext.hora_cierre','rrpp.ext.dia_envio')");
+                }
+                hecho.add("externos: la lista se envía a la DAES a más tardar el lunes y ahí cierra el Form");
+            }
             // Nadie puede figurar dos veces con la misma función en un taller (pasaba al sumarse como "adicional" siendo del plan).
             // Se queda la fila del plan (o la más antigua) y hereda la asistencia/nivel de la repetida si le faltaba.
             try (Statement st = c.createStatement()) {
@@ -528,9 +536,9 @@ public class ArranqueDao extends BaseDao {
                              "CONSTRAINT fk_ext_enc FOREIGN KEY (id_encargado) REFERENCES miembro(id_miembro) ON DELETE SET NULL, " +
                              "CONSTRAINT fk_ext_pub FOREIGN KEY (publicado_por) REFERENCES miembro(id_miembro) ON DELETE SET NULL, " +
                              "CONSTRAINT fk_ext_env FOREIGN KEY (enviado_por) REFERENCES miembro(id_miembro) ON DELETE SET NULL)" + UTF);
-            // ciclo por defecto (se cambia en RRPP → Externos): publicar el sábado, cerrar el lunes 23:59, enviar a la DAES el martes
-            st.executeUpdate("INSERT IGNORE INTO config (clave, valor) VALUES ('rrpp.ext.dia_publicar','6'),('rrpp.ext.dia_cierre','1')," +
-                             "('rrpp.ext.hora_cierre','23:59'),('rrpp.ext.dia_envio','2'),('rrpp.ext.encargado',''),('rrpp.meta_visitas','1')");
+            // ciclo por defecto (se cambia en RRPP → Externos): publicar el sábado; el Form cierra cuando se envía a la DAES, a más tardar el lunes
+            st.executeUpdate("INSERT IGNORE INTO config (clave, valor) VALUES ('rrpp.ext.dia_publicar','6'),('rrpp.ext.dia_limite','1')," +
+                             "('rrpp.ext.encargado',''),('rrpp.meta_visitas','1')");
         }
     }
 
